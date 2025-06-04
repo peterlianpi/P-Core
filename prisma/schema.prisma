@@ -1,0 +1,225 @@
+// This is your Prisma schema file.
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Speed up queries and scale easily with Prisma Accelerate:
+// https://pris.ly/cli/accelerate-init
+
+// Prisma schema file for database models and relationships
+// Define the generator for Prisma Client (JavaScript/TypeScript)
+// Generates the Prisma Client in JavaScript/TypeScript.
+generator client {
+  provider = "prisma-client-js"
+  output   = "generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enum for user roles
+enum UserRole {
+  SUPERADMIN // Superuser with all permissions
+  ADMIN
+  MANAGER
+  USER
+}
+
+model Account {
+  id                String  @id @default(cuid()) // Unique identifier
+  userId            String // User ID foreign key
+  type              String // Account type (e.g., OAuth)
+  provider          String // Provider name (e.g., Google, Facebook)
+  providerAccountId String // Unique account ID from the provider
+  refresh_token     String? @db.Text // Refresh token (optional, stored as text)
+  access_token      String? @db.Text // Access token (optional, stored as text)
+  expires_at        Int? // Expiration timestamp for the token
+  token_type        String? // Token type (e.g., Bearer)
+  scope             String? // OAuth scopes
+  id_token          String? @db.Text // ID token (optional, stored as text)
+  session_state     String? // Session state (optional)
+
+  createdAt DateTime @default(now()) // Timestamp for creation
+  updatedAt DateTime @updatedAt // Timestamp for last update
+
+  user User @relation(fields: [userId], references: [id]) // Relation to User model
+
+  @@unique([provider, providerAccountId]) // Ensures unique combination of provider and account ID
+}
+
+model VerificationToken {
+  id      String   @id @default(cuid()) // Unique identifier
+  email   String // User email
+  token   String   @unique // Unique verification token
+  expires DateTime // Expiration timestamp
+
+  createdAt DateTime @default(now()) // Timestamp for creation
+  updatedAt DateTime @updatedAt // Timestamp for last update
+
+  @@unique([email, token]) // Ensures unique email-token combination
+}
+
+model PasswordResetToken {
+  id      String   @id @default(cuid()) // Unique identifier
+  email   String // User email
+  token   String   @unique // Unique reset token
+  expires DateTime // Expiration timestamp
+
+  createdAt DateTime @default(now()) // Timestamp for creation
+  updatedAt DateTime @updatedAt // Timestamp for last update
+
+  @@unique([email, token]) // Ensures unique email-token combination
+}
+
+model TwoFactorToken {
+  id      String   @id @default(cuid()) // Unique identifier
+  email   String // User email
+  token   String   @unique // Unique 2FA token
+  expires DateTime // Expiration timestamp
+
+  createdAt DateTime @default(now()) // Timestamp for creation
+  updatedAt DateTime @updatedAt // Timestamp for last update
+
+  @@unique([email, token]) // Ensures unique email-token combination
+}
+
+model TwoFactorConfirmation {
+  id String @id @default(cuid()) // Unique identifier
+
+  userId String // User ID foreign key
+  user   User   @relation(fields: [userId], references: [id]) // Relation to User model
+
+  @@unique([userId]) // Ensures each user has only one 2FA confirmation
+}
+
+enum OrganizationUserRole {
+  ACCOUNTANT
+  OFFICE_STAFF
+  OWNER
+}
+
+model VersionInfo {
+  id          String    @id @default(uuid()) // Unique ID
+  version     String    @unique // e.g., "1.0.0", "1.1.0-beta"
+  status      String // "beta", "release", "deprecated"
+  description String? // Optional details about changes
+  createdAt   DateTime  @default(now()) // Timestamp when the goods is created
+  updatedAt   DateTime  @updatedAt // Timestamp when the goods is last updated
+  deletedAt   DateTime?
+}
+
+model Feedback {
+  id        String    @id @default(uuid())
+  name      String?
+  email     String?
+  phone     String?
+  message   String
+  anonymous Boolean   @default(false)
+  status    String    @default("Pending")
+  createdAt DateTime  @default(now()) // Timestamp when the goods is created
+  updatedAt DateTime  @updatedAt // Timestamp when the goods is last updated
+  deletedAt DateTime?
+}
+
+model User {
+  id                    String                 @id @default(cuid()) // Unique ID for the user
+  name                  String? // Optional name field
+  email                 String                 @unique // Unique email field for login
+  emailVerified         DateTime? // Date when email was verified
+  image                 String? // Profile image
+  password              String? // User's password
+  role                  UserRole               @default(USER) // User role (Admin/User)
+  accounts              Account[] // Account-related details
+  isTwoFactorEnabled    Boolean                @default(false) // Whether two-factor authentication is enabled
+  twoFactorConfirmation TwoFactorConfirmation? // Two-factor confirmation
+
+  createdAt DateTime  @default(now()) // Timestamp when the goods is created
+  updatedAt DateTime  @updatedAt // Timestamp when the goods is last updated
+  deletedAt DateTime?
+
+  defaultOrgId String?
+
+  // Many-to-many relation with Organization
+  UserOrganization UserOrganization[]
+
+  organizationCreated Organization[] @relation("OrganizationCreatedBy")
+
+  telegramBot TelegramSetting[]
+}
+
+model Organization {
+  id          String    @id @default(cuid())
+  number      Int?
+  name        String    @unique
+  description String?
+  startedAt   DateTime?
+  logoImage   String?
+  Address     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  createdById String
+  createdBy   User   @relation("OrganizationCreatedBy", fields: [createdById], references: [id])
+
+  // Many-to-many relation with User
+  UserOrganization UserOrganization[]
+
+  telegramBot TelegramSetting[]
+}
+
+// Join table to manage many-to-many relation
+model UserOrganization {
+  id             String                @id @default(cuid())
+  userId         String
+  role           OrganizationUserRole? // Role specific to the organization
+  organizationId String
+  user           User                  @relation(fields: [userId], references: [id])
+  organization   Organization          @relation(fields: [organizationId], references: [id])
+
+  @@unique([userId, organizationId]) // Compound primary key to enforce uniqueness
+}
+
+model UpdateLog {
+  id        String   @id @default(cuid())
+  name      String // Short name or action (e.g., "User Login", "Password Change")
+  message   String // Full message sent to Telegram
+  updatedBy String // User ID who performed it
+  orgId     String? // Optional org reference
+  type      LogType // INFO, WARNING, ERROR, etc.
+  date      DateTime @default(now()) // Action date
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum LogType {
+  INFO
+  WARNING
+  ERROR
+  CRITICAL
+}
+
+model TelegramSetting {
+  id        String   @id @default(uuid())
+  botToken  String
+  chatId    String
+  scope     Scope // USER | ORG | SUPERADMIN
+  userId    String? // For scope = USER
+  orgId     String? // For scope = ORG
+  createdAt DateTime @default(now())
+
+  user User?         @relation(fields: [userId], references: [id])
+  org  Organization? @relation(fields: [orgId], references: [id])
+}
+
+enum Role {
+  USER
+  ORG_ADMIN
+  SUPERADMIN
+}
+
+enum Scope {
+  USER
+  ORG
+  SUPERADMIN
+}

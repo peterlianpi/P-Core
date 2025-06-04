@@ -1,0 +1,123 @@
+"use server";
+
+import { db } from "@/lib/db";
+import { OrganizationsAPISchema } from "@/schemas";
+import { revalidatePath } from "next/cache";
+
+export async function handleError(error: unknown, fallbackMessage: string) {
+  if (error instanceof Error) {
+    return { error: error.message || fallbackMessage };
+  }
+  return { error: fallbackMessage };
+}
+
+export async function getOrganizationsByUserId(userId: string | undefined) {
+  const userOrganizations = await db.userOrganization.findMany({
+    where: { userId },
+    select: {
+      role: true,
+      organization: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          startedAt: true,
+          logoImage: true,
+        },
+      },
+    },
+  });
+
+  const result = OrganizationsAPISchema.safeParse(userOrganizations);
+  if (!result.success) throw new Error("Invalid data");
+
+  return result;
+}
+
+export async function createOrganization({
+  userId,
+  value,
+}: {
+  userId: string;
+  value: {
+    name: string;
+    description?: string;
+    logoImage?: string;
+    startedAt?: Date;
+  };
+}) {
+  try {
+    const result = await db.$transaction(async (prisma) => {
+      const organization = await prisma.organization.create({
+        data: {
+          name: value.name,
+          description: value.description,
+          logoImage: value.logoImage,
+          startedAt: value.startedAt,
+          createdBy: { connect: { id: userId } },
+        },
+      });
+
+      await prisma.userOrganization.create({
+        data: {
+          userId,
+          organizationId: organization.id,
+          role: "OWNER",
+        },
+      });
+
+      return organization;
+    });
+
+    revalidatePath("/organization"); // Optional: revalidate page
+
+    return { success: result };
+  } catch (error: unknown) {
+    return handleError(error, "Failed to create organization");
+  }
+}
+
+export async function updateOrganization({
+  organizationId,
+  value,
+}: {
+  organizationId: string;
+  value: {
+    name?: string;
+    description?: string;
+    logoImage?: string;
+    startedAt?: Date;
+  };
+}) {
+  try {
+    const updated = await db.organization.update({
+      where: { id: organizationId },
+      data: { ...value },
+    });
+    revalidatePath("/organization"); // Optional: revalidate page
+
+    return { success: { name: updated.name } };
+  } catch (error: unknown) {
+    return handleError(error, "Failed to update organization");
+  }
+}
+
+export async function deleteOrganization(organizationId: string) {
+  if (!organizationId) return { error: "Organization ID is required" };
+
+  try {
+    // Delete related userOrganization links (optional)
+    await db.userOrganization.deleteMany({
+      where: { organizationId },
+    });
+
+    const deleted = await db.organization.delete({
+      where: { id: organizationId },
+    });
+    revalidatePath("/organization"); // Optional: revalidate page
+
+    return { success: deleted };
+  } catch (error: unknown) {
+    return handleError(error, "Failed to delete organization");
+  }
+}
