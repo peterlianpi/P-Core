@@ -16,7 +16,7 @@ import {
   trackPasswordChange,
   trackTwoFactorDisabled,
   trackTwoFactorEnabled,
-} from "../auth/track-user-activities";
+} from "../auth/track-system-activities";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_NAME,
@@ -27,6 +27,8 @@ cloudinary.config({
 // Update settings
 export const settings = async (values: z.infer<typeof SettingsSchema>) => {
   const user = await currentUser();
+  // Destructure values to separate Telegram fields
+  const { telegramChatId, telegramBotToken, ...userValues } = values;
 
   if (!user) {
     return { error: "Unauthorized" };
@@ -99,11 +101,30 @@ export const settings = async (values: z.infer<typeof SettingsSchema>) => {
     }
   }
 
+  // Telegram settings
+  if (telegramChatId && telegramBotToken) {
+    await db.telegramSetting.upsert({
+      where: { userId_role: { userId: dbUser.id, role: dbUser.role } }, // assumes composite unique
+      update: {
+        role: values.role,
+        chatId: telegramChatId,
+        botToken: telegramBotToken,
+      },
+      create: {
+        userId: dbUser.id,
+        role: dbUser.role,
+        scope: dbUser.role === "SUPERADMIN" ? "SUPERADMIN" : "USER",
+        chatId: telegramChatId,
+        botToken: telegramBotToken,
+      },
+    });
+  }
+
   // Update the user in the database, including the image URL if provided
   await db.user.update({
     where: { id: dbUser.id },
     data: {
-      ...values,
+      ...userValues,
       defaultOrgId: values?.defaultOrgId,
       image: link,
     },

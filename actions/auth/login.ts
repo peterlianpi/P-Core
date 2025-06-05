@@ -17,7 +17,7 @@ import { DEFAULT_LOGIN_REDIRECT } from "@/routes";
 import { LoginSchema } from "@/schemas";
 import { AuthError } from "next-auth";
 import * as z from "zod";
-import { trackLogin } from "./track-user-activities";
+import { trackLogin } from "./track-system-activities";
 
 export const login = async (
   values: z.infer<typeof LoginSchema>,
@@ -105,7 +105,11 @@ export const login = async (
       return { error: "Invalid credentials" };
     }
 
-    await trackLogin({ value: email }); // Track successful login
+    await trackLogin({
+      value: email,
+      userId: existingUser.id,
+      role: existingUser.role,
+    }); // Track successful login
 
     // Successful login
     return {

@@ -1,7 +1,7 @@
 "use client";
 
 import { logout } from "@/actions/auth/logout";
-import { trackLogout } from "@/actions/auth/track-user-activities";
+import { trackLogout } from "@/actions/auth/track-system-activities";
 
 interface LogoutButtonProps {
   children?: React.ReactNode;

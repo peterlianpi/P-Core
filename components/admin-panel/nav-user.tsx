@@ -19,7 +19,7 @@ import {
 import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation"; // Importing usePathname for App Router
 import { UserRole } from "@/prisma/generated/client";
-import { trackLogout } from "@/actions/auth/track-user-activities";
+import { trackLogout } from "@/actions/auth/track-system-activities";
 
 export function NavUser({
   user,

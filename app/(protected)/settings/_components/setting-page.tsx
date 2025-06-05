@@ -46,11 +46,17 @@ type Organizations = {
   role?: string | undefined;
 };
 
+type TelegramSetting = {
+  telegramChatId: string | undefined;
+  telegramBotToken: string | undefined;
+};
+
 type Props = {
+  telegram: TelegramSetting;
   organizations: Organizations[];
 };
 
-const SettingsComponentPage = ({ organizations }: Props) => {
+const SettingsComponentPage = ({ telegram, organizations }: Props) => {
   const user = useCurrentUser();
   const [error, setError] = useState<string | undefined>();
   const [success, setSuccess] = useState<string | undefined>();
@@ -98,6 +104,8 @@ const SettingsComponentPage = ({ organizations }: Props) => {
       isTwoFactorEnabled: user?.isTwoFactorEnabled || undefined,
       image: user?.image || undefined,
       defaultOrgId: user?.defaultOrgId || undefined,
+      telegramChatId: telegram?.telegramChatId || undefined,
+      telegramBotToken: telegram?.telegramBotToken || undefined,
     },
   });
 
@@ -252,15 +260,21 @@ const SettingsComponentPage = ({ organizations }: Props) => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {/* Map through organizations */}
-                        {organizations?.map((org) => (
-                          <SelectItem
-                            key={org.organization.id}
-                            value={org.organization.id}
-                          >
-                            {org.organization.name}
-                          </SelectItem>
-                        ))}
+                        {organizations?.length === 0 ? (
+                          <div className="px-4 py-2 text-sm text-muted-foreground">
+                            No organizations available
+                          </div>
+                        ) : (
+                          /* Map through organizations */
+                          organizations?.map((org) => (
+                            <SelectItem
+                              key={org.organization.id}
+                              value={org.organization.id}
+                            >
+                              {org.organization.name}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -280,6 +294,42 @@ const SettingsComponentPage = ({ organizations }: Props) => {
                         disabled={true}
                       />
                     </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              {/* Telegram Chat ID and Bot API */}
+              <FormField
+                control={form.control}
+                name="telegramChatId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Telegram Chat Id</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="12345678"
+                        disabled={isPending}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="telegramBotToken"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Telegram Bot Token</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="12345678abcdef"
+                        disabled={isPending}
+                      />
+                    </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -351,7 +401,7 @@ const SettingsComponentPage = ({ organizations }: Props) => {
                   <FormItem>
                     <FormLabel>Role</FormLabel>
                     <Select
-                      disabled={isPending}
+                      disabled={isPending || user?.role !== UserRole.SUPERADMIN}
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
@@ -376,6 +426,7 @@ const SettingsComponentPage = ({ organizations }: Props) => {
                   </FormItem>
                 )}
               />
+
               {user?.isOAuth === false && (
                 <FormField
                   control={form.control}
