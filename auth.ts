@@ -7,7 +7,6 @@ import { getUserById } from "./data/user";
 import { getTwoFactorConfirmationByUserId } from "./data/two-factor-confirmation";
 import { getAccountByUserId } from "./data/account";
 import { UserRole } from "./prisma/generated/client";
-import async from "./actions/features/org/organization copy 2";
 
 // Exporting NextAuth handlers to use for authentication in the application
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -19,15 +18,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
   // Event listeners to handle account linking (e.g., after a successful OAuth login)
   events: {
-    // signOut callback: This function is called when a user signs out
-    async signOut({ user }) {
-      try {
-        // Perform any necessary cleanup or logging when a user signs out
-        console.log(`User ${user.email} has signed out.`);
-      } catch (error) {
-        console.error("Error during sign-out:", error); // Log errors if any occur
-      }
-    },
     async linkAccount({ user }) {
       try {
         // Update the `emailVerified` field when the account is linked

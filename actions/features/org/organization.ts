@@ -1,6 +1,6 @@
 "use server";
 
-import { trackOrganizationCreatedBy } from "@/actions/auth/track-user-activities";
+import { trackOrganizationCreatedBy } from "@/actions/auth/track-system-activities";
 import { db } from "@/lib/db";
 import { OrganizationsAPISchema } from "@/schemas";
 import { revalidatePath } from "next/cache";

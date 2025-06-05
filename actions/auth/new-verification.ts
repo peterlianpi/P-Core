@@ -3,7 +3,7 @@
 import { getUserByEmail } from "@/data/user";
 import { getVerificationTokenByToken } from "@/data/verification-token";
 import { db } from "@/lib/db";
-import { notifySuperAdmins } from "@/lib/notify-superadmin";
+import { trackEmailVerification } from "./track-system-activities";
 
 export const newVerification = async (token: string) => {
   const existingToken = await getVerificationTokenByToken(token);
@@ -38,11 +38,10 @@ export const newVerification = async (token: string) => {
     where: { id: existingToken.id },
   });
 
-  const log = await notifySuperAdmins({
-    title: "Email Verified",
-    message: `The email address of user *${existingToken.email}* has been verified.`,
+  await trackEmailVerification({
+    value: existingUser.email,
   });
-  console.log("Log notification sent:", log);
+
   return {
     success: "Email verified!",
   };

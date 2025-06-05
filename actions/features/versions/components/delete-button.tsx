@@ -1,8 +1,12 @@
 import { deleteVersion } from "../delete-version";
 
-export default function DeleteVersionButton({ versionId }) {
+export default function DeleteVersionButton({
+  versionId,
+}: {
+  versionId: string;
+}) {
   const handleDelete = async () => {
-    const result = await deleteVersion(versionId);
+    const result = await deleteVersion({ id: versionId });
     alert(result.success || result.error);
   };
 

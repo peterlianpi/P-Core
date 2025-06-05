@@ -203,19 +203,21 @@ model TelegramSetting {
   id        String   @id @default(uuid())
   botToken  String
   chatId    String
-  scope     Scope // USER | ORG | SUPERADMIN
+  scope     Scope    @default(USER) // USER | ORG | SUPERADMIN
   userId    String? // For scope = USER
   orgId     String? // For scope = ORG
+  role      UserRole @default(USER) // Role for the user in the organization, if applicable
+  isEnabled Boolean  @default(true) // Whether the Telegram bot is enabled for this scope
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user User?         @relation(fields: [userId], references: [id])
   org  Organization? @relation(fields: [orgId], references: [id])
-}
 
-enum Role {
-  USER
-  ORG_ADMIN
-  SUPERADMIN
+  @@unique([userId, scope])
+  @@unique([orgId, scope])
+  @@unique([userId, role])
+  @@unique([orgId, role, userId, scope]) // Unique constraint for organization, role, userId, and scope
 }
 
 enum Scope {

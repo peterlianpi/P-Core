@@ -5,7 +5,7 @@ import { getPasswordResetTokenByToken } from "@/data/password-reset-token";
 import { getUserByEmail } from "@/data/user";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
-import { notifySuperAdmins } from "@/lib/notify-superadmin";
+import { trackPasswordChange } from "./track-system-activities";
 
 export const newPassword = async (
   values: z.infer<typeof NewPasswordSchema>,
@@ -47,10 +47,8 @@ export const newPassword = async (
     where: { id: existingToken.id },
   });
 
-  const log = await notifySuperAdmins({
-    title: "Password Changed",
-    message: `The password for user *${existingToken.email}* has been changed.`,
+  await trackPasswordChange({
+    value: existingUser.email,
   });
-  console.log("Log notification sent:", log);
   return { success: "Password updated!" };
 };

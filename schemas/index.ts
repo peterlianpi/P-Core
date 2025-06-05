@@ -16,6 +16,8 @@ export const SettingsSchema = z
       UserRole.MANAGER,
       UserRole.USER,
     ]), // Must be one of the defined user roles
+    telegramChatId: z.optional(z.string()), // Optional Telegram chat ID
+    telegramBotToken: z.optional(z.string()), // Optional Telegram bot token
     email: z.optional(z.string().email()), // Optional email field with email validation
     password: z.optional(z.string().min(6)), // Optional current password with a minimum length of 6
     newPassword: z.optional(z.string().min(6)), // Optional new password with a minimum length of 6
