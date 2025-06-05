@@ -50,7 +50,7 @@ const EditTeam = ({
     name: organization.name,
     description: organization?.description,
     logoImage: organization?.logoImage,
-    startedAt: organization?.startedAt,
+    startedAt: organization?.startedAt ?? undefined,
   };
 
   return (

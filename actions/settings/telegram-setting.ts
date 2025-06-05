@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { UserRole } from "@/prisma/generated/client";
+import { UserRole } from "@prisma/client";
 
 export const getTelegramSetting = async ({
   userId,

@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { sendTelegramLog } from "@/lib/telegram";
-import { UserRole } from "@/prisma/generated/client";
+import { UserRole } from "@prisma/client";
 
 type NotifyOptions = {
   title: string;

@@ -1,4 +1,3 @@
-import { khawkSchema } from "@/schemas";
 import { z } from "zod";
 
 export const paramSchema = z.object({
@@ -8,7 +7,3 @@ export const paramSchema = z.object({
 export const querySchema = z.object({
   orgId: z.string().optional(),
 });
-
-export const createKhawkSchema = khawkSchema.omit({ id: true });
-
-

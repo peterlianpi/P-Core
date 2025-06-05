@@ -25,7 +25,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { UserRole } from "@/prisma/generated/client";
+import { UserRole } from "@prisma/client";
 
 // This is a mock user data that simulates how your data is structured
 const data = {

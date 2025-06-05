@@ -1,4 +1,4 @@
-import { $Enums } from "@/prisma/generated/client";
+import { $Enums } from "@prisma/client";
 
 export type Organization = {
   role: $Enums.OrganizationUserRole | null;
