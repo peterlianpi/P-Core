@@ -22,7 +22,6 @@ import { teamFormSchema } from "@/schemas";
 import { useData } from "@/providers/data-provider";
 import CustomUploadImagePage from "@/features/image-upload/components/upload-image";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const apiSchema = teamFormSchema.omit({
   id: true,
 });

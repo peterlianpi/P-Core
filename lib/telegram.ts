@@ -1,9 +1,9 @@
-import { Role, LogType } from "@/prisma/generated/client";
+import { LogType, UserRole } from "@prisma/client";
 import { db } from "./db";
 
 async function getTelegramSettings(
   userId?: string,
-  role?: Role,
+  role?: UserRole,
   orgId?: string
 ) {
   if (role === "SUPERADMIN") {
@@ -12,7 +12,7 @@ async function getTelegramSettings(
     });
   }
 
-  if (role === "ORG_ADMIN") {
+  if (role === "ADMIN") {
     return await db.telegramSetting.findMany({
       where: {
         OR: [
@@ -38,7 +38,7 @@ export async function sendTelegramLog({
 }: {
   userId?: string; // ✅ Now optional
   orgId?: string;
-  role?: Role; // ✅ Now optional
+  role?: UserRole; // ✅ Now optional
   title: string;
   message: string;
   type?: LogType;
