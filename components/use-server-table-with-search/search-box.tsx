@@ -3,7 +3,7 @@ import { useData } from "@/providers/data-provider";
 import { useEffect, useState } from "react";
 import { SearchBar } from "./search-bar";
 import { DataTable } from "./data-table";
-import { columns } from "@/app/(protected)/tests/_components/columns";
+import { columns } from "@/app/(protected)/hello-world/_components/columns";
 import { usePagination } from "@/helpers/use-pagination";
 import ErrorBox from "../error-box";
 import { Member } from "@/helpers/formatMember";

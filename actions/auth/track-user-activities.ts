@@ -2,7 +2,9 @@
 import { loginDate } from "@/helpers/date-format";
 import { notifySuperAdmins } from "@/lib/notify-superadmin";
 
-export const trackRegister = async ({ value }: { value: string }) => {
+type UserEvent = { value: string };
+
+export const trackRegister = async ({ value }: UserEvent) => {
   await notifySuperAdmins({
     title: "\n*👤 P-Core User Registration Notification*",
     message: `A new user has been registered in the system.\n\n*User:* ${value ?? "Unknown"}\n*Date:* ${loginDate}\n\n__This registration event is for monitoring purposes only._\n\n_P-Core Activity Log_`,
@@ -10,7 +12,7 @@ export const trackRegister = async ({ value }: { value: string }) => {
   });
 };
 
-export const trackLogout = async ({ value }: { value: string }) => {
+export const trackLogout = async ({ value }: UserEvent) => {
   await notifySuperAdmins({
     title: "\n*👤 P-Core Logout Notification*",
     message: `A user has successfully signed out from the system.\n\n*User:* ${value}\n*Date:* ${loginDate}\n\n_This logout event is for monitoring purposes only._\n\n_P-Core Activity Log_`,
@@ -18,7 +20,7 @@ export const trackLogout = async ({ value }: { value: string }) => {
   });
 };
 
-export const trackLogin = async ({ value }: { value: string }) => {
+export const trackLogin = async ({ value }: UserEvent) => {
   await notifySuperAdmins({
     title: "\n*👤 P-Core Login Notification*",
     message: `A user has successfully signed in to the system.\n\n*User:* ${value}\n*Date:* ${loginDate}\n\n_This login event is for monitoring purposes only._\n\n_P-Core Activity Log_`,
@@ -26,7 +28,7 @@ export const trackLogin = async ({ value }: { value: string }) => {
   });
 };
 
-export const trackReset = async ({ value }: { value: string }) => {
+export const trackReset = async ({ value }: UserEvent) => {
   await notifySuperAdmins({
     title: "\n*👤 P-Core Password Reset Requested*",
     message: `A user has requested a password reset.\n\n*User:* ${value ?? "Unknown"}\n*Date:* ${loginDate}\n\n_This login event is for monitoring purposes only._\n\n_P-Core Activity Log_`,
@@ -34,7 +36,7 @@ export const trackReset = async ({ value }: { value: string }) => {
   });
 };
 
-export const trackUpdate = async ({ value }: { value: string }) => {
+export const trackUpdate = async ({ value }: UserEvent) => {
   await notifySuperAdmins({
     title: "\n*👤 P-Core User Update Notification*",
     message: `A user has updated their profile information.\n\n*User:* ${value ?? "Unknown"}\n*Date:* ${loginDate}\n\n_This update event is for monitoring purposes only._\n\n_P-Core Activity Log_`,
@@ -42,7 +44,7 @@ export const trackUpdate = async ({ value }: { value: string }) => {
   });
 };
 
-export const trackDelete = async ({ value }: { value: string }) => {
+export const trackDelete = async ({ value }: UserEvent) => {
   await notifySuperAdmins({
     title: "\n*👤 P-Core User Deletion Notification*",
     message: `A user has been deleted from the system.\n\n*User:* ${value ?? "Unknown"}\n*Date:* ${loginDate}\n\n_This deletion event is for monitoring purposes only._\n\n_P-Core Activity Log_`,
@@ -50,7 +52,7 @@ export const trackDelete = async ({ value }: { value: string }) => {
   });
 };
 
-export const trackTwoFactorEnabled = async ({ value }: { value: string }) => {
+export const trackTwoFactorEnabled = async ({ value }: UserEvent) => {
   await notifySuperAdmins({
     title: "\n*👤 P-Core Two-Factor Authentication Notification*",
     message: `A user has enabled two-factor authentication.\n\n*User:* ${value ?? "Unknown"}\n*Date:* ${loginDate}\n\n_This two-factor event is for monitoring purposes only._\n\n_P-Core Activity Log_`,
@@ -58,7 +60,7 @@ export const trackTwoFactorEnabled = async ({ value }: { value: string }) => {
   });
 };
 
-export const trackTwoFactorDisabled = async ({ value }: { value: string }) => {
+export const trackTwoFactorDisabled = async ({ value }: UserEvent) => {
   await notifySuperAdmins({
     title: "\n*👤 P-Core Two-Factor Authentication Disabled Notification*",
     message: `A user has disabled two-factor authentication.\n\n*User:* ${value ?? "Unknown"}\n*Date:* ${loginDate}\n\n_This two-factor disabled event is for monitoring purposes only._\n\n_P-Core Activity Log_`,
@@ -80,7 +82,7 @@ export const trackEmailChange = async ({
   });
 };
 
-export const trackPasswordChange = async ({ value }: { value: string }) => {
+export const trackPasswordChange = async ({ value }: UserEvent) => {
   await notifySuperAdmins({
     title: "\n*👤 P-Core Password Change Notification*",
     message: `A user has changed their password.\n\n*User:* ${value ?? "Unknown"}\n*Date:* ${loginDate}\n\n_This password change event is for monitoring purposes only._\n\n_P-Core Activity Log_`,
@@ -88,7 +90,7 @@ export const trackPasswordChange = async ({ value }: { value: string }) => {
   });
 };
 
-export const trackTwoFactorToken = async ({ value }: { value: string }) => {
+export const trackTwoFactorToken = async ({ value }: UserEvent) => {
   await notifySuperAdmins({
     title: "\n*👤 P-Core Two-Factor Token Notification*",
     message: `A user has requested a two-factor authentication token.\n\n*User:* ${value ?? "Unknown"}\n*Date:* ${loginDate}\n\n_This two-factor token event is for monitoring purposes only._\n\n_P-Core Activity Log_`,
@@ -96,7 +98,7 @@ export const trackTwoFactorToken = async ({ value }: { value: string }) => {
   });
 };
 
-export const trackVerification = async ({ value }: { value: string }) => {
+export const trackVerification = async ({ value }: UserEvent) => {
   await notifySuperAdmins({
     title: "\n*👤 P-Core Email Verification Notification*",
     message: `A user has requested an email verification.\n\n*User:* ${value ?? "Unknown"}\n*Date:* ${loginDate}\n\n_This verification event is for monitoring purposes only._\n\n_P-Core Activity Log_`,
@@ -104,10 +106,23 @@ export const trackVerification = async ({ value }: { value: string }) => {
   });
 };
 
-export const trackLoginAttempt = async ({ value }: { value: string }) => {
+export const trackLoginAttempt = async ({ value }: UserEvent) => {
   await notifySuperAdmins({
     title: "\n*👤 P-Core Login Attempt Notification*",
     message: `A user has attempted to log in to the system.\n\n*User:* ${value ?? "Unknown"}\n*Date:* ${loginDate}\n\n_This login attempt event is for monitoring purposes only._\n\n_P-Core Activity Log_`,
+    type: "INFO",
+  });
+};
+
+type OrganizationEvent = { userId: string; organizationId: string };
+
+export const trackOrganizationCreatedBy = async ({
+  userId,
+  organizationId,
+}: OrganizationEvent) => {
+  await notifySuperAdmins({
+    title: "\n*👤 P-Core Organization Created Notification*",
+    message: `A new organization ${organizationId} has been created by ${userId} in the system.\n\n*Date:* ${loginDate}\n\n_This organization creation event is for monitoring purposes only._\n\n_P-Core Activity Log_`,
     type: "INFO",
   });
 };

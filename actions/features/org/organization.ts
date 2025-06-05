@@ -1,5 +1,6 @@
 "use server";
 
+import { trackOrganizationCreatedBy } from "@/actions/auth/track-user-activities";
 import { db } from "@/lib/db";
 import { OrganizationsAPISchema } from "@/schemas";
 import { revalidatePath } from "next/cache";
@@ -69,6 +70,10 @@ export async function createOrganization({
       return organization;
     });
 
+    await trackOrganizationCreatedBy({
+      userId: result.createdById,
+      organizationId: result.id,
+    });
     revalidatePath("/organization"); // Optional: revalidate page
 
     return { success: result };
