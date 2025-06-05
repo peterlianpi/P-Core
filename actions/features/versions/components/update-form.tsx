@@ -1,7 +1,3 @@
-// import { useEffect, useState } from "react";
-// import { getVersionById } from "../get-version";
-// import { updateVersion } from "../update-version";
-
 // export default function UpdateVersionForm({ versionId }) {
 //   const [version, setVersion] = useState(null);
 
