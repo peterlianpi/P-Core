@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 
-export const deleteVersion = async (id: string) => {
+export const deleteVersion = async ({id}:{id: string}) => {
   try {
     await db.versionInfo.delete({
       where: { id },
