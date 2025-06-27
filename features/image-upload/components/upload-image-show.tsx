@@ -28,7 +28,7 @@ function ImageUpload({
     <div className="flex flex-col items-center justify-center mb-4 gap-4">
       {imgSrc && (
         <Image
-          src={imgSrc === null ? "/image/profile.png" : imgSrc}
+          src={!imgSrc ? "/image/profile.png" : imgSrc}
           // Use a placeholder image if imgSrc is null
           className="rounded-xl items-center"
           width={100}

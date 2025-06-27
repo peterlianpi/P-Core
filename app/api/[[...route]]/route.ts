@@ -2,8 +2,6 @@
 import { Hono } from "hono";
 import { handle } from "hono/vercel";
 
-import users from "./users";
-import admin from "./admin";
 import upload from "./upload";
 import org from "./org";
 import versionInfo from "./version";
@@ -21,8 +19,6 @@ const app = new Hono().basePath("/api");
 // Each route points to the appropriate module handler for that resource.
 const routes = app
 
-  .route("/users", users)
-  .route("/admin", admin)
   .route("/upload", upload)
   .route("/org", org)
   .route("/versionInfo", versionInfo)
