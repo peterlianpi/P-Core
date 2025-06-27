@@ -1,17 +1,17 @@
-// LyricsDisplay.tsx
 "use client";
 
 import React, { useState, useCallback } from "react";
 import { ProPresenterMessage, TextSettings } from "../lib/type";
 
 import { useProPresenterWS } from "../lib/use-propresenter-ws";
-import { loadSettings } from "../lib/lyric-text-settings";
 import { cleanLyricText } from "../lib/lyric-utils";
 
-export default function LyricsDisplay() {
+interface LyricsDisplayProps {
+  settings: TextSettings;
+}
+
+export default function LyricsDisplay({ settings }: LyricsDisplayProps) {
   const [lines, setLines] = useState<string[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [settings, setSettings] = useState<TextSettings>(() => loadSettings());
 
   const handleMessage = useCallback((msg: ProPresenterMessage) => {
     if (msg.acn === "fv") {
@@ -26,9 +26,12 @@ export default function LyricsDisplay() {
 
   useProPresenterWS(
     {
-      IPAddress: "localhost",
-      IPPort: 80,
-      Password: "Pro12345",
+      IPAddress: settings?.IPAddress || "127.0.0.1",
+      IPPort: settings?.IPPort || 8080,
+      Password: settings?.Password || "Pro12345",
+      BackupIPAddress: "localhost", // Optional
+      BackupIPPort: 8088, // Optional
+      BackupPassword: "Pro12345", // Optional
       ClockLocale: "en-US",
     },
     handleMessage
@@ -37,18 +40,36 @@ export default function LyricsDisplay() {
   return (
     <div
       style={{
-        fontSize: settings.fontSize,
-        color: settings.color,
-        textTransform: settings.textTransform,
+        fontSize: settings?.fontSize || "30px",
+        fontWeight: settings?.fontWeight || "bold",
+        color: settings?.color || "white",
+        textTransform: settings?.textTransform || "capitalize",
+        backgroundColor: settings?.backgroundTransparent
+          ? "transparent"
+          : settings?.backgroundColor || "transparent",
+        width: settings?.width || "100%",
+        height: settings?.height || "auto",
       }}
-      className="font-semibold w-full absolute bottom-0 mx-auto"
+      className={`absolute mx-auto ${
+        settings?.position === "bottom"
+          ? "bottom-0"
+          : settings?.position === "center"
+          ? "top-1/2 -translate-y-1/2"
+          : "top-0"
+      } text-center`}
     >
-      {lines.map((line, i) => (
-        <p key={i} dangerouslySetInnerHTML={{ __html: line }} />
-      ))}
-
-      <p>Line one lyric</p>
-      <p>Line two lyric</p>
+      {lines.length > 0 ? (
+        lines.map((line, i) => (
+          <p key={i} dangerouslySetInnerHTML={{ __html: line }} />
+        ))
+      ) : (
+        <>
+          <p>First Line Lyrics</p>
+          <p>Second Line Lyrics</p>
+          <p>Third Line Lyrics</p>
+          <p>Fouth Line Lyrics</p>
+        </>
+      )}
     </div>
   );
 }

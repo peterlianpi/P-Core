@@ -26,7 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import ImageUpload from "@/features/image-upload/components/upload-image-show";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { UserRole } from "@prisma/client";
+import { UserRole } from "@/prisma-user-database/user-database-client-types";
 import { useData } from "@/providers/data-provider";
 import { SettingsSchema } from "@/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";

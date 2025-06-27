@@ -120,134 +120,11 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   Serializable: 'Serializable'
 });
 
-exports.Prisma.AccountScalarFieldEnum = {
+exports.Prisma.UserSettingsScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
-  type: 'type',
-  provider: 'provider',
-  providerAccountId: 'providerAccountId',
-  refresh_token: 'refresh_token',
-  access_token: 'access_token',
-  expires_at: 'expires_at',
-  token_type: 'token_type',
-  scope: 'scope',
-  id_token: 'id_token',
-  session_state: 'session_state',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.VerificationTokenScalarFieldEnum = {
-  id: 'id',
-  email: 'email',
-  token: 'token',
-  expires: 'expires',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.PasswordResetTokenScalarFieldEnum = {
-  id: 'id',
-  email: 'email',
-  token: 'token',
-  expires: 'expires',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.TwoFactorTokenScalarFieldEnum = {
-  id: 'id',
-  email: 'email',
-  token: 'token',
-  expires: 'expires',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.TwoFactorConfirmationScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId'
-};
-
-exports.Prisma.VersionInfoScalarFieldEnum = {
-  id: 'id',
-  version: 'version',
-  status: 'status',
-  description: 'description',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt'
-};
-
-exports.Prisma.FeedbackScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  email: 'email',
-  phone: 'phone',
-  message: 'message',
-  anonymous: 'anonymous',
-  status: 'status',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt'
-};
-
-exports.Prisma.UserScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  email: 'email',
-  emailVerified: 'emailVerified',
-  image: 'image',
-  password: 'password',
-  role: 'role',
-  isTwoFactorEnabled: 'isTwoFactorEnabled',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt',
-  defaultOrgId: 'defaultOrgId'
-};
-
-exports.Prisma.OrganizationScalarFieldEnum = {
-  id: 'id',
-  number: 'number',
-  name: 'name',
-  description: 'description',
-  startedAt: 'startedAt',
-  logoImage: 'logoImage',
-  Address: 'Address',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  createdById: 'createdById'
-};
-
-exports.Prisma.UserOrganizationScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  role: 'role',
-  organizationId: 'organizationId'
-};
-
-exports.Prisma.UpdateLogScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  message: 'message',
-  updatedBy: 'updatedBy',
-  orgId: 'orgId',
-  type: 'type',
-  date: 'date',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.TelegramSettingScalarFieldEnum = {
-  id: 'id',
-  botToken: 'botToken',
-  chatId: 'chatId',
-  scope: 'scope',
-  userId: 'userId',
-  orgId: 'orgId',
-  role: 'role',
-  isEnabled: 'isEnabled',
+  apiKey: 'apiKey',
+  settings: 'settings',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -257,54 +134,24 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
+exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
+};
+
 exports.Prisma.QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
 };
 
-exports.Prisma.NullsOrder = {
-  first: 'first',
-  last: 'last'
-};
-exports.UserRole = exports.$Enums.UserRole = {
-  SUPERADMIN: 'SUPERADMIN',
-  ADMIN: 'ADMIN',
-  MANAGER: 'MANAGER',
-  USER: 'USER'
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
 };
 
-exports.OrganizationUserRole = exports.$Enums.OrganizationUserRole = {
-  ACCOUNTANT: 'ACCOUNTANT',
-  OFFICE_STAFF: 'OFFICE_STAFF',
-  OWNER: 'OWNER'
-};
-
-exports.LogType = exports.$Enums.LogType = {
-  INFO: 'INFO',
-  WARNING: 'WARNING',
-  ERROR: 'ERROR',
-  CRITICAL: 'CRITICAL'
-};
-
-exports.Scope = exports.$Enums.Scope = {
-  USER: 'USER',
-  ORG: 'ORG',
-  SUPERADMIN: 'SUPERADMIN'
-};
 
 exports.Prisma.ModelName = {
-  Account: 'Account',
-  VerificationToken: 'VerificationToken',
-  PasswordResetToken: 'PasswordResetToken',
-  TwoFactorToken: 'TwoFactorToken',
-  TwoFactorConfirmation: 'TwoFactorConfirmation',
-  VersionInfo: 'VersionInfo',
-  Feedback: 'Feedback',
-  User: 'User',
-  Organization: 'Organization',
-  UserOrganization: 'UserOrganization',
-  UpdateLog: 'UpdateLog',
-  TelegramSetting: 'TelegramSetting'
+  UserSettings: 'UserSettings'
 };
 
 /**

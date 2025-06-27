@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import React from "react";
 import { Organization } from "../../_components/organizations-list";
-import { $Enums } from "@prisma/client";
+import { $Enums } from "@/prisma-user-database/user-database-client-types";
 
 const OrganizationUserManagenentPage = ({
   organizations,

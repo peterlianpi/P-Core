@@ -1,6 +1,6 @@
 // import { db } from "@/lib/db";
 // import { sendTelegramLog } from "@/lib/telegram";
-// import { UserRole } from "@prisma/client";
+// import { UserRole } from "@/prisma-user-database/user-database-client-types";
 
 // type NotifyOptions = {
 //   actorUserId: string;

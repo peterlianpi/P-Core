@@ -1,5 +1,6 @@
 import { sendTelegramLog } from "@/lib/telegram";
-import { UserRole } from "@prisma/client";
+import { UserRole } from "@/prisma-user-database/user-database-client-types";
+
 
 type LogOptions = {
   userId: string;

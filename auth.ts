@@ -1,12 +1,11 @@
 import NextAuth from "next-auth";
 import authConfig from "./auth.config";
-import { db } from "./lib/db";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { getUserById } from "./data/user";
-
 import { getTwoFactorConfirmationByUserId } from "./data/two-factor-confirmation";
 import { getAccountByUserId } from "./data/account";
-import { UserRole } from "@prisma/client";
+import { UserRole } from "./prisma-user-database/user-database-client-types";
+import { userDBPrismaClient } from "./lib/user-prisma-client";
 
 // Exporting NextAuth handlers to use for authentication in the application
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -21,7 +20,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async linkAccount({ user }) {
       try {
         // Update the `emailVerified` field when the account is linked
-        await db.user.update({
+        await userDBPrismaClient.user.update({
           where: { id: user.id },
           data: { emailVerified: new Date() }, // Mark the email as verified
         });
@@ -61,7 +60,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           if (!twoFactorConfirmation) return false;
 
           // Remove the two-factor confirmation for the next sign-in attempt
-          await db.twoFactorConfirmation.delete({
+          await userDBPrismaClient.twoFactorConfirmation.delete({
             where: {
               id: twoFactorConfirmation.id,
             },
@@ -91,7 +90,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         // Fetch the latest user data (like profile image) from the database to update the session
         if (session.user?.id) {
-          const updatedUser = await db.user.findUnique({
+          const updatedUser = await userDBPrismaClient.user.findUnique({
             where: { id: session.user.id },
           });
 
@@ -136,7 +135,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
 
   // Adapter to integrate with Prisma ORM for managing authentication data
-  adapter: PrismaAdapter(db),
+  adapter: PrismaAdapter(userDBPrismaClient),
 
   // Session configuration: Use JWT (JSON Web Tokens) for session management
   session: { strategy: "jwt" },

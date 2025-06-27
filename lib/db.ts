@@ -3,7 +3,6 @@ import { PrismaClient } from "@prisma/client";
 // Extend the globalThis type to include the prisma property
 declare global {
   // `var` is used to declare a globally scoped variable that works with hot-reloading
-  // eslint-disable-next-line no-var
   var prisma: PrismaClient | undefined;
 }
 

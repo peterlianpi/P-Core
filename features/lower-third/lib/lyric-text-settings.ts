@@ -1,11 +1,46 @@
 import { TextSettings } from "./type";
 
-export const loadSettings = (): TextSettings => {
+const SETTINGS_KEY = "lower-third-settings";
+
+export function loadSettings(): TextSettings {
+
   if (typeof window === "undefined") {
-    return { fontSize: "2rem", color: "#FFFFFF", textTransform: "uppercase" };
+    // SSR-safe fallback
+    return {
+      fontSize: "30px",
+      fontWeight: "600",
+      color: "#ffffff",
+      backgroundColor: "#000000",
+      backgroundTransparent: true,
+      width: "100%",
+      height: "auto",
+      position: "bottom",
+      textTransform: "none",
+      IPAddress: "localhost",
+      IPPort: 8080,
+      Password: "Pro12345",
+    };
   }
-  const raw = localStorage.getItem("lyricsSettings");
-  return raw
-    ? JSON.parse(raw)
-    : { fontSize: "2rem", color: "#FFFFFF", textTransform: "uppercase" };
-};
+
+  const data = localStorage.getItem(SETTINGS_KEY);
+  return data
+    ? JSON.parse(data)
+    : {
+      fontSize: "30px",
+      fontWeight: "600",
+      color: "#ffffff",
+      backgroundColor: "#000000",
+      backgroundTransparent: true,
+      width: "100%",
+      height: "auto",
+      position: "bottom",
+      textTransform: "none",
+      IPAddress: "localhost",
+      IPPort: 8080,
+      Password: "Pro12345",
+    };
+}
+
+export function saveSettings(settings: TextSettings) {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+}

@@ -1,19 +1,16 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../prisma-user-database/user-database-client-types";
+import { withAccelerate } from "@prisma/extension-accelerate"
 
-// Extend the globalThis type to include the prisma property
-declare global {
-  // `var` is used to declare a globally scoped variable that works with hot-reloading
-  // eslint-disable-next-line no-var
-  var prisma: PrismaClient | undefined;
-}
 
-// Initialize the PrismaClient instance
-// If `globalThis.prisma` is already defined (e.g., during development with hot-reloading), reuse it.
-// Otherwise, create a new PrismaClient instance.
-export const db = globalThis.prisma || new PrismaClient();
+const getPrisma = () => new PrismaClient()
+    .$extends(withAccelerate());
 
-// In non-production environments, assign the PrismaClient instance to `globalThis.prisma`
-// to prevent multiple instances being created during hot-reloading.
-if (process.env.NODE_ENV !== "production") {
-  globalThis.prisma = db;
-}
+const globalForUserDBPrismaClient = global as unknown as {
+    userDBPrismaClient: ReturnType<typeof getPrisma>;
+};
+
+export const userDBPrismaClient =
+    globalForUserDBPrismaClient.userDBPrismaClient || getPrisma();
+
+if (process.env.NODE_ENV !== "production")
+    globalForUserDBPrismaClient.userDBPrismaClient = userDBPrismaClient;

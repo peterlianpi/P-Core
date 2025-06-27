@@ -2,7 +2,7 @@
 
 // import { db } from "@/lib/db";
 // import { handleError } from "./organization"; // Reuse the error handler
-// import { OrganizationUserRole } from "@prisma/client";
+// import { OrganizationUserRole } from "@/prisma-user-database/user-database-client-types";
 
 // export async function getUserByOrgId({ orgId }: { orgId: string }) {
 //   try {

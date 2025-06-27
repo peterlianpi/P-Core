@@ -6,6 +6,7 @@ import upload from "./upload";
 import org from "./org";
 import versionInfo from "./version";
 import feedback from "./feedback";
+import propresenterSettings from "./propresenter-settings";
 
 // Set runtime to edge for serverless deployment.
 // This ensures the app is optimized for edge environments like Vercel.
@@ -22,7 +23,8 @@ const routes = app
   .route("/upload", upload)
   .route("/org", org)
   .route("/versionInfo", versionInfo)
-  .route("/feedback", feedback); // This handles requests to /api/*
+  .route("/feedback", feedback)
+  .route("/propresenter-settings", propresenterSettings); // This handles requests to /api/*
 // Define HTTP methods for each route handler.
 // The handle function from Hono processes requests based on their methods (GET, POST, PATCH, DELETE).
 // These exports allow your app to be deployed to an edge platform like Vercel.

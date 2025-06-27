@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Dashboard</title>
+    <link rel="stylesheet" href="user-theme.css" />
+  </head>
+  <body>
+    <div id="app">
+      <h1>Welcome, <span id="username">Guest</span></h1>
+      <p>Your last login: <span id="last-login">never</span></p>
+    </div>
+
+    <script>
+      async function fetchUserData() {
+        try {
+          const response = await fetch("https://your-api.com/user-info?id=123");
+          const userData = await response.json();
+          localStorage.setItem("userData", JSON.stringify(userData));
+          render(userData);
+        } catch (err) {
+          console.warn("Offline or error: using local data");
+          const saved = localStorage.getItem("userData");
+          if (saved) render(JSON.parse(saved));
+        }
+      }
+
+      function render(data) {
+        document.getElementById("username").textContent = data.name || "Guest";
+        document.getElementById("last-login").textContent =
+          data.lastLogin || "unknown";
+      }
+
+      fetchUserData();
+    </script>
+  </body>
+</html>
