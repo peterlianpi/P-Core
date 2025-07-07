@@ -2,7 +2,6 @@
 
 import { getUserByEmail, getUserById } from "@/data/user";
 import { currentUser } from "@/lib/auth";
-import { db } from "@/lib/db";
 
 import { generateVerificationToken } from "@/lib/tokens";
 import { SettingsSchema } from "@/schemas";
@@ -10,13 +9,14 @@ import * as z from "zod";
 import bcrypt from "bcryptjs";
 import { v2 as cloudinary } from "cloudinary";
 import { uploadImageSettings } from "@/data/upload-image-cloudinary";
-import { sendVerificationEmail } from "@/lib/email-templates";
+import { sendVerificationEmail } from "@/lib/mail/email-templates";
 import {
   trackEmailChange,
   trackPasswordChange,
   trackTwoFactorDisabled,
   trackTwoFactorEnabled,
 } from "../auth/track-system-activities";
+import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_NAME,
@@ -53,7 +53,7 @@ export const settings = async (values: z.infer<typeof SettingsSchema>) => {
     }
 
     // Save the token and pending email in the database
-    await db.user.update({
+    await userDBPrismaClient.user.update({
       where: { id: dbUser.id },
       data: { email: values.email, emailVerified: null },
     });
@@ -103,7 +103,7 @@ export const settings = async (values: z.infer<typeof SettingsSchema>) => {
 
   // Telegram settings
   if (telegramChatId && telegramBotToken) {
-    await db.telegramSetting.upsert({
+    await userDBPrismaClient.telegramSetting.upsert({
       where: { userId_role: { userId: dbUser.id, role: dbUser.role } }, // assumes composite unique
       update: {
         role: values.role,
@@ -121,7 +121,7 @@ export const settings = async (values: z.infer<typeof SettingsSchema>) => {
   }
 
   // Update the user in the database, including the image URL if provided
-  await db.user.update({
+  await userDBPrismaClient.user.update({
     where: { id: dbUser.id },
     data: {
       ...userValues,

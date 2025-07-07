@@ -5,7 +5,7 @@ import { getUserById } from "./data/user";
 import { getTwoFactorConfirmationByUserId } from "./data/two-factor-confirmation";
 import { getAccountByUserId } from "./data/account";
 import { UserRole } from "./prisma-user-database/user-database-client-types";
-import { userDBPrismaClient } from "./lib/user-prisma-client";
+import { userDBPrismaClient } from "./lib/prisma-client/user-prisma-client";
 
 // Exporting NextAuth handlers to use for authentication in the application
 export const { handlers, signIn, signOut, auth } = NextAuth({

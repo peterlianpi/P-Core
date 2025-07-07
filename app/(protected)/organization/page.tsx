@@ -6,7 +6,15 @@ const OrganizationPage = async () => {
   const user = await currentUser();
   const organizationsResult = await getOrganizationsByUserId(user?.id);
 
-  return <OrganizationListsPage organizations={organizationsResult.data} />;
+  return (
+    <>
+      {organizationsResult.data.length > 0 ? (
+        <OrganizationListsPage organizations={organizationsResult.data} />
+      ) : (
+        <p>No organization to show, create now</p>
+      )}
+    </>
+  );
 };
 
 export default OrganizationPage;

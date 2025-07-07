@@ -1,4 +1,5 @@
-import { db } from "@/lib/db";
+import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
+
 
 /**
  * Retrieve a user by their email address.
@@ -12,7 +13,7 @@ import { db } from "@/lib/db";
 export const getUserByEmail = async (email: string) => {
   try {
     // Query the database to find the user by email.
-    const user = await db.user.findUnique({
+    const user = await userDBPrismaClient.user.findUnique({
       where: {
         email,
       },
@@ -39,7 +40,7 @@ export const getUserByEmail = async (email: string) => {
 export const getUserById = async (id: string) => {
   try {
     // Query the database to find the user by ID.
-    const user = await db.user.findUnique({
+    const user = await userDBPrismaClient.user.findUnique({
       where: {
         id,
       },

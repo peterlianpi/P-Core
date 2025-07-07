@@ -1,4 +1,5 @@
-import { db } from "@/lib/db";
+import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
+
 
 /**
  * Retrieve a two-factor token by the provided token value.
@@ -12,7 +13,7 @@ import { db } from "@/lib/db";
 export const getTwoFactorTokenByToken = async (token: string) => {
   try {
     // Query the database to find the two-factor token by its value.
-    const twoFactorToken = await db.twoFactorToken.findUnique({
+    const twoFactorToken = await userDBPrismaClient.twoFactorToken.findUnique({
       where: { token },
     });
 
@@ -37,7 +38,7 @@ export const getTwoFactorTokenByToken = async (token: string) => {
 export const getTwoFactorTokenByEmail = async (email: string) => {
   try {
     // Query the database to find the first two-factor token associated with the email.
-    const twoFactorToken = await db.twoFactorToken.findFirst({
+    const twoFactorToken = await userDBPrismaClient.twoFactorToken.findFirst({
       where: { email },
     });
 

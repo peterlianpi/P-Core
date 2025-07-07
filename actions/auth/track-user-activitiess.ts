@@ -1,6 +1,6 @@
 "use server";
 import { loginDate } from "@/helpers/date-format";
-import { notifySuperAdmins } from "@/lib/notify-superadmin";
+import { notifySuperAdmins } from "@/lib/notification/notify-superadmin";
 
 type UserEvent = { value: string };
 

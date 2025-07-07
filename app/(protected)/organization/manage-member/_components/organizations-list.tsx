@@ -45,7 +45,7 @@ function OrganizationListsPage({
         result.map((r) => (
           <div
             key={r.id}
-            onClick={() => router.push(`/organization/add-user/${r.id}`)}
+            onClick={() => router.push(`/organization/manage-member/${r.id}`)}
           >
             <OrganizationCard organization={r} />
           </div>

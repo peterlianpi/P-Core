@@ -1,4 +1,4 @@
-import { sendTelegramLog } from "@/lib/telegram";
+import { sendTelegramLog } from "@/lib/telegram/telegram";
 import { UserRole } from "@/prisma-user-database/user-database-client-types";
 
 

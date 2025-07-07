@@ -4,11 +4,10 @@ import { signIn } from "@/auth";
 import { getTwoFactorConfirmationByUserId } from "@/data/two-factor-confirmation";
 import { getTwoFactorTokenByEmail } from "@/data/two-factor-token";
 import { getUserByEmail } from "@/data/user";
-import { db } from "@/lib/db";
 import {
   sendTwoFactorTokenEmail,
   sendVerificationEmail,
-} from "@/lib/email-templates";
+} from "@/lib/mail/email-templates";
 import {
   generateTwoFactorToken,
   generateVerificationToken,
@@ -18,6 +17,7 @@ import { LoginSchema } from "@/schemas";
 import { AuthError } from "next-auth";
 import * as z from "zod";
 import { trackLogin } from "./track-system-activities";
+import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
 
 export const login = async (
   values: z.infer<typeof LoginSchema>,
@@ -67,7 +67,7 @@ export const login = async (
         return { error: "Code expired!" };
       }
 
-      await db.twoFactorToken.delete({
+      await userDBPrismaClient.twoFactorToken.delete({
         where: { id: twoFactorToken.id },
       });
 
@@ -76,12 +76,12 @@ export const login = async (
       );
 
       if (existingConfirmation) {
-        await db.twoFactorConfirmation.delete({
+        await userDBPrismaClient.twoFactorConfirmation.delete({
           where: { id: existingConfirmation.id },
         });
       }
 
-      await db.twoFactorConfirmation.create({
+      await userDBPrismaClient.twoFactorConfirmation.create({
         data: {
           userId: existingUser.id,
         },

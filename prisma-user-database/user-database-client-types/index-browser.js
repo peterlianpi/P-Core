@@ -20,12 +20,12 @@ exports.Prisma = Prisma
 exports.$Enums = {}
 
 /**
- * Prisma Client JS version: 6.10.1
- * Query Engine version: 9b628578b3b7cae625e8c927178f15a170e74a9c
+ * Prisma Client JS version: 6.11.1
+ * Query Engine version: f40f79ec31188888a2e33acda0ecc8fd10a853a9
  */
 Prisma.prismaVersion = {
-  client: "6.10.1",
-  engine: "9b628578b3b7cae625e8c927178f15a170e74a9c"
+  client: "6.11.1",
+  engine: "f40f79ec31188888a2e33acda0ecc8fd10a853a9"
 }
 
 Prisma.PrismaClientKnownRequestError = () => {
@@ -192,6 +192,31 @@ exports.Prisma.FeedbackScalarFieldEnum = {
   deletedAt: 'deletedAt'
 };
 
+exports.Prisma.UpdateLogScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  message: 'message',
+  updatedBy: 'updatedBy',
+  orgId: 'orgId',
+  type: 'type',
+  date: 'date',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.TelegramSettingScalarFieldEnum = {
+  id: 'id',
+  botToken: 'botToken',
+  chatId: 'chatId',
+  scope: 'scope',
+  userId: 'userId',
+  orgId: 'orgId',
+  role: 'role',
+  isEnabled: 'isEnabled',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -227,29 +252,31 @@ exports.Prisma.UserOrganizationScalarFieldEnum = {
   organizationId: 'organizationId'
 };
 
-exports.Prisma.UpdateLogScalarFieldEnum = {
+exports.Prisma.OrganizationInviteScalarFieldEnum = {
   id: 'id',
-  name: 'name',
-  message: 'message',
-  updatedBy: 'updatedBy',
-  orgId: 'orgId',
-  type: 'type',
-  date: 'date',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  invitedBy: 'invitedBy',
+  email: 'email',
+  organizationId: 'organizationId',
+  role: 'role',
+  token: 'token',
+  accepted: 'accepted',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt'
 };
 
-exports.Prisma.TelegramSettingScalarFieldEnum = {
+exports.Prisma.FeatureScalarFieldEnum = {
   id: 'id',
-  botToken: 'botToken',
-  chatId: 'chatId',
-  scope: 'scope',
-  userId: 'userId',
-  orgId: 'orgId',
-  role: 'role',
+  name: 'name',
+  slug: 'slug',
   isEnabled: 'isEnabled',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.OrganizationFeatureAccessScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  featureId: 'featureId',
+  isEnabled: 'isEnabled'
 };
 
 exports.Prisma.SortOrder = {
@@ -266,19 +293,6 @@ exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
 };
-exports.UserRole = exports.$Enums.UserRole = {
-  SUPERADMIN: 'SUPERADMIN',
-  ADMIN: 'ADMIN',
-  MANAGER: 'MANAGER',
-  USER: 'USER'
-};
-
-exports.OrganizationUserRole = exports.$Enums.OrganizationUserRole = {
-  ACCOUNTANT: 'ACCOUNTANT',
-  OFFICE_STAFF: 'OFFICE_STAFF',
-  OWNER: 'OWNER'
-};
-
 exports.LogType = exports.$Enums.LogType = {
   INFO: 'INFO',
   WARNING: 'WARNING',
@@ -292,6 +306,20 @@ exports.Scope = exports.$Enums.Scope = {
   SUPERADMIN: 'SUPERADMIN'
 };
 
+exports.UserRole = exports.$Enums.UserRole = {
+  SUPERADMIN: 'SUPERADMIN',
+  ADMIN: 'ADMIN',
+  MANAGER: 'MANAGER',
+  USER: 'USER'
+};
+
+exports.OrganizationUserRole = exports.$Enums.OrganizationUserRole = {
+  ACCOUNTANT: 'ACCOUNTANT',
+  OFFICE_STAFF: 'OFFICE_STAFF',
+  OWNER: 'OWNER',
+  MEMBER: 'MEMBER'
+};
+
 exports.Prisma.ModelName = {
   Account: 'Account',
   VerificationToken: 'VerificationToken',
@@ -300,11 +328,14 @@ exports.Prisma.ModelName = {
   TwoFactorConfirmation: 'TwoFactorConfirmation',
   VersionInfo: 'VersionInfo',
   Feedback: 'Feedback',
+  UpdateLog: 'UpdateLog',
+  TelegramSetting: 'TelegramSetting',
   User: 'User',
   Organization: 'Organization',
   UserOrganization: 'UserOrganization',
-  UpdateLog: 'UpdateLog',
-  TelegramSetting: 'TelegramSetting'
+  OrganizationInvite: 'OrganizationInvite',
+  Feature: 'Feature',
+  OrganizationFeatureAccess: 'OrganizationFeatureAccess'
 };
 
 /**

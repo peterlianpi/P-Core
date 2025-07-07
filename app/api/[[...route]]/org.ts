@@ -1,8 +1,9 @@
 import { Hono } from "hono";
-import { db } from "@/lib/db"; // Import Prisma client
+// Import Prisma client
 import { OrgSchema, teamFormSchema } from "@/schemas";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
+import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
 
 const org = new Hono()
 
@@ -11,7 +12,7 @@ const org = new Hono()
   .get("/org", async (c) => {
     try {
       // Fetch organizations linked to the user
-      const organization = await db.organization.findMany({
+      const organization = await userDBPrismaClient.organization.findMany({
         select: {
           id: true,
           name: true,
@@ -43,7 +44,7 @@ const org = new Hono()
         const { userId } = c.req.valid("query");
 
         // Fetch organizations linked to the user
-        const userOrganizations = await db.userOrganization.findMany({
+        const userOrganizations = await userDBPrismaClient.userOrganization.findMany({
           where: { userId },
           select: {
             role: true,
@@ -98,7 +99,7 @@ const org = new Hono()
         if (!parsed.success) return c.json({ error: "Invalid input" }, 400);
 
         // Start a transaction to create both the organization and the UserOrganization relation
-        const result = await db.$transaction(async (prisma) => {
+        const result = await userDBPrismaClient.$transaction(async (prisma) => {
           // Create the organization
           const organization = await prisma.organization.create({
             data: {
@@ -137,7 +138,7 @@ const org = new Hono()
   // ✅ Get All Organizations with Counts Only
   .get("/org-details", async (c) => {
     try {
-      const organizations = await db.organization.findMany({
+      const organizations = await userDBPrismaClient.organization.findMany({
         select: {
           id: true,
           name: true,
@@ -178,7 +179,7 @@ const org = new Hono()
         const { userId } = c.req.valid("query"); // You need to extract userId from query
 
         // Check if user is part of the organization
-        const userOrg = await db.userOrganization.findUnique({
+        const userOrg = await userDBPrismaClient.userOrganization.findUnique({
           where: {
             userId_organizationId: {
               userId,
@@ -193,7 +194,7 @@ const org = new Hono()
             403
           );
 
-        const organization = await db.organization.findUnique({
+        const organization = await userDBPrismaClient.organization.findUnique({
           where: { id: orgId },
         });
 
@@ -238,7 +239,7 @@ const org = new Hono()
         if (!parsed.success) return c.json({ error: "Invalid input" }, 400);
 
         // Check if the user is part of the organization
-        const userOrg = await db.userOrganization.findUnique({
+        const userOrg = await userDBPrismaClient.userOrganization.findUnique({
           where: {
             userId_organizationId: {
               userId,
@@ -253,7 +254,7 @@ const org = new Hono()
             403
           );
 
-        const updatedOrg = await db.organization.update({
+        const updatedOrg = await userDBPrismaClient.organization.update({
           where: { id: orgId },
           data: parsed.data,
         });
@@ -280,7 +281,7 @@ const org = new Hono()
         const { userId } = c.req.valid("query"); // Extract userId from query
 
         // Check if the user is part of the organization
-        const userOrg = await db.userOrganization.findUnique({
+        const userOrg = await userDBPrismaClient.userOrganization.findUnique({
           where: {
             userId_organizationId: {
               userId,
@@ -295,7 +296,7 @@ const org = new Hono()
             403
           );
 
-        await db.organization.delete({ where: { id: orgId } });
+        await userDBPrismaClient.organization.delete({ where: { id: orgId } });
         return c.json({ message: "Organization deleted" });
       } catch {
         return c.json({ error: "Failed to delete organization" }, 500);
@@ -320,7 +321,7 @@ const org = new Hono()
         const { userId, adminUserId } = c.req.valid("query"); // Assuming the user making the request is an admin or authorized user
 
         // Check if the admin user is part of the organization
-        const adminOrg = await db.userOrganization.findUnique({
+        const adminOrg = await userDBPrismaClient.userOrganization.findUnique({
           where: {
             userId_organizationId: {
               userId: adminUserId,
@@ -335,15 +336,15 @@ const org = new Hono()
             403
           );
 
-        const user = await db.user.findUnique({ where: { id: userId } });
-        const organization = await db.organization.findUnique({
+        const user = await userDBPrismaClient.user.findUnique({ where: { id: userId } });
+        const organization = await userDBPrismaClient.organization.findUnique({
           where: { id: orgId },
         });
 
         if (!user || !organization)
           return c.json({ error: "User or Organization not found" }, 404);
 
-        await db.userOrganization.create({
+        await userDBPrismaClient.userOrganization.create({
           data: { userId, organizationId: orgId, role: "OWNER" }, // Default role for the added user
         });
 

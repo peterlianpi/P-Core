@@ -1,6 +1,6 @@
 "use server";
 
-import { db } from "@/lib/db";
+import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
 import { z } from "zod";
 
 // Define schema for the version data
@@ -14,7 +14,7 @@ const versionSchema = z.object({
 
 export const createVersion = async (values: z.infer<typeof versionSchema>) => {
   try {
-    const data = await db.versionInfo.create({
+    const data = await userDBPrismaClient.versionInfo.create({
       data: values,
     });
     return { success: "Version created successfully", data };

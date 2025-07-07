@@ -1,24 +1,28 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
-import { generateApiKey } from "@/lib/generate-api-key";
-import { featuresDBPrismaClient } from "@/lib/features-prisma-client";
+import { generateApiKey } from "@/lib/generate-api-key/generate-api-key";
+import { featuresDBPrismaClient } from "@/lib/prisma-client/features-prisma-client";
 // the function above
 
 const settings = new Hono()
-
     // Save or update user settings
     .post(
-        "/save",
+        "/", zValidator(
+            "query",
+            z.object({
+                userId: z.string(), // The user ID to associate with the new organization
+            })
+        ),
         zValidator(
             "json",
             z.object({
-                userId: z.string(),
                 settings: z.any(), // ideally you can match your TextSettings schema
             })
         ),
         async (c) => {
-            const { userId, settings } = c.req.valid("json");
+            const { userId } = c.req.valid("query")
+            const { settings } = c.req.valid("json");
 
             const existing = await featuresDBPrismaClient.userSettings.findFirst({
                 where: { userId },

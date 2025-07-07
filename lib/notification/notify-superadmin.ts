@@ -1,6 +1,7 @@
-import { db } from "@/lib/db";
-import { sendTelegramLog } from "@/lib/telegram";
+
+import { sendTelegramLog } from "@/lib/telegram/telegram";
 import { UserRole } from "@/prisma-user-database/user-database-client-types";
+import { userDBPrismaClient } from "../prisma-client/user-prisma-client";
 
 type NotifyOptions = {
   title: string;
@@ -13,7 +14,7 @@ export const notifySuperAdmins = async ({
   message,
   type = "INFO",
 }: NotifyOptions) => {
-  const superAdmins = await db.user.findMany({
+  const superAdmins = await userDBPrismaClient.user.findMany({
     where: {
       role: UserRole.SUPERADMIN,
     },

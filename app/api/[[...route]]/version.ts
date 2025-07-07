@@ -1,7 +1,7 @@
 import { Hono } from "hono";
-import { db } from "@/lib/db";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
+import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
 
 const versionSchema = z.object({
   version: z.string(),
@@ -16,7 +16,7 @@ const app = new Hono()
     const values = c.req.valid("json");
 
     try {
-      const data = await db.versionInfo.create({
+      const data = await userDBPrismaClient.versionInfo.create({
         data: values,
       });
       return c.json(data, 201);
@@ -36,7 +36,7 @@ const app = new Hono()
       const values = c.req.valid("json");
 
       try {
-        const data = await db.versionInfo.update({
+        const data = await userDBPrismaClient.versionInfo.update({
           where: { id },
           data: values,
         });
@@ -51,7 +51,7 @@ const app = new Hono()
   // GET: Retrieve all versionInfo
   .get("/", async (c) => {
     try {
-      const versions = await db.versionInfo.findMany({
+      const versions = await userDBPrismaClient.versionInfo.findMany({
         orderBy: { createdAt: "desc" },
       });
       return c.json(versions);
@@ -66,7 +66,7 @@ const app = new Hono()
     const { id } = c.req.valid("param");
 
     try {
-      const version = await db.versionInfo.findUnique({
+      const version = await userDBPrismaClient.versionInfo.findUnique({
         where: { id },
       });
       if (!version) return c.json({ error: "Version not found" }, 404);
@@ -85,7 +85,7 @@ const app = new Hono()
       const { id } = c.req.valid("param");
 
       try {
-        await db.versionInfo.delete({ where: { id } });
+        await userDBPrismaClient.versionInfo.delete({ where: { id } });
         return c.json({ message: "Version info deleted successfully" });
       } catch (err) {
         console.error(err);

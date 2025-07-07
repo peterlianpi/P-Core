@@ -1,5 +1,6 @@
 import { LogType, UserRole } from "@/prisma-user-database/user-database-client-types";
-import { db } from "./db";
+import { userDBPrismaClient } from "../prisma-client/user-prisma-client";
+
 
 async function getTelegramSettings(
   userId?: string,
@@ -7,13 +8,13 @@ async function getTelegramSettings(
   orgId?: string
 ) {
   if (role === "SUPERADMIN") {
-    return await db.telegramSetting.findMany({
+    return await userDBPrismaClient.telegramSetting.findMany({
       where: { scope: "SUPERADMIN" },
     });
   }
 
   if (role === "ADMIN") {
-    return await db.telegramSetting.findMany({
+    return await userDBPrismaClient.telegramSetting.findMany({
       where: {
         OR: [
           { scope: "ORG", orgId },
@@ -23,7 +24,7 @@ async function getTelegramSettings(
     });
   }
 
-  return await db.telegramSetting.findMany({
+  return await userDBPrismaClient.telegramSetting.findMany({
     where: { scope: "USER", userId },
   });
 }
@@ -46,7 +47,7 @@ export async function sendTelegramLog({
   const settings = await getTelegramSettings(userId, role, orgId);
 
   // Save to database log
-  await db.updateLog.create({
+  await userDBPrismaClient.updateLog.create({
     data: {
       name: title,
       message,

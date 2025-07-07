@@ -2,7 +2,7 @@
 CREATE TYPE "UserRole" AS ENUM ('SUPERADMIN', 'ADMIN', 'MANAGER', 'USER');
 
 -- CreateEnum
-CREATE TYPE "OrganizationUserRole" AS ENUM ('ACCOUNTANT', 'OFFICE_STAFF', 'OWNER');
+CREATE TYPE "OrganizationUserRole" AS ENUM ('ACCOUNTANT', 'OFFICE_STAFF', 'OWNER', 'MEMBER');
 
 -- CreateEnum
 CREATE TYPE "LogType" AS ENUM ('INFO', 'WARNING', 'ERROR', 'CRITICAL');
@@ -104,6 +104,37 @@ CREATE TABLE "Feedback" (
 );
 
 -- CreateTable
+CREATE TABLE "UpdateLog" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "message" TEXT NOT NULL,
+    "updatedBy" TEXT NOT NULL,
+    "orgId" TEXT,
+    "type" "LogType" NOT NULL,
+    "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "UpdateLog_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "TelegramSetting" (
+    "id" TEXT NOT NULL,
+    "botToken" TEXT NOT NULL,
+    "chatId" TEXT NOT NULL,
+    "scope" "Scope" NOT NULL DEFAULT 'USER',
+    "userId" TEXT,
+    "orgId" TEXT,
+    "role" "UserRole" NOT NULL DEFAULT 'USER',
+    "isEnabled" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "TelegramSetting_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
     "name" TEXT,
@@ -148,34 +179,39 @@ CREATE TABLE "UserOrganization" (
 );
 
 -- CreateTable
-CREATE TABLE "UpdateLog" (
+CREATE TABLE "OrganizationInvite" (
     "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "message" TEXT NOT NULL,
-    "updatedBy" TEXT NOT NULL,
-    "orgId" TEXT,
-    "type" "LogType" NOT NULL,
-    "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "invitedBy" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "organizationId" TEXT NOT NULL,
+    "role" "OrganizationUserRole" DEFAULT 'MEMBER',
+    "token" TEXT NOT NULL,
+    "accepted" BOOLEAN NOT NULL DEFAULT false,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "UpdateLog_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "OrganizationInvite_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "TelegramSetting" (
+CREATE TABLE "Feature" (
     "id" TEXT NOT NULL,
-    "botToken" TEXT NOT NULL,
-    "chatId" TEXT NOT NULL,
-    "scope" "Scope" NOT NULL DEFAULT 'USER',
-    "userId" TEXT,
-    "orgId" TEXT,
-    "role" "UserRole" NOT NULL DEFAULT 'USER',
+    "name" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
     "isEnabled" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "TelegramSetting_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "Feature_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "OrganizationFeatureAccess" (
+    "id" TEXT NOT NULL,
+    "organizationId" TEXT NOT NULL,
+    "featureId" TEXT NOT NULL,
+    "isEnabled" BOOLEAN NOT NULL DEFAULT true,
+
+    CONSTRAINT "OrganizationFeatureAccess_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -206,15 +242,6 @@ CREATE UNIQUE INDEX "TwoFactorConfirmation_userId_key" ON "TwoFactorConfirmation
 CREATE UNIQUE INDEX "VersionInfo_version_key" ON "VersionInfo"("version");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
-
--- CreateIndex
-CREATE UNIQUE INDEX "Organization_name_key" ON "Organization"("name");
-
--- CreateIndex
-CREATE UNIQUE INDEX "UserOrganization_userId_organizationId_key" ON "UserOrganization"("userId", "organizationId");
-
--- CreateIndex
 CREATE UNIQUE INDEX "TelegramSetting_userId_scope_key" ON "TelegramSetting"("userId", "scope");
 
 -- CreateIndex
@@ -226,11 +253,41 @@ CREATE UNIQUE INDEX "TelegramSetting_userId_role_key" ON "TelegramSetting"("user
 -- CreateIndex
 CREATE UNIQUE INDEX "TelegramSetting_orgId_role_userId_scope_key" ON "TelegramSetting"("orgId", "role", "userId", "scope");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Organization_name_key" ON "Organization"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "UserOrganization_userId_organizationId_key" ON "UserOrganization"("userId", "organizationId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "OrganizationInvite_token_key" ON "OrganizationInvite"("token");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "OrganizationInvite_email_organizationId_key" ON "OrganizationInvite"("email", "organizationId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Feature_name_key" ON "Feature"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Feature_slug_key" ON "Feature"("slug");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "OrganizationFeatureAccess_organizationId_featureId_key" ON "OrganizationFeatureAccess"("organizationId", "featureId");
+
 -- AddForeignKey
 ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "TwoFactorConfirmation" ADD CONSTRAINT "TwoFactorConfirmation_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "TelegramSetting" ADD CONSTRAINT "TelegramSetting_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "TelegramSetting" ADD CONSTRAINT "TelegramSetting_orgId_fkey" FOREIGN KEY ("orgId") REFERENCES "Organization"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Organization" ADD CONSTRAINT "Organization_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -242,7 +299,10 @@ ALTER TABLE "UserOrganization" ADD CONSTRAINT "UserOrganization_userId_fkey" FOR
 ALTER TABLE "UserOrganization" ADD CONSTRAINT "UserOrganization_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "TelegramSetting" ADD CONSTRAINT "TelegramSetting_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "OrganizationInvite" ADD CONSTRAINT "OrganizationInvite_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "TelegramSetting" ADD CONSTRAINT "TelegramSetting_orgId_fkey" FOREIGN KEY ("orgId") REFERENCES "Organization"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "OrganizationFeatureAccess" ADD CONSTRAINT "OrganizationFeatureAccess_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "OrganizationFeatureAccess" ADD CONSTRAINT "OrganizationFeatureAccess_featureId_fkey" FOREIGN KEY ("featureId") REFERENCES "Feature"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -1,4 +1,4 @@
-import { PrismaClient } from "../prisma-features-database/features-database-client-types";
+import { PrismaClient } from "../../prisma-features-database/features-database-client-types";
 // import { withAccelerate } from "@prisma/extension-accelerate"
 
 const getPrisma = () => new PrismaClient()
