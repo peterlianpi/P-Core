@@ -18,9 +18,8 @@ export const useCreateLowerThirdSettings = (userId: string) => {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
                 throw new Error(
-                    (errorData as unknown)?.error || "Unknown error occurred"
+                    "Unknown error occurred"
                 );
             }
 
