@@ -97,6 +97,7 @@ enum OrganizationUserRole {
   OFFICE_STAFF
   OWNER
   MEMBER
+  ADMIN
 }
 
 model VersionInfo {

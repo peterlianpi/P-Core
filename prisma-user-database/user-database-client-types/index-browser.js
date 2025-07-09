@@ -317,7 +317,8 @@ exports.OrganizationUserRole = exports.$Enums.OrganizationUserRole = {
   ACCOUNTANT: 'ACCOUNTANT',
   OFFICE_STAFF: 'OFFICE_STAFF',
   OWNER: 'OWNER',
-  MEMBER: 'MEMBER'
+  MEMBER: 'MEMBER',
+  ADMIN: 'ADMIN'
 };
 
 exports.Prisma.ModelName = {

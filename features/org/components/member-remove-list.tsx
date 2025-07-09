@@ -2,6 +2,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useCurrentMemberRole } from "@/hooks/use-current-team-role";
 
 type Role = "OWNER" | "ADMIN" | "MEMBER" | "ACCOUNTANT" | "OFFICE_STAFF";
 
@@ -19,40 +20,41 @@ type Member = {
 type Props = {
   members: Member[];
   onRemove: (id: string) => void;
+  selectedOrgId: string | null;
 };
 
-const MemberRemoveList = ({ members, onRemove }: Props) => {
-  return (
-    <ul className="space-y-2 py-4">
-      {members.map((m) => {
-        const currentRole = m.organization.find((o) => o.id)?.role;
+const MemberRemoveList = ({ members, onRemove, selectedOrgId }: Props) => {
+  const currentUserRole = useCurrentMemberRole(members, selectedOrgId);
 
-        return (
-          <li
-            key={m.id}
-            className="border p-2 rounded-lg flex items-center gap-4"
-          >
+  return (
+    <div className="flex py-4 flex-wrap justify-start md:justify-center items-center gap-4 w-full">
+      {members.map((m) => (
+        <div
+          key={m.id}
+          className="max-md:w-full w-64 border p-4 rounded-lg flex flex-col gap-4 bg-white shadow-sm  "
+        >
+          <div className="flex flex-row gap-4 items-center w-full">
             <img
               src={m.image || "/image/profile.png"}
               alt={m.name ?? "No name"}
               className="w-12 h-12 rounded-full object-cover"
             />
-            <div className="flex-1">
-              <p className="font-medium">{m.name ?? "(No name)"}</p>
-              <p className="text-sm text-gray-600">{m.email}</p>
+            <div className="flex-1 overflow-hidden">
+              <p className="font-medium truncate">{m.name ?? "(No name)"}</p>
+              <p className="text-sm text-gray-600 truncate">{m.email}</p>
             </div>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => onRemove(m.id)}
-              disabled={currentRole !== "OWNER"}
-            >
-              Remove
-            </Button>
-          </li>
-        );
-      })}
-    </ul>
+          </div>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => onRemove(m.id)}
+            disabled={currentUserRole !== "OWNER"}
+          >
+            Remove
+          </Button>
+        </div>
+      ))}
+    </div>
   );
 };
 

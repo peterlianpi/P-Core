@@ -7,6 +7,7 @@ import org from "./org";
 import versionInfo from "./version";
 import feedback from "./feedback";
 import invite from "./invite";
+import accept from './accept';
 import lyrics from "./lyrics";
 
 // Set runtime to edge for serverless deployment.
@@ -26,6 +27,7 @@ const routes = app
   .route("/versionInfo", versionInfo)
   .route("/feedback", feedback)
   .route("/invite", invite)
+  .route("/accept", accept)
   .route("/lyrics", lyrics); // This handles requests to /api/*
 // Define HTTP methods for each route handler.
 // The handle function from Hono processes requests based on their methods (GET, POST, PATCH, DELETE).

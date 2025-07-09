@@ -107,7 +107,8 @@ export const OrganizationUserRole: {
   ACCOUNTANT: 'ACCOUNTANT',
   OFFICE_STAFF: 'OFFICE_STAFF',
   OWNER: 'OWNER',
-  MEMBER: 'MEMBER'
+  MEMBER: 'MEMBER',
+  ADMIN: 'ADMIN'
 };
 
 export type OrganizationUserRole = (typeof OrganizationUserRole)[keyof typeof OrganizationUserRole]

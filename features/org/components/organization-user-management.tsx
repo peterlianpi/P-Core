@@ -11,10 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  $Enums,
-  OrganizationUserRole,
-} from "@/prisma-user-database/user-database-client-types";
+import { OrganizationUserRole } from "@/prisma-user-database/user-database-client-types";
 import MemberCardPage from "./member-card";
 import MemberRemoveList from "./member-remove-list";
 import MemberRoleEditor from "./member-role-editor";
@@ -30,7 +27,7 @@ type User = {
   image?: string | null;
   organization: {
     id: string;
-    role: $Enums.OrganizationUserRole | null;
+    role: OrganizationUserRole;
   }[];
 };
 
@@ -46,6 +43,10 @@ export default function OrganizationUserManagementPage({
   organizations: Organization[];
   users: User[];
 }) {
+  // Get current user (assumes it's the first user in the users array)
+  const currentUser = useCurrentUser();
+  const createInviteMember = useInviteMember(currentUser?.id ?? "");
+
   const { orgId } = useData();
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(orgId);
   const [activeTab, setActiveTab] = useState<
@@ -68,10 +69,6 @@ export default function OrganizationUserManagementPage({
     setRoleEdits({});
   }, [selectedOrgId, users]);
 
-  // Get current user (assumes it's the first user in the users array)
-  const currentUser = useCurrentUser();
-  const createInviteMember = useInviteMember(currentUser?.id ?? "");
-
   const currentUserRole = users
     .find((u) => u.id === currentUser?.id)
     ?.organization.find((org) => org.id === selectedOrgId)?.role;
@@ -87,8 +84,10 @@ export default function OrganizationUserManagementPage({
     };
 
     createInviteMember.mutate(values, {
-      onSuccess: () => {
-        toast.success(`Invite mail sent to ${values.email} successfully!`);
+      onSuccess: (data) => {
+        toast.success(
+          data.message || `Invite mail sent to ${values.email} successfully!`
+        );
         setAddEmail("");
         setActiveTab("members");
       },
@@ -128,7 +127,7 @@ export default function OrganizationUserManagementPage({
   };
 
   return (
-    <div className="p-4">
+    <div className="p-4 w-full">
       {/* Org Selector */}
       <Select onValueChange={setSelectedOrgId} value={selectedOrgId ?? ""}>
         <SelectTrigger className="w-full sm:w-64">
@@ -144,7 +143,7 @@ export default function OrganizationUserManagementPage({
       </Select>
 
       {/* Tabs */}
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-wrap items-center gap-2">
         <Button
           variant={activeTab === "members" ? "default" : "outline"}
           onClick={() => setActiveTab("members")}
@@ -179,9 +178,9 @@ export default function OrganizationUserManagementPage({
       </div>
 
       {/* Tab Content */}
-      <div className="mt-6">
+      <div className="mt-6 w-full h-full">
         {activeTab === "members" && (
-          <div className="flex py-4 flex-wrap justify-start sm:justify-center gap-4">
+          <div className="flex py-4 flex-wrap   justify-start md:justify-center items-center gap-4">
             {orgMembers.map((m) => {
               const role =
                 m.organization.find((o) => o.id === selectedOrgId)?.role ??
@@ -202,30 +201,38 @@ export default function OrganizationUserManagementPage({
 
         {activeTab === "add" && (
           <div className="max-w-md space-y-4 py-4">
-            <Label htmlFor="addEmail">User Email to Invite</Label>
-            <Input
-              id="addEmail"
-              type="email"
-              placeholder="user@example.com"
-              value={addEmail}
-              onChange={(e) => setAddEmail(e.target.value)}
-            />
+            <div>
+              <Label htmlFor="addEmail">User Email to Invite</Label>
+              <Input
+                id="addEmail"
+                type="email"
+                placeholder="user@example.com"
+                value={addEmail}
+                onChange={(e) => setAddEmail(e.target.value)}
+              />
+            </div>
 
-            <Label htmlFor="addRole">Select Role</Label>
-            <Select value={addRole} onValueChange={(val) => setAddRole(val)}>
-              <SelectTrigger id="addRole" className="w-full">
-                <SelectValue placeholder="Choose a role" />
-              </SelectTrigger>
-              <SelectContent>
-                {["OWNER", "ADMIN", "MEMBER", "ACCOUNTANT", "OFFICE_STAFF"].map(
-                  (role) => (
+            <div>
+              <Label htmlFor="addRole">Select Role</Label>
+              <Select value={addRole} onValueChange={(val) => setAddRole(val)}>
+                <SelectTrigger id="addRole" className="w-full">
+                  <SelectValue placeholder="Choose a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {[
+                    "OWNER",
+                    "ADMIN",
+                    "MEMBER",
+                    "ACCOUNTANT",
+                    "OFFICE_STAFF",
+                  ].map((role) => (
                     <SelectItem key={role} value={role}>
                       {role}
                     </SelectItem>
-                  )
-                )}
-              </SelectContent>
-            </Select>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             <Button onClick={handleAddUser} disabled={!addEmail || !addRole}>
               Send Invite
@@ -234,17 +241,25 @@ export default function OrganizationUserManagementPage({
         )}
 
         {activeTab === "remove" && currentUserRole === "OWNER" && (
-          <MemberRemoveList members={orgMembers} onRemove={handleRemoveUser} />
+          <div className="w-full">
+            <MemberRemoveList
+              members={orgMembers}
+              onRemove={handleRemoveUser}
+              selectedOrgId={selectedOrgId}
+            />
+          </div>
         )}
 
         {activeTab === "roles" &&
           selectedOrgId &&
           currentUserRole === "OWNER" && (
-            <MemberRoleEditor
-              members={orgMembers}
-              selectedOrgId={selectedOrgId}
-              onSave={handleSaveRoles}
-            />
+            <div className="w-full">
+              <MemberRoleEditor
+                members={orgMembers}
+                selectedOrgId={selectedOrgId}
+                onSave={handleSaveRoles}
+              />
+            </div>
           )}
       </div>
     </div>

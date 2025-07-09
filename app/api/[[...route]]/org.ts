@@ -353,6 +353,86 @@ const org = new Hono()
         return c.json({ error: "Failed to add user to organization" }, 500);
       }
     }
-  );
+  )
+
+
+  .patch(
+    "/:id/update-roles",
+    zValidator(
+      "param",
+      z.object({
+        id: z.string(), // organizationId
+      })
+    ),
+    zValidator(
+      "json",
+      z.object({
+        updates: z.record(z.string(), z.enum([
+          "OWNER",
+          "ADMIN",
+          "MEMBER",
+          "ACCOUNTANT",
+          "OFFICE_STAFF",
+          "ADMIN"
+        ])),
+        adminUserId: z.string(), // the user making the request
+      })
+    ),
+    async (c) => {
+      const orgId = c.req.param("id");
+      const { updates, adminUserId } = c.req.valid("json");
+
+      // Check permission
+      const adminRecord = await userDBPrismaClient.userOrganization.findUnique({
+        where: {
+          userId_organizationId: {
+            userId: adminUserId,
+            organizationId: orgId,
+          },
+        },
+      });
+
+      if (!adminRecord || (adminRecord.role !== "OWNER" && adminRecord.role !== "ADMIN")) {
+        return c.json({ error: "You are not authorized to update roles" }, 403);
+      }
+
+      // Loop and update roles
+      const updatePromises = Object.entries(updates).map(([userId, role]) =>
+        userDBPrismaClient.userOrganization.update({
+          where: {
+            userId_organizationId: {
+              userId,
+              organizationId: orgId,
+            },
+          },
+          data: {
+            role: { set: role }, // ✅ wrap enum value
+          },
+        })
+      );
+
+      try {
+        await Promise.all(updatePromises);
+        // Log to UpdateLog table
+        await userDBPrismaClient.updateLog.create({
+          data: {
+            name: "Role Update",
+            message: `Updated roles: ${Object.entries(updates)
+              .map(([id, role]) => `${id} => ${role}`)
+              .join(", ")}`,
+            updatedBy: adminUserId,
+            orgId: orgId,
+            type: "INFO",
+          },
+        });
+
+        return c.json({ success: true, updated: Object.keys(updates).length });
+      } catch (error) {
+        console.error("Error updating roles:", error);
+        return c.json({ error: "Failed to update roles" }, 500);
+      }
+    }
+  )
+
 
 export default org;

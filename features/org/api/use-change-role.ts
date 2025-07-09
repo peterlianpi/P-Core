@@ -1,22 +1,18 @@
-import {
-  InferRequestType,
-  // InferResponseType 
-} from "hono";
+import { InferRequestType, InferResponseType } from "hono";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { client } from "@/lib/hono";
-import { InviteSuccessResponse } from "@/helpers/organization-type";
 
-// type ResponseType = InferResponseType<typeof client.api.invite.$post>;
-type RequestType = InferRequestType<typeof client.api.invite.$post>["json"];
+type ResponseType = InferResponseType<typeof client.api.org.$post>;
+type RequestType = InferRequestType<typeof client.api.org.$post>["json"];
 
-export const useInviteMember = (userId: string) => {
+export const useCreateOrg = (userId: string) => {
   // userId is passed as a parameter
   const queryClient = useQueryClient();
 
-  const mutation = useMutation<InviteSuccessResponse, Error, RequestType>({
+  const mutation = useMutation<ResponseType, Error, RequestType>({
     mutationFn: async (json) => {
       // Include userId in the request payload (json)
-      const response = await client.api.invite.$post({
+      const response = await client.api.org.$post({
         query: { userId },
         json,
       });
@@ -32,7 +28,7 @@ export const useInviteMember = (userId: string) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["member-invited"] });
+      queryClient.invalidateQueries({ queryKey: ["organizations"] });
     },
   });
 
