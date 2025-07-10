@@ -14453,6 +14453,8 @@ export namespace Prisma {
     userId: string | null
     role: $Enums.OrganizationUserRole | null
     organizationId: string | null
+    status: string | null
+    removedAt: Date | null
   }
 
   export type UserOrganizationMaxAggregateOutputType = {
@@ -14460,6 +14462,8 @@ export namespace Prisma {
     userId: string | null
     role: $Enums.OrganizationUserRole | null
     organizationId: string | null
+    status: string | null
+    removedAt: Date | null
   }
 
   export type UserOrganizationCountAggregateOutputType = {
@@ -14467,6 +14471,8 @@ export namespace Prisma {
     userId: number
     role: number
     organizationId: number
+    status: number
+    removedAt: number
     _all: number
   }
 
@@ -14476,6 +14482,8 @@ export namespace Prisma {
     userId?: true
     role?: true
     organizationId?: true
+    status?: true
+    removedAt?: true
   }
 
   export type UserOrganizationMaxAggregateInputType = {
@@ -14483,6 +14491,8 @@ export namespace Prisma {
     userId?: true
     role?: true
     organizationId?: true
+    status?: true
+    removedAt?: true
   }
 
   export type UserOrganizationCountAggregateInputType = {
@@ -14490,6 +14500,8 @@ export namespace Prisma {
     userId?: true
     role?: true
     organizationId?: true
+    status?: true
+    removedAt?: true
     _all?: true
   }
 
@@ -14570,6 +14582,8 @@ export namespace Prisma {
     userId: string
     role: $Enums.OrganizationUserRole | null
     organizationId: string
+    status: string
+    removedAt: Date | null
     _count: UserOrganizationCountAggregateOutputType | null
     _min: UserOrganizationMinAggregateOutputType | null
     _max: UserOrganizationMaxAggregateOutputType | null
@@ -14594,6 +14608,8 @@ export namespace Prisma {
     userId?: boolean
     role?: boolean
     organizationId?: boolean
+    status?: boolean
+    removedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["userOrganization"]>
@@ -14603,6 +14619,8 @@ export namespace Prisma {
     userId?: boolean
     role?: boolean
     organizationId?: boolean
+    status?: boolean
+    removedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["userOrganization"]>
@@ -14612,6 +14630,8 @@ export namespace Prisma {
     userId?: boolean
     role?: boolean
     organizationId?: boolean
+    status?: boolean
+    removedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["userOrganization"]>
@@ -14621,9 +14641,11 @@ export namespace Prisma {
     userId?: boolean
     role?: boolean
     organizationId?: boolean
+    status?: boolean
+    removedAt?: boolean
   }
 
-  export type UserOrganizationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "role" | "organizationId", ExtArgs["result"]["userOrganization"]>
+  export type UserOrganizationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "role" | "organizationId" | "status" | "removedAt", ExtArgs["result"]["userOrganization"]>
   export type UserOrganizationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
@@ -14648,6 +14670,8 @@ export namespace Prisma {
       userId: string
       role: $Enums.OrganizationUserRole | null
       organizationId: string
+      status: string
+      removedAt: Date | null
     }, ExtArgs["result"]["userOrganization"]>
     composites: {}
   }
@@ -15077,6 +15101,8 @@ export namespace Prisma {
     readonly userId: FieldRef<"UserOrganization", 'String'>
     readonly role: FieldRef<"UserOrganization", 'OrganizationUserRole'>
     readonly organizationId: FieldRef<"UserOrganization", 'String'>
+    readonly status: FieldRef<"UserOrganization", 'String'>
+    readonly removedAt: FieldRef<"UserOrganization", 'DateTime'>
   }
     
 
@@ -18900,7 +18926,9 @@ export namespace Prisma {
     id: 'id',
     userId: 'userId',
     role: 'role',
-    organizationId: 'organizationId'
+    organizationId: 'organizationId',
+    status: 'status',
+    removedAt: 'removedAt'
   };
 
   export type UserOrganizationScalarFieldEnum = (typeof UserOrganizationScalarFieldEnum)[keyof typeof UserOrganizationScalarFieldEnum]
@@ -19912,6 +19940,8 @@ export namespace Prisma {
     userId?: StringFilter<"UserOrganization"> | string
     role?: EnumOrganizationUserRoleNullableFilter<"UserOrganization"> | $Enums.OrganizationUserRole | null
     organizationId?: StringFilter<"UserOrganization"> | string
+    status?: StringFilter<"UserOrganization"> | string
+    removedAt?: DateTimeNullableFilter<"UserOrganization"> | Date | string | null
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
   }
@@ -19921,6 +19951,8 @@ export namespace Prisma {
     userId?: SortOrder
     role?: SortOrderInput | SortOrder
     organizationId?: SortOrder
+    status?: SortOrder
+    removedAt?: SortOrderInput | SortOrder
     user?: UserOrderByWithRelationInput
     organization?: OrganizationOrderByWithRelationInput
   }
@@ -19934,6 +19966,8 @@ export namespace Prisma {
     userId?: StringFilter<"UserOrganization"> | string
     role?: EnumOrganizationUserRoleNullableFilter<"UserOrganization"> | $Enums.OrganizationUserRole | null
     organizationId?: StringFilter<"UserOrganization"> | string
+    status?: StringFilter<"UserOrganization"> | string
+    removedAt?: DateTimeNullableFilter<"UserOrganization"> | Date | string | null
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
   }, "id" | "userId_organizationId">
@@ -19943,6 +19977,8 @@ export namespace Prisma {
     userId?: SortOrder
     role?: SortOrderInput | SortOrder
     organizationId?: SortOrder
+    status?: SortOrder
+    removedAt?: SortOrderInput | SortOrder
     _count?: UserOrganizationCountOrderByAggregateInput
     _max?: UserOrganizationMaxOrderByAggregateInput
     _min?: UserOrganizationMinOrderByAggregateInput
@@ -19956,6 +19992,8 @@ export namespace Prisma {
     userId?: StringWithAggregatesFilter<"UserOrganization"> | string
     role?: EnumOrganizationUserRoleNullableWithAggregatesFilter<"UserOrganization"> | $Enums.OrganizationUserRole | null
     organizationId?: StringWithAggregatesFilter<"UserOrganization"> | string
+    status?: StringWithAggregatesFilter<"UserOrganization"> | string
+    removedAt?: DateTimeNullableWithAggregatesFilter<"UserOrganization"> | Date | string | null
   }
 
   export type OrganizationInviteWhereInput = {
@@ -21052,6 +21090,8 @@ export namespace Prisma {
   export type UserOrganizationCreateInput = {
     id?: string
     role?: $Enums.OrganizationUserRole | null
+    status?: string
+    removedAt?: Date | string | null
     user: UserCreateNestedOneWithoutUserOrganizationInput
     organization: OrganizationCreateNestedOneWithoutUserOrganizationInput
   }
@@ -21061,11 +21101,15 @@ export namespace Prisma {
     userId: string
     role?: $Enums.OrganizationUserRole | null
     organizationId: string
+    status?: string
+    removedAt?: Date | string | null
   }
 
   export type UserOrganizationUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     role?: NullableEnumOrganizationUserRoleFieldUpdateOperationsInput | $Enums.OrganizationUserRole | null
+    status?: StringFieldUpdateOperationsInput | string
+    removedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     user?: UserUpdateOneRequiredWithoutUserOrganizationNestedInput
     organization?: OrganizationUpdateOneRequiredWithoutUserOrganizationNestedInput
   }
@@ -21075,6 +21119,8 @@ export namespace Prisma {
     userId?: StringFieldUpdateOperationsInput | string
     role?: NullableEnumOrganizationUserRoleFieldUpdateOperationsInput | $Enums.OrganizationUserRole | null
     organizationId?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    removedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type UserOrganizationCreateManyInput = {
@@ -21082,11 +21128,15 @@ export namespace Prisma {
     userId: string
     role?: $Enums.OrganizationUserRole | null
     organizationId: string
+    status?: string
+    removedAt?: Date | string | null
   }
 
   export type UserOrganizationUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     role?: NullableEnumOrganizationUserRoleFieldUpdateOperationsInput | $Enums.OrganizationUserRole | null
+    status?: StringFieldUpdateOperationsInput | string
+    removedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type UserOrganizationUncheckedUpdateManyInput = {
@@ -21094,6 +21144,8 @@ export namespace Prisma {
     userId?: StringFieldUpdateOperationsInput | string
     role?: NullableEnumOrganizationUserRoleFieldUpdateOperationsInput | $Enums.OrganizationUserRole | null
     organizationId?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    removedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type OrganizationInviteCreateInput = {
@@ -22033,6 +22085,8 @@ export namespace Prisma {
     userId?: SortOrder
     role?: SortOrder
     organizationId?: SortOrder
+    status?: SortOrder
+    removedAt?: SortOrder
   }
 
   export type UserOrganizationMaxOrderByAggregateInput = {
@@ -22040,6 +22094,8 @@ export namespace Prisma {
     userId?: SortOrder
     role?: SortOrder
     organizationId?: SortOrder
+    status?: SortOrder
+    removedAt?: SortOrder
   }
 
   export type UserOrganizationMinOrderByAggregateInput = {
@@ -22047,6 +22103,8 @@ export namespace Prisma {
     userId?: SortOrder
     role?: SortOrder
     organizationId?: SortOrder
+    status?: SortOrder
+    removedAt?: SortOrder
   }
 
   export type EnumOrganizationUserRoleNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -23409,6 +23467,8 @@ export namespace Prisma {
   export type UserOrganizationCreateWithoutUserInput = {
     id?: string
     role?: $Enums.OrganizationUserRole | null
+    status?: string
+    removedAt?: Date | string | null
     organization: OrganizationCreateNestedOneWithoutUserOrganizationInput
   }
 
@@ -23416,6 +23476,8 @@ export namespace Prisma {
     id?: string
     role?: $Enums.OrganizationUserRole | null
     organizationId: string
+    status?: string
+    removedAt?: Date | string | null
   }
 
   export type UserOrganizationCreateOrConnectWithoutUserInput = {
@@ -23583,6 +23645,8 @@ export namespace Prisma {
     userId?: StringFilter<"UserOrganization"> | string
     role?: EnumOrganizationUserRoleNullableFilter<"UserOrganization"> | $Enums.OrganizationUserRole | null
     organizationId?: StringFilter<"UserOrganization"> | string
+    status?: StringFilter<"UserOrganization"> | string
+    removedAt?: DateTimeNullableFilter<"UserOrganization"> | Date | string | null
   }
 
   export type OrganizationUpsertWithWhereUniqueWithoutCreatedByInput = {
@@ -23695,6 +23759,8 @@ export namespace Prisma {
   export type UserOrganizationCreateWithoutOrganizationInput = {
     id?: string
     role?: $Enums.OrganizationUserRole | null
+    status?: string
+    removedAt?: Date | string | null
     user: UserCreateNestedOneWithoutUserOrganizationInput
   }
 
@@ -23702,6 +23768,8 @@ export namespace Prisma {
     id?: string
     userId: string
     role?: $Enums.OrganizationUserRole | null
+    status?: string
+    removedAt?: Date | string | null
   }
 
   export type UserOrganizationCreateOrConnectWithoutOrganizationInput = {
@@ -24378,6 +24446,8 @@ export namespace Prisma {
     id?: string
     role?: $Enums.OrganizationUserRole | null
     organizationId: string
+    status?: string
+    removedAt?: Date | string | null
   }
 
   export type OrganizationCreateManyCreatedByInput = {
@@ -24455,6 +24525,8 @@ export namespace Prisma {
   export type UserOrganizationUpdateWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
     role?: NullableEnumOrganizationUserRoleFieldUpdateOperationsInput | $Enums.OrganizationUserRole | null
+    status?: StringFieldUpdateOperationsInput | string
+    removedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     organization?: OrganizationUpdateOneRequiredWithoutUserOrganizationNestedInput
   }
 
@@ -24462,12 +24534,16 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     role?: NullableEnumOrganizationUserRoleFieldUpdateOperationsInput | $Enums.OrganizationUserRole | null
     organizationId?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    removedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type UserOrganizationUncheckedUpdateManyWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
     role?: NullableEnumOrganizationUserRoleFieldUpdateOperationsInput | $Enums.OrganizationUserRole | null
     organizationId?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    removedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type OrganizationUpdateWithoutCreatedByInput = {
@@ -24554,6 +24630,8 @@ export namespace Prisma {
     id?: string
     userId: string
     role?: $Enums.OrganizationUserRole | null
+    status?: string
+    removedAt?: Date | string | null
   }
 
   export type OrganizationFeatureAccessCreateManyOrganizationInput = {
@@ -24588,6 +24666,8 @@ export namespace Prisma {
   export type UserOrganizationUpdateWithoutOrganizationInput = {
     id?: StringFieldUpdateOperationsInput | string
     role?: NullableEnumOrganizationUserRoleFieldUpdateOperationsInput | $Enums.OrganizationUserRole | null
+    status?: StringFieldUpdateOperationsInput | string
+    removedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     user?: UserUpdateOneRequiredWithoutUserOrganizationNestedInput
   }
 
@@ -24595,12 +24675,16 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     userId?: StringFieldUpdateOperationsInput | string
     role?: NullableEnumOrganizationUserRoleFieldUpdateOperationsInput | $Enums.OrganizationUserRole | null
+    status?: StringFieldUpdateOperationsInput | string
+    removedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type UserOrganizationUncheckedUpdateManyWithoutOrganizationInput = {
     id?: StringFieldUpdateOperationsInput | string
     userId?: StringFieldUpdateOperationsInput | string
     role?: NullableEnumOrganizationUserRoleFieldUpdateOperationsInput | $Enums.OrganizationUserRole | null
+    status?: StringFieldUpdateOperationsInput | string
+    removedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type OrganizationFeatureAccessUpdateWithoutOrganizationInput = {

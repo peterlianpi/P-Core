@@ -35,3 +35,28 @@ export interface InviteAcceptSuccessResponse {
   message: string;            // e.g. "Invite accepted successfully"
   organizationId: string;     // ID of the organization user joined
 }
+
+// 
+export type ChangeOrgRole = {
+  success: boolean;
+  updated: number;
+}
+
+
+// helpers/organization-type.ts
+export type Invite = {
+  id: string;
+  email: string;
+  organizationId: string;
+  organizationName: string;
+  expiresAt: string;
+  accepted: boolean;
+  role: string;
+};
+
+// Type for your mutation response
+export type RemoveMemberResponse = {
+  message: string;
+  userId: string;
+  organizationId: string;
+};

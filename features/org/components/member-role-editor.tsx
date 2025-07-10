@@ -17,10 +17,11 @@ type Member = {
   id: string;
   name: string | null;
   email: string;
-  image?: string | null;
+  image: string | null;
   organization: {
     id: string;
     role: OrganizationUserRole;
+    status: string;
   }[];
 };
 
@@ -65,6 +66,8 @@ const MemberRoleEditor = ({ members, selectedOrgId, onSave }: Props) => {
 
           const isEditable =
             currentUserRole === "OWNER" || currentUserRole === "ADMIN";
+          const status =
+            m.organization.find((o) => o.id === selectedOrgId)?.status ?? "N/A";
 
           return (
             <div
@@ -83,28 +86,39 @@ const MemberRoleEditor = ({ members, selectedOrgId, onSave }: Props) => {
                 </div>
               </div>
 
-              <Select
-                disabled={!isEditable}
-                value={currentRole}
-                onValueChange={(val) =>
-                  handleChange(m.id, val as OrganizationUserRole)
-                }
-              >
-                <SelectTrigger className="w-24 p-2">
-                  <SelectValue placeholder="Select Role" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableRoles.map((role) => (
-                    <SelectItem key={role} value={role}>
-                      {role}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex flex-row justify-center gap-4 items-center">
+                <Select
+                  disabled={!isEditable}
+                  value={currentRole}
+                  onValueChange={(val) =>
+                    handleChange(m.id, val as OrganizationUserRole)
+                  }
+                >
+                  <SelectTrigger className="w-24 p-2">
+                    <SelectValue placeholder="Select Role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableRoles.map((role) => (
+                      <SelectItem key={role} value={role}>
+                        {role}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div>
+                  <Button
+                    variant={status === "REMOVED" ? "destructive" : "default"}
+                    type="button"
+                    className="text-xs border pointer-events-none"
+                  >
+                    {status}
+                  </Button>
+                </div>
+              </div>
             </div>
           );
         })}
-      </div>{" "}
+      </div>
       <div className="flex gap-4">
         <Button
           onClick={handleSubmit}

@@ -8,6 +8,7 @@ import { useData } from "@/providers/data-provider";
 import { updateOrganization } from "@/actions/features/org/organization";
 import { useTransition } from "react";
 import { isError } from "@/helpers/organization-type";
+import { OrganizationUserRole } from "@/prisma-user-database/user-database-client-types";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const formSchema = teamFormSchema.omit({
@@ -15,10 +16,24 @@ const formSchema = teamFormSchema.omit({
 });
 
 type FormValues = z.input<typeof formSchema>;
+type Users = {
+  id: string;
+  name: string | null;
+  email: string;
+  image: string | null;
+  organization: {
+    id: string;
+    role: OrganizationUserRole;
+  }[];
+};
 
 const EditTeam = ({
+  users,
+
   organization,
 }: {
+  users?: Users[];
+
   organization: {
     id: string;
     name: string;
@@ -63,6 +78,7 @@ const EditTeam = ({
   return (
     <div className="max-w-lg bg-background flex items-center justify-center p-2 rounded-lg mx-2 md:max-w-md w-full">
       <TeamForm
+        users={users}
         isPending={isPending}
         id={organization.id}
         onSubmit={onSubmit}

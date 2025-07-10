@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useUploadImage } from "../api/use-upload-image";
 
 type Props = {
+  canEdit?: boolean;
   fileRef: any;
   isClient: boolean;
   imageUrl: string | null;
@@ -15,6 +16,7 @@ type Props = {
 };
 
 const CustomUploadImagePage = ({
+  canEdit,
   fileRef,
   isClient,
   imageUrl,
@@ -70,7 +72,7 @@ const CustomUploadImagePage = ({
       <div className="w-20">
         <Input
           {...fileRef}
-          disabled={isPending}
+          disabled={isPending || !canEdit}
           accept="image/*"
           type="file"
           onChange={handleUploadImage}

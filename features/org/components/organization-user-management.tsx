@@ -19,15 +19,19 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { useData } from "@/providers/data-provider";
 import { useInviteMember } from "../api/use-invite-member";
 import { toast } from "sonner";
+import { useUpdateOrgRoles } from "../api/use-change-role";
+import { useCurrentMemberRole } from "@/hooks/use-current-team-role";
+import { useRemoveOrgMember } from "../api/use-remove-member";
 
 type User = {
   id: string;
   name: string | null;
   email: string;
-  image?: string | null;
+  image: string | null;
   organization: {
     id: string;
     role: OrganizationUserRole;
+    status: string;
   }[];
 };
 
@@ -47,15 +51,24 @@ export default function OrganizationUserManagementPage({
   const currentUser = useCurrentUser();
   const createInviteMember = useInviteMember(currentUser?.id ?? "");
 
-  const { orgId } = useData();
+  const { orgId, setOrgId } = useData();
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(orgId);
+  const changeMemberRole = useUpdateOrgRoles({
+    adminUserId: currentUser?.id ?? "",
+    orgId: selectedOrgId ?? "",
+  });
+  const removeOrgMember = useRemoveOrgMember({
+    adminUserId: currentUser?.id ?? "",
+    orgId: selectedOrgId ?? "",
+  });
   const [activeTab, setActiveTab] = useState<
     "members" | "add" | "remove" | "roles"
   >("members");
   const [orgMembers, setOrgMembers] = useState<User[]>([]);
   const [addEmail, setAddEmail] = useState("");
   const [addRole, setAddRole] = useState("");
-  const [roleEdits, setRoleEdits] = useState<Record<string, string>>({});
+  const currentUserRole = useCurrentMemberRole(users ?? [], selectedOrgId);
+
   // Filter users in selected org
   useEffect(() => {
     if (!selectedOrgId) {
@@ -63,15 +76,16 @@ export default function OrganizationUserManagementPage({
       return;
     }
     const filtered = users.filter((u) =>
-      u.organization.some((org) => org.id === selectedOrgId)
+      u.organization.some((org) => {
+        const inOrg = org.id === selectedOrgId;
+        if (!inOrg) return false;
+        return currentUserRole === "OWNER" ? true : org.status === "ACTIVE";
+      })
     );
-    setOrgMembers(filtered);
-    setRoleEdits({});
-  }, [selectedOrgId, users]);
 
-  const currentUserRole = users
-    .find((u) => u.id === currentUser?.id)
-    ?.organization.find((org) => org.id === selectedOrgId)?.role;
+    setOrgMembers(filtered);
+    setOrgId(selectedOrgId);
+  }, [currentUserRole, selectedOrgId, setOrgId, users]);
 
   // Add user invite
   const handleAddUser = async () => {
@@ -84,10 +98,8 @@ export default function OrganizationUserManagementPage({
     };
 
     createInviteMember.mutate(values, {
-      onSuccess: (data) => {
-        toast.success(
-          data.message || `Invite mail sent to ${values.email} successfully!`
-        );
+      onSuccess: () => {
+        toast.success(`Invite mail sent to ${values.email} successfully!`);
         setAddEmail("");
         setActiveTab("members");
       },
@@ -101,29 +113,35 @@ export default function OrganizationUserManagementPage({
   const handleRemoveUser = async (userId: string) => {
     if (!selectedOrgId) return;
     if (!confirm("Are you sure you want to remove this user?")) return;
-    const res = await fetch(
-      `/api/organizations/${selectedOrgId}/members/${userId}`,
+    console.log("org id 222 : ", selectedOrgId);
+    removeOrgMember.mutate(
+      { userId },
       {
-        method: "DELETE",
+        onSuccess: (data) => {
+          toast.success(data.message || "Member removed successfully!");
+        },
+        onError: (error: Error) => {
+          toast.error(error.message);
+        },
       }
     );
-    if (res.ok) {
-      alert("User removed");
-    } else alert("Failed to remove user");
   };
 
   // Save edited roles
-  const handleSaveRoles = async () => {
-    if (!selectedOrgId) return;
-    const updates = Object.entries(roleEdits).map(([userId, role]) =>
-      fetch(`/api/organizations/${selectedOrgId}/members/${userId}/role`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role }),
-      })
+  const handleSaveRoles = (roleEdits: Record<string, OrganizationUserRole>) => {
+    if (!selectedOrgId || !currentUser?.id) return;
+
+    changeMemberRole.mutate(
+      { updates: roleEdits },
+      {
+        onSuccess: (data) => {
+          toast.success(`${data.updated} roles updated successfully!`);
+        },
+        onError: (error) => {
+          toast.error(error.message);
+        },
+      }
     );
-    await Promise.all(updates);
-    alert("Roles updated");
   };
 
   return (
@@ -151,15 +169,14 @@ export default function OrganizationUserManagementPage({
           Members
         </Button>
 
-        <Button
-          variant={activeTab === "add" ? "default" : "outline"}
-          onClick={() => setActiveTab("add")}
-        >
-          Add
-        </Button>
-
         {currentUserRole === "OWNER" && (
           <>
+            <Button
+              variant={activeTab === "add" ? "default" : "outline"}
+              onClick={() => setActiveTab("add")}
+            >
+              Add
+            </Button>
             <Button
               variant={activeTab === "remove" ? "default" : "outline"}
               onClick={() => setActiveTab("remove")}
@@ -180,10 +197,13 @@ export default function OrganizationUserManagementPage({
       {/* Tab Content */}
       <div className="mt-6 w-full h-full">
         {activeTab === "members" && (
-          <div className="flex py-4 flex-wrap   justify-start md:justify-center items-center gap-4">
+          <div className="flex py-4 flex-wrap justify-start md:justify-center items-center gap-4">
             {orgMembers.map((m) => {
               const role =
                 m.organization.find((o) => o.id === selectedOrgId)?.role ??
+                "N/A";
+              const status =
+                m.organization.find((o) => o.id === selectedOrgId)?.status ??
                 "N/A";
               return (
                 <MemberCardPage
@@ -193,13 +213,14 @@ export default function OrganizationUserManagementPage({
                   email={m.email}
                   image={m.image}
                   role={role}
+                  status={status}
                 />
               );
             })}
           </div>
         )}
 
-        {activeTab === "add" && (
+        {activeTab === "add" && currentUserRole === "OWNER" && (
           <div className="max-w-md space-y-4 py-4">
             <div>
               <Label htmlFor="addEmail">User Email to Invite</Label>
@@ -220,7 +241,7 @@ export default function OrganizationUserManagementPage({
                 </SelectTrigger>
                 <SelectContent>
                   {[
-                    "OWNER",
+                    // "OWNER",
                     "ADMIN",
                     "MEMBER",
                     "ACCOUNTANT",

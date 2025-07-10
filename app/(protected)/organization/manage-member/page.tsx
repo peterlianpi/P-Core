@@ -17,6 +17,7 @@ const AddUserToOrganizationPage = async () => {
     organization: u.UserOrganization.map((i) => ({
       id: i.organizationId,
       role: i.role as OrganizationUserRole,
+      status: i.status,
     })),
   }));
 

@@ -19,20 +19,11 @@ import { FormError } from "../form-error";
 import { FormSuccess } from "../form-success";
 import { useState, useTransition } from "react";
 import { register } from "@/actions/auth/register";
-import {
-  getAndClearInviteToken,
-  InviteTokenTracker,
-} from "@/features/org/components/InviteTokenTracker";
-import { toast } from "sonner";
-import { useCurrentUser } from "@/hooks/use-current-user";
-import { useAcceptMember } from "@/features/org/api/use-accept-member";
 
 export const RegisterForm = () => {
   const [error, setError] = useState<string | undefined>("");
   const [success, setSuccess] = useState<string | undefined>("");
   const [isPending, startTransition] = useTransition();
-  const currentUser = useCurrentUser();
-  const createAcceptMember = useAcceptMember(currentUser?.id ?? "");
 
   const form = useForm<z.infer<typeof RegisterSchema>>({
     resolver: zodResolver(RegisterSchema),
@@ -50,40 +41,11 @@ export const RegisterForm = () => {
       const data = await register(values);
       setError(data.error);
       setSuccess(data.success);
-
-      if (
-        data.success
-        // && data.userId
-      ) {
-        // After successful registration, check invite token
-
-        const token = getAndClearInviteToken();
-        if (token) {
-          try {
-            createAcceptMember.mutate(
-              { token },
-              {
-                onSuccess: (data) => {
-                  toast.success(
-                    data.message || `Invite accepted successfully!`
-                  );
-                },
-                onError: (error) => {
-                  toast.error(error.message || "Failed to accept invite");
-                },
-              }
-            );
-          } catch {
-            toast.error("Failed to accept invite.");
-          }
-        }
-      }
     });
   };
 
   return (
     <>
-      <InviteTokenTracker />
       <CardWrapper
         headerLabel="Welcome back"
         backButtonLabel="Already have an account?"

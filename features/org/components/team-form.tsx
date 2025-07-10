@@ -21,16 +21,29 @@ import { useEffect, useState } from "react";
 import { teamFormSchema } from "@/schemas";
 import { useData } from "@/providers/data-provider";
 import CustomUploadImagePage from "@/features/image-upload/components/upload-image";
+import { OrganizationUserRole } from "@/prisma-user-database/user-database-client-types";
+import { useIsOrgOwner } from "@/hooks/use-current-team-role";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const apiSchema = teamFormSchema.omit({
   id: true,
 });
+
+type Users = {
+  id: string;
+  name: string | null;
+  email: string;
+  image: string | null;
+  organization: {
+    id: string;
+    role: OrganizationUserRole;
+  }[];
+};
 
 type FormValues = z.input<typeof apiSchema>;
 type ApiFormValues = z.input<typeof apiSchema>;
 
 type Props = {
+  users?: Users[];
   id?: string;
   defaultValues?: FormValues;
   isPending?: boolean;
@@ -41,6 +54,7 @@ type Props = {
 };
 
 export function TeamForm({
+  users,
   id,
   defaultValues,
   isPending,
@@ -53,7 +67,7 @@ export function TeamForm({
   const { setIsAddTeam, setIsEditTeam, isEditTeam } = useData();
   const [isClient, setIsClient] = useState(false);
   const [imageUrl, setImageUrl] = useState(defaultValues?.logoImage || null);
-
+  const { orgId } = useData();
   // Initialize FileReader only on the client side
   useEffect(() => {
     setIsClient(true); // Ensures code only runs on the client side
@@ -63,6 +77,10 @@ export function TeamForm({
     resolver: zodResolver(apiSchema),
     defaultValues: defaultValues,
   });
+
+  const isOwner = useIsOrgOwner(users ?? [], orgId);
+  const isEditing = !!id;
+  const canEdit = !isEditing || isOwner; // new team: anyone, existing: only owner
 
   const fileRef = form.register("logoImage");
 
@@ -93,6 +111,7 @@ export function TeamForm({
         >
           {/* Image Section */}
           <CustomUploadImagePage
+            canEdit={canEdit}
             isClient={isClient}
             imageUrl={imageUrl}
             setImageUrl={setImageUrl}
@@ -114,7 +133,7 @@ export function TeamForm({
                       {...field}
                       placeholder="Organization Name"
                       value={field.value}
-                      disabled={disabled || isPending}
+                      disabled={disabled || isPending || !canEdit}
                     />
                   </FormControl>
                 </FormItem>
@@ -132,7 +151,7 @@ export function TeamForm({
                     <DatePicker
                       value={field.value ?? undefined}
                       onChange={field.onChange}
-                      disabled={disabled || isPending}
+                      disabled={disabled || isPending || !canEdit}
                     />
                   </FormControl>
                   <FormDescription>
@@ -155,7 +174,7 @@ export function TeamForm({
                       {...field}
                       placeholder="Description"
                       value={field.value}
-                      disabled={disabled || isPending}
+                      disabled={disabled || isPending || !canEdit}
                     />
                   </FormControl>
                 </FormItem>
@@ -164,7 +183,10 @@ export function TeamForm({
 
             {/* Actions */}
             <div className="md:col-span-3 flex flex-col  gap-2">
-              <Button className="w-full" disabled={disabled || isPending}>
+              <Button
+                className="w-full"
+                disabled={disabled || isPending || !canEdit}
+              >
                 {id ? "Save changes" : "Create team"}
               </Button>
               {ConfirmDialog && (
@@ -172,7 +194,7 @@ export function TeamForm({
                   {!!id && (
                     <Button
                       type="button"
-                      disabled={disabled || isPending}
+                      disabled={disabled || isPending || !canEdit}
                       onClick={onDelete}
                       className="w-full"
                       variant="outline"

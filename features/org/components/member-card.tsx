@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 // components/member-card.tsx
+import { Button } from "@/components/ui/button";
 import React from "react";
 
 type MemberCardProps = {
@@ -8,15 +9,21 @@ type MemberCardProps = {
   email: string;
   image?: string | null;
   role: string;
+  status: string;
 };
 
-const MemberCardPage = ({ id, name, email, image, role }: MemberCardProps) => {
+const MemberCardPage = ({
+  id,
+  name,
+  email,
+  image,
+  role,
+  status,
+}: MemberCardProps) => {
   return (
     <div
       key={id}
-      className="max-md:w-full w-64
-             bg-white border p-4 shadow-md rounded-md 
-             flex flex-col items-center text-center"
+      className="max-md:w-full w-64 border p-4 shadow-md rounded-md flex flex-col items-center text-center"
     >
       <img
         src={image ? image : "/image/profile.png"}
@@ -29,6 +36,12 @@ const MemberCardPage = ({ id, name, email, image, role }: MemberCardProps) => {
       <p className="text-xs mt-1 px-2 py-1 rounded bg-gray-100 text-gray-700">
         Role: {role}
       </p>
+      <Button
+        variant={status === "REMOVED" ? "destructive" : "default"}
+        className="text-xs mt-2 rounded-full pointer-events-none"
+      >
+        {status}
+      </Button>
     </div>
   );
 };

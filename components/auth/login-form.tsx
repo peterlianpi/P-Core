@@ -24,13 +24,7 @@ import { useSearchParams } from "next/navigation";
 import { getSession, useSession } from "next-auth/react";
 import Link from "next/link";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "../ui/input-otp";
-import {
-  getAndClearInviteToken,
-  InviteTokenTracker,
-} from "@/features/org/components/InviteTokenTracker";
-import { toast } from "sonner";
-import { useAcceptMember } from "@/features/org/api/use-accept-member";
-import { useCurrentUser } from "@/hooks/use-current-user";
+import { InviteTokenTracker } from "@/features/org/components/InviteTokenTracker";
 
 export const LoginForm = () => {
   const searchParams = useSearchParams();
@@ -44,8 +38,6 @@ export const LoginForm = () => {
   const [success, setSuccess] = useState<string | undefined>("");
   const [isPending, startTransition] = useTransition();
   const { status } = useSession();
-  const currentUser = useCurrentUser();
-  const createAcceptMember = useAcceptMember(currentUser?.id ?? "");
 
   const form = useForm<z.infer<typeof LoginSchema>>({
     resolver: zodResolver(LoginSchema),
@@ -68,34 +60,9 @@ export const LoginForm = () => {
             setError(data.error);
           }
 
-          if (
-            data?.success
-            // && data.userId
-          ) {
+          if (data?.success) {
             form.reset();
             setSuccess(data.success);
-
-            // After successful login, check invite token
-            const token = getAndClearInviteToken();
-            if (token) {
-              try {
-                createAcceptMember.mutate(
-                  { token },
-                  {
-                    onSuccess: (data) => {
-                      toast.success(
-                        data.message || `Invite accepted successfully!`
-                      );
-                    },
-                    onError: (error) => {
-                      toast.error(error.message || "Failed to accept invite");
-                    },
-                  }
-                );
-              } catch {
-                toast.error("Failed to accept invite.");
-              }
-            }
 
             if (data.redirectTo) {
               window.location.href = data.redirectTo;

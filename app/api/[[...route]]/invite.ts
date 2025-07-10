@@ -149,6 +149,35 @@ const app = new Hono()
 
             return c.json({ message: 'Invite accepted successfully', organizationId: invite.organizationId });
         }
-    );
+    )
+
+    .get("/", zValidator(
+        'query',
+        z.object({
+            token: z.string(),
+        })), async (c) => {
+            const { token } = c.req.valid("query");
+
+            const invite = await userDBPrismaClient.organizationInvite.findUnique({
+                where: { token },
+                include: {
+                    organization: true,
+                },
+            });
+
+            if (!invite || invite.expiresAt < new Date()) {
+                return c.json({ error: "Invalid or expired invite" }, 400);
+            }
+
+            return c.json({
+                id: invite.id,
+                email: invite.email,
+                organizationId: invite.organizationId,
+                organizationName: invite.organization.name,
+                expiresAt: invite.expiresAt,
+                accepted: invite.accepted,
+                role: invite.role,
+            })
+        })
 
 export default app;

@@ -229,8 +229,12 @@ model UserOrganization {
   userId         String
   role           OrganizationUserRole? // Role specific to the organization
   organizationId String
-  user           User                  @relation(fields: [userId], references: [id])
-  organization   Organization          @relation(fields: [organizationId], references: [id])
+
+  status    String    @default("ACTIVE") // or ENUM: "ACTIVE", "REMOVED", "PENDING"
+  removedAt DateTime? // optional
+
+  user         User         @relation(fields: [userId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
 
   @@unique([userId, organizationId]) // Compound primary key to enforce uniqueness
 }

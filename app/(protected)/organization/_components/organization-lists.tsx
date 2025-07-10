@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import OrganizationCard from "./organization-card";
 import { useData } from "@/providers/data-provider";
 import EditTeamPage from "./edit-team";
+import { OrganizationUserRole } from "@/prisma-user-database/user-database-client-types";
 
 type Organization = {
   organization: {
@@ -25,10 +26,23 @@ type OrganizationType = {
   role: string | undefined;
 };
 
+type Users = {
+  id: string;
+  name: string | null;
+  email: string;
+  image: string | null;
+  organization: {
+    id: string;
+    role: OrganizationUserRole;
+  }[];
+};
+
 function OrganizationListsPage({
   organizations,
+  users,
 }: {
   organizations: Organization[];
+  users?: Users[];
 }) {
   const { isEditTeam, setIsEditTeam } = useData();
   const [isOrg, setIsOrg] = useState<OrganizationType>({
@@ -50,7 +64,7 @@ function OrganizationListsPage({
 
   return (
     <div className="flex flex-wrap justify-start items-center w-full gap-2">
-      {isEditTeam && <EditTeamPage organization={isOrg} />}
+      {isEditTeam && <EditTeamPage users={users} organization={isOrg} />}
       {result &&
         result.map((r) => (
           <div

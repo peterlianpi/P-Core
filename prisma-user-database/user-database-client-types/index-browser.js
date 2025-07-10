@@ -249,7 +249,9 @@ exports.Prisma.UserOrganizationScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   role: 'role',
-  organizationId: 'organizationId'
+  organizationId: 'organizationId',
+  status: 'status',
+  removedAt: 'removedAt'
 };
 
 exports.Prisma.OrganizationInviteScalarFieldEnum = {

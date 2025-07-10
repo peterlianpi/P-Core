@@ -22,6 +22,7 @@ export const getAllUsers = async () => {
           select: {
             organizationId: true,
             role: true,
+            status: true,
           },
         },
       },

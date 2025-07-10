@@ -365,6 +365,12 @@ const org = new Hono()
       })
     ),
     zValidator(
+      "query",
+      z.object({
+        userId: z.string()
+      })
+    ),
+    zValidator(
       "json",
       z.object({
         updates: z.record(z.string(), z.enum([
@@ -375,12 +381,12 @@ const org = new Hono()
           "OFFICE_STAFF",
           "ADMIN"
         ])),
-        adminUserId: z.string(), // the user making the request
       })
     ),
     async (c) => {
       const orgId = c.req.param("id");
-      const { updates, adminUserId } = c.req.valid("json");
+      const { userId: adminUserId } = c.req.valid("query")
+      const { updates } = c.req.valid("json");
 
       // Check permission
       const adminRecord = await userDBPrismaClient.userOrganization.findUnique({
@@ -406,7 +412,7 @@ const org = new Hono()
             },
           },
           data: {
-            role: { set: role }, // ✅ wrap enum value
+            role: role,
           },
         })
       );
@@ -433,6 +439,77 @@ const org = new Hono()
       }
     }
   )
+
+
+  // PATCH /api/org/remove-member
+  .patch(
+    "/:id/remove-member",
+    zValidator("param", z.object({
+      id: z.string(),
+    })),
+    zValidator("query", z.object({
+      adminUserId: z.string(),
+    })),
+    zValidator("json", z.object({
+      userId: z.string(),
+    })),
+    async (c) => {
+      try {
+        const { id: orgId } = c.req.valid("param");
+        const { userId } = c.req.valid("json");
+        const { adminUserId } = c.req.valid("query");
+
+        // 🔐 Step 1: Check if adminUserId is OWNER of org
+        const adminOrgRole = await userDBPrismaClient.userOrganization.findUnique({
+          where: {
+            userId_organizationId: {
+              userId: adminUserId,
+              organizationId: orgId,
+            },
+          },
+          select: { role: true },
+        });
+
+        if (!adminOrgRole || adminOrgRole.role !== "OWNER") {
+          return c.json({ error: "Only organization OWNER can remove members." }, 403);
+        }
+
+        // ✅ Step 2: Check if user is in organization
+        const userOrg = await userDBPrismaClient.userOrganization.findUnique({
+          where: {
+            userId_organizationId: {
+              userId,
+              organizationId: orgId,
+            },
+          },
+        });
+
+        if (!userOrg) {
+          return c.json({ error: "User is not part of this organization" }, 404);
+        }
+
+        // ✅ Step 3: Soft-remove member
+        await userDBPrismaClient.userOrganization.update({
+          where: {
+            userId_organizationId: {
+              userId,
+              organizationId: orgId,
+            },
+          },
+          data: {
+            status: "REMOVED",
+            removedAt: new Date(),
+          },
+        });
+
+        return c.json({ message: "Member removed successfully", userId, organizationId: orgId });
+      } catch {
+        return c.json({ error: "Failed to remove member" }, 500);
+      }
+    }
+  );
+
+
 
 
 export default org;
