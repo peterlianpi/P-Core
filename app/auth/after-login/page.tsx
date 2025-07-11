@@ -20,22 +20,41 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 const AfterLoginPage = () => {
   const router = useRouter();
   const currentUser = useCurrentUser();
-  const [showDialog, setShowDialog] = useState(false);
+
   const [token, setToken] = useState<string | null>(null);
+  const [showDialog, setShowDialog] = useState(false);
+
+  // ✅ Fetch invite details based on the token
   const { data: invite, isLoading } = useGetInviteDetailsByToken(token ?? "");
+
   const acceptMember = useAcceptMember(currentUser?.id ?? "");
 
+  // ✅ Get inviteToken from localStorage on first load
   useEffect(() => {
     const storedToken = localStorage.getItem("inviteToken");
     setToken(storedToken);
-  }, []);
 
+    // ✅ Redirect to /settings if token is missing
+    if (!storedToken) {
+      router.push("/settings");
+    }
+  }, [router]);
+
+  // ✅ Show modal dialog if invite is found and valid
   useEffect(() => {
-    if (invite && !isLoading) {
+    if (!isLoading && invite) {
       setShowDialog(true);
     }
-  }, [invite, isLoading]);
 
+    // ✅ If invite is invalid or fetch errored, redirect and cleanup
+    if (!isLoading && !invite) {
+      toast.error("Invalid or expired invite.");
+      localStorage.removeItem("inviteToken");
+      router.push("/settings");
+    }
+  }, [invite, isLoading, router]);
+
+  // ✅ Accept invite API call
   const handleAccept = () => {
     if (!token || !currentUser?.id) return;
 
@@ -58,6 +77,7 @@ const AfterLoginPage = () => {
     );
   };
 
+  // ✅ Cancel invite — remove token and redirect to /settings
   const handleCancel = () => {
     localStorage.removeItem("inviteToken");
     toast.info("Invite was ignored.");
@@ -65,8 +85,13 @@ const AfterLoginPage = () => {
     router.push("/settings");
   };
 
+  // ✅ Show a fallback loading UI while fetching invite
   if (isLoading) {
-    return <>Loading...</>;
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-sm text-muted-foreground">Loading invite...</p>
+      </div>
+    );
   }
 
   return (
