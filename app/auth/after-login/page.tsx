@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -12,80 +11,91 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
-import { useAcceptMember } from "@/features/org/api/use-accept-member";
-import { useGetInviteDetailsByToken } from "@/features/org/api/invite-client";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useAcceptMember } from "@/features/org/api/use-accept-member";
+import { useInvite } from "@/features/org/hooks/use-invite";
 
 const AfterLoginPage = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const currentUser = useCurrentUser();
-
-  const [token, setToken] = useState<string | null>(null);
   const [showDialog, setShowDialog] = useState(false);
 
-  // ✅ Fetch invite details based on the token
-  const { data: invite, isLoading } = useGetInviteDetailsByToken(token ?? "");
-
+  const { token, invite, isLoading, isError } = useInvite();
   const acceptMember = useAcceptMember(currentUser?.id ?? "");
 
-  // ✅ Get inviteToken from localStorage on first load
+  // ✅ Redirect if no invite token (normal login)
+  // ✅ Show dialog if invite is valid
   useEffect(() => {
-    const storedToken = localStorage.getItem("inviteToken");
-    setToken(storedToken);
+    if (isLoading) return;
 
-    // ✅ Redirect to /settings if token is missing
-    if (!storedToken) {
-      router.push("/settings");
+    if (!isLoading && !token) {
+      // router.push("/settings");
+      console.log("Invalid :", !isLoading && !token);
+      return;
     }
-  }, [router]);
 
-  // ✅ Show modal dialog if invite is found and valid
-  useEffect(() => {
-    if (!isLoading && invite) {
+    if (token && invite) {
+      console.log("Invite :", token && invite);
       setShowDialog(true);
+      return;
     }
 
-    // ✅ If invite is invalid or fetch errored, redirect and cleanup
-    if (!isLoading && !invite) {
+    if (token && isError) {
       toast.error("Invalid or expired invite.");
       localStorage.removeItem("inviteToken");
+      console.log("Invalid :", token);
       router.push("/settings");
     }
-  }, [invite, isLoading, router]);
+  }, [isLoading, token, invite, router, isError]);
 
-  // ✅ Accept invite API call
+  // ✅ Remove token from URL
+  useEffect(() => {
+    if (searchParams.get("token")) {
+      const params = new URLSearchParams(window.location.search);
+      params.delete("token");
+
+      const newUrl =
+        window.location.pathname +
+        (params.toString() ? `?${params.toString()}` : "");
+      window.history.replaceState({}, "", newUrl);
+    }
+  }, [searchParams]);
+
+  // ✅ Accept invite
   const handleAccept = () => {
-    if (!token || !currentUser?.id) return;
+    if (!token || !currentUser?.id) {
+      router.push("/settings");
+      return;
+    }
 
     acceptMember.mutate(
       { token },
       {
         onSuccess: (data) => {
-          toast.success(data.message || "Invite accepted successfully!");
+          toast.success(data.message || "Invite accepted!");
           localStorage.removeItem("inviteToken");
-          setShowDialog(false);
           router.push("/settings");
         },
-        onError: (error) => {
-          toast.error(error.message || "Failed to accept invite.");
+        onError: (err) => {
+          toast.error(err.message || "Failed to accept invite.");
           localStorage.removeItem("inviteToken");
-          setShowDialog(false);
           router.push("/settings");
         },
       }
     );
   };
 
-  // ✅ Cancel invite — remove token and redirect to /settings
+  // ✅ Cancel invite
   const handleCancel = () => {
     localStorage.removeItem("inviteToken");
     toast.info("Invite was ignored.");
-    setShowDialog(false);
     router.push("/settings");
   };
 
-  // ✅ Show a fallback loading UI while fetching invite
+  // ✅ Show loading
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -94,9 +104,13 @@ const AfterLoginPage = () => {
     );
   }
 
+  // ✅ Dialog (if token & invite are valid)
   return (
-    <Dialog open={showDialog} onOpenChange={setShowDialog}>
-      <DialogContent>
+    <Dialog open={showDialog} onOpenChange={(open) => setShowDialog(open)}>
+      <DialogContent
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>Accept Organization Invite</DialogTitle>
         </DialogHeader>
@@ -108,6 +122,12 @@ const AfterLoginPage = () => {
           </p>
           <p>
             Invite sent to: <strong>{invite?.email}</strong>
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Expires at:{" "}
+            {invite?.expiresAt
+              ? new Date(invite.expiresAt).toLocaleString()
+              : "Unknown"}
           </p>
         </div>
 

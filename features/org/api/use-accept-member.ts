@@ -24,7 +24,8 @@ export const useAcceptMember = (userId: string) => {
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
-          (errorData as ErrorResponse)?.error || "Unknown error occurred"
+          (errorData as ErrorResponse)?.error
+          || "Unknown error occurred"
         );
       }
 

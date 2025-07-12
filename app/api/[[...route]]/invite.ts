@@ -132,7 +132,19 @@ const app = new Hono()
                 return c.json({ error: 'Invite email does not match your account email' }, 403);
             }
 
-            // 4. Add user to the organization
+            // ✅ Step 4 - Check for existing membership
+            const existing = await userDBPrismaClient.userOrganization.findFirst({
+                where: {
+                    userId: user.id,
+                    organizationId: invite.organizationId,
+                },
+            });
+
+            if (existing) {
+                return c.json({ error: 'User is already a member of this organization' }, 409);
+            }
+
+            // ✅ Step 5 - Create if not exists
             await userDBPrismaClient.userOrganization.create({
                 data: {
                     userId: user.id,
@@ -141,7 +153,8 @@ const app = new Hono()
                 },
             });
 
-            // 5. Mark invite as accepted
+
+            // 6. Mark invite as accepted
             await userDBPrismaClient.organizationInvite.update({
                 where: { id: invite.id },
                 data: { accepted: true },
