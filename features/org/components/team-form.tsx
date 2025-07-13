@@ -21,29 +21,16 @@ import { useEffect, useState } from "react";
 import { teamFormSchema } from "@/schemas";
 import { useData } from "@/providers/data-provider";
 import CustomUploadImagePage from "@/features/image-upload/components/upload-image";
-import { OrganizationUserRole } from "@/prisma-user-database/user-database-client-types";
 import { useIsOrgOwner } from "@/hooks/use-current-team-role";
 
 const apiSchema = teamFormSchema.omit({
   id: true,
 });
 
-type Users = {
-  id: string;
-  name: string | null;
-  email: string;
-  image: string | null;
-  organization: {
-    id: string;
-    role: OrganizationUserRole;
-  }[];
-};
-
 type FormValues = z.input<typeof apiSchema>;
 type ApiFormValues = z.input<typeof apiSchema>;
 
 type Props = {
-  users?: Users[];
   id?: string;
   defaultValues?: FormValues;
   isPending?: boolean;
@@ -54,7 +41,6 @@ type Props = {
 };
 
 export function TeamForm({
-  users,
   id,
   defaultValues,
   isPending,
@@ -67,7 +53,7 @@ export function TeamForm({
   const { setIsAddTeam, setIsEditTeam, isEditTeam } = useData();
   const [isClient, setIsClient] = useState(false);
   const [imageUrl, setImageUrl] = useState(defaultValues?.logoImage || null);
-  const { orgId } = useData();
+
   // Initialize FileReader only on the client side
   useEffect(() => {
     setIsClient(true); // Ensures code only runs on the client side
@@ -78,7 +64,7 @@ export function TeamForm({
     defaultValues: defaultValues,
   });
 
-  const isOwner = useIsOrgOwner(users ?? [], orgId);
+  const isOwner = useIsOrgOwner();
   const isEditing = !!id;
   const canEdit = !isEditing || isOwner; // new team: anyone, existing: only owner
 

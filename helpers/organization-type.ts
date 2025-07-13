@@ -60,3 +60,12 @@ export type RemoveMemberResponse = {
   userId: string;
   organizationId: string;
 };
+
+export type OrganizationType = {
+  id: string;
+  name: string;
+  description: string | undefined;
+  startedAt: Date | undefined;
+  logoImage: string | undefined;
+  role: string | undefined;
+};

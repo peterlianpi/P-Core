@@ -16,12 +16,14 @@ import MemberCardPage from "./member-card";
 import MemberRemoveList from "./member-remove-list";
 import MemberRoleEditor from "./member-role-editor";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { useData } from "@/providers/data-provider";
 import { useInviteMember } from "../api/use-invite-member";
 import { toast } from "sonner";
 import { useUpdateOrgRoles } from "../api/use-change-role";
 import { useCurrentMemberRole } from "@/hooks/use-current-team-role";
 import { useRemoveOrgMember } from "../api/use-remove-member";
+import { useOrgData } from "@/context/org-context";
+import { useSelectedOrg } from "@/context/selected-org-context";
+import { useData } from "@/providers/data-provider";
 
 type User = {
   id: string;
@@ -35,24 +37,23 @@ type User = {
   }[];
 };
 
-type Organization = {
-  id: string;
-  name: string;
-};
-
-export default function OrganizationUserManagementPage({
-  organizations,
-  users,
-}: {
-  organizations: Organization[];
-  users: User[];
-}) {
+export default function OrganizationUserManagementPage() {
   // Get current user (assumes it's the first user in the users array)
   const currentUser = useCurrentUser();
+  const { orgId } = useData();
   const createInviteMember = useInviteMember(currentUser?.id ?? "");
 
-  const { orgId, setOrgId } = useData();
-  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(orgId);
+  const { organizations, users } = useOrgData();
+
+  // Map to OrganizationType for display
+  const resultOrg = organizations.map((org) => ({
+    id: org.organization.id,
+    name: org.organization.name,
+  }));
+  const { selectedOrgId, setSelectedOrgId } = useSelectedOrg();
+
+  useEffect(() => setSelectedOrgId(orgId), []);
+
   const changeMemberRole = useUpdateOrgRoles({
     adminUserId: currentUser?.id ?? "",
     orgId: selectedOrgId ?? "",
@@ -84,8 +85,7 @@ export default function OrganizationUserManagementPage({
     );
 
     setOrgMembers(filtered);
-    setOrgId(selectedOrgId);
-  }, [currentUserRole, selectedOrgId, setOrgId, users]);
+  }, [currentUserRole, selectedOrgId, users]);
 
   // Add user invite
   const handleAddUser = async () => {
@@ -152,7 +152,7 @@ export default function OrganizationUserManagementPage({
           <SelectValue placeholder="Select Organization" />
         </SelectTrigger>
         <SelectContent>
-          {organizations.map((org) => (
+          {resultOrg.map((org) => (
             <SelectItem key={org.id} value={org.id}>
               {org.name}
             </SelectItem>

@@ -3,6 +3,8 @@ import { currentUser } from "@/lib/auth";
 import OrganizationUserManagementPage from "@/features/org/components/organization-user-management";
 import { OrganizationUserRole } from "@/prisma-user-database/user-database-client-types";
 import { getAllUsers } from "@/data/users";
+import { OrgDataProvider } from "@/context/org-context";
+import { SelectedOrgProvider } from "@/context/selected-org-context";
 
 const AddUserToOrganizationPage = async () => {
   const user = await currentUser();
@@ -11,7 +13,7 @@ const AddUserToOrganizationPage = async () => {
 
   const users = allUsers?.map((u) => ({
     id: u.id,
-    name: u.name,
+    name: u.name ?? "",
     email: u.email,
     image: u.image,
     organization: u.UserOrganization.map((i) => ({
@@ -21,20 +23,19 @@ const AddUserToOrganizationPage = async () => {
     })),
   }));
 
-  const orgs = rawOrganizations.data.map((entry) => ({
-    id: entry.organization.id,
-    name: entry.organization.name,
-  }));
+  const organizations = rawOrganizations.data;
+
+  if (!organizations.length) {
+    return <p>No organization to show, create now</p>;
+  }
+
   return (
     <>
-      {orgs.length > 0 ? (
-        <OrganizationUserManagementPage
-          organizations={orgs}
-          users={users ?? []}
-        />
-      ) : (
-        <p>No organization to show, create now</p>
-      )}
+      <OrgDataProvider organizations={organizations} users={users ?? []}>
+        <SelectedOrgProvider>
+          <OrganizationUserManagementPage />
+        </SelectedOrgProvider>
+      </OrgDataProvider>
     </>
   );
 };

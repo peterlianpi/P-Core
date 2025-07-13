@@ -1,58 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import OrganizationCard from "./organization-card";
-import { useData } from "@/providers/data-provider";
 import EditTeamPage from "./edit-team";
-import { OrganizationUserRole } from "@/prisma-user-database/user-database-client-types";
+import { useData } from "@/providers/data-provider"; // for isEditTeam
+import { useOrgData } from "@/context/org-context";
+import { useSelectedOrg } from "@/context/selected-org-context";
 
-type Organization = {
-  organization: {
-    id: string;
-    name: string;
-    description?: string | undefined;
-    startedAt?: Date | null | undefined;
-    logoImage?: string | undefined;
-  };
-  role?: string | undefined;
-};
-
-type OrganizationType = {
-  id: string;
-  name: string;
-  description: string | undefined;
-  startedAt: Date | undefined;
-  logoImage: string | undefined;
-  role: string | undefined;
-};
-
-type Users = {
-  id: string;
-  name: string | null;
-  email: string;
-  image: string | null;
-  organization: {
-    id: string;
-    role: OrganizationUserRole;
-  }[];
-};
-
-function OrganizationListsPage({
-  organizations,
-  users,
-}: {
-  organizations: Organization[];
-  users?: Users[];
-}) {
+function OrganizationListsPage() {
   const { isEditTeam, setIsEditTeam } = useData();
-  const [isOrg, setIsOrg] = useState<OrganizationType>({
-    id: "",
-    name: "",
-    logoImage: "",
-    description: "",
-    startedAt: undefined,
-    role: "",
-  });
+  const { organizations } = useOrgData(); // 👈 access context
+  const { setSelectedOrg } = useSelectedOrg();
+
+  // Map to OrganizationType for display
   const result = organizations.map((org) => ({
     id: org.organization.id,
     name: org.organization.name,
@@ -64,20 +24,18 @@ function OrganizationListsPage({
 
   return (
     <div className="flex flex-wrap justify-start items-center w-full gap-2">
-      {isEditTeam && <EditTeamPage users={users} organization={isOrg} />}
-      {result &&
-        result.map((r) => (
-          <div
-            className=""
-            key={r.id}
-            onClick={() => (
-              setIsOrg(r),
-              !isEditTeam ? setIsEditTeam(true) : setIsEditTeam(false)
-            )}
-          >
-            <OrganizationCard organization={r} />
-          </div>
-        ))}
+      {isEditTeam && <EditTeamPage />}
+      {result.map((r) => (
+        <div
+          key={r.id}
+          onClick={() => {
+            setSelectedOrg(r);
+            setIsEditTeam(!isEditTeam);
+          }}
+        >
+          <OrganizationCard organization={r} />
+        </div>
+      ))}
     </div>
   );
 }
