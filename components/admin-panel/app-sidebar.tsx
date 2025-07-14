@@ -52,23 +52,6 @@ export function AppSidebar({
   const hasOrg = organizations.length > 0;
   // Dynamic nav with isActive
   const navMain = [
-    {
-      title: "Lower Thirds",
-      url: "/lower-thirds",
-      icon: TextIcon,
-      isActive: pathname.startsWith("/lower-thirds"),
-      items: [
-        {
-          title: "Lyrics Display",
-          url: "/lower-thirds/lyrics-display",
-        },
-        {
-          title: "Lower Thirds Settings",
-          url: "/lower-thirds/settings",
-        },
-      ],
-    },
-
     ...(hasOrg
       ? [
           {
