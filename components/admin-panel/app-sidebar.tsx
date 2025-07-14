@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { usePathname } from "next/navigation";
-import { Settings2, TextIcon, GroupIcon } from "lucide-react";
+import { Settings2, GroupIcon } from "lucide-react";
 
 import { NavUser } from "@/components/admin-panel/nav-user";
 import { NavMain } from "@/components/admin-panel/nav-main";
