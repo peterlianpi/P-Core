@@ -1,4 +1,3 @@
-import { OrganizationUserRole } from "@/prisma-user-database/user-database-client-types";
 
 type Updated = {
   name: string;
@@ -17,17 +16,17 @@ export function isError(
 // Invite data return
 export type InviteSuccessResponse = {
   message: string;
-  invite: {
-    id: string;
-    createdAt: string;
-    email: string;
-    role: OrganizationUserRole | null;
-    organizationId: string;
-    invitedBy: string;
-    token: string;
-    accepted: boolean;
-    expiresAt: string;
-  };
+  // invite: {
+  //   id: string;
+  //   createdAt: string;
+  //   email: string;
+  //   role: OrganizationUserRole | null;
+  //   organizationId: string;
+  //   invitedBy: string;
+  //   token: string;
+  //   accepted: boolean;
+  //   expiresAt: string;
+  // };
 };
 
 // Accept data return

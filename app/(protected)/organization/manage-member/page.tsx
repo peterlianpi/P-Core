@@ -3,8 +3,8 @@ import { currentUser } from "@/lib/auth";
 import OrganizationUserManagementPage from "@/features/org/components/organization-user-management";
 import { OrganizationUserRole } from "@/prisma-user-database/user-database-client-types";
 import { getAllUsers } from "@/data/users";
-import { OrgDataProvider } from "@/context/org-context";
-import { SelectedOrgProvider } from "@/context/selected-org-context";
+import { OrgDataProvider } from "@/features/org/context/org-context";
+import { SelectedOrgProvider } from "@/features/org/context/selected-org-context";
 
 const AddUserToOrganizationPage = async () => {
   const user = await currentUser();

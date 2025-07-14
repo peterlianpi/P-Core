@@ -21,9 +21,17 @@ const schema = z.object({
     email: z.string().email(),
     organizationId: z.string(),
     role: OrganizationUserRoleEnum.optional(),
+    actionType: z.enum(['invite', 'resend']).optional(), // NEW
+});
+
+const RevokeRequestSchema = z.object({
+    email: z.string().email(),
+    organizationId: z.string(),
 });
 
 const app = new Hono()
+    // Invite route
+
     .post(
         '/',
         zValidator(
@@ -35,7 +43,7 @@ const app = new Hono()
         zValidator('json', schema),
         async (c) => {
             const { userId } = c.req.valid('query');
-            const { email, organizationId, role } = c.req.valid('json');
+            const { email, organizationId, role, actionType = "invite" } = c.req.valid('json');
 
             const organization = await userDBPrismaClient.organization.findUnique({
                 where: { id: organizationId },
@@ -45,48 +53,58 @@ const app = new Hono()
                 return c.json({ error: 'Organization not found' }, 404);
             }
 
-            // Check for existing invite
             const existingInvite = await userDBPrismaClient.organizationInvite.findFirst({
-                where: {
-                    email,
-                    organizationId,
-                },
+                where: { email, organizationId },
             });
 
-            // If there's an existing invite
-            if (existingInvite) {
-                const now = new Date();
+            const now = new Date();
+            const token = crypto.randomUUID();
 
-                // If it's expired, delete it
-                if (existingInvite.expiresAt < now) {
-                    await userDBPrismaClient.organizationInvite.delete({
+            if (existingInvite) {
+                if (actionType === 'resend') {
+                    // update existing invite
+                    await userDBPrismaClient.organizationInvite.update({
                         where: { id: existingInvite.id },
+                        data: {
+                            role: role ?? existingInvite.role,
+                            expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7), // extend expiry
+                            token,
+                        },
                     });
-                } else {
-                    // Optional: return early or continue with resending new invite anyway
-                    return c.json({ message: 'An active invite already exists.', invite: existingInvite }, 200);
+
+                    await sendInviteEmail(email, token, organization.name);
+
+                    return c.json({ message: 'Invite resent successfully.' });
                 }
+
+                if (existingInvite.expiresAt > now) {
+                    return c.json({ message: 'An active invite already exists.' }, 200);
+                }
+
+                // Expired, delete and create new
+                await userDBPrismaClient.organizationInvite.delete({
+                    where: { id: existingInvite.id },
+                });
             }
 
             // Create new invite
-            const token = crypto.randomUUID();
-            const newInvite = await userDBPrismaClient.organizationInvite.create({
+            await userDBPrismaClient.organizationInvite.create({
                 data: {
                     invitedBy: userId,
                     email,
                     organizationId,
                     role: role ?? 'MEMBER',
                     token,
-                    expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7), // 7 days
+                    expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
                 },
             });
 
-            // Send invite email
             await sendInviteEmail(email, token, organization.name);
 
-            return c.json({ message: 'New invite sent', invite: newInvite });
+            return c.json({ message: 'New invite sent.' });
         }
     )
+
 
     // Accept invite route
     .post(
@@ -164,6 +182,8 @@ const app = new Hono()
         }
     )
 
+
+    // Get invite details by token
     .get("/", zValidator(
         'query',
         z.object({
@@ -190,5 +210,61 @@ const app = new Hono()
                 role: invite.role,
             })
         })
+
+    // Get all invites for an organization
+    .get("/invites", zValidator(
+        'query',
+        z.object({
+            orgId: z.string(),
+        })), async (c) => {
+            const { orgId } = c.req.valid("query");
+
+            if (!orgId) {
+                return c.json({ error: "Organization ID is required" }, 400);
+            }
+
+            const rawInvites = await userDBPrismaClient.organizationInvite.findMany({
+                where: { organizationId: orgId },
+                include: {
+                    organization: true,
+                },
+            });
+
+            const invites = rawInvites.map(invite => ({
+                email: invite.email,
+                organizationName: invite.organization.name,
+                expiresAt: invite.expiresAt,
+                accepted: invite.accepted,
+                role: invite.role,
+            }))
+
+            return c.json(invites)
+        })
+
+    // Revoke invite
+    .delete(
+        '/',
+        zValidator('json', RevokeRequestSchema),
+        async (c) => {
+            const { email, organizationId } = c.req.valid('json');
+
+            const existingInvite = await userDBPrismaClient.organizationInvite.findFirst({
+                where: {
+                    email,
+                    organizationId,
+                },
+            });
+
+            if (!existingInvite) {
+                return c.json({ error: 'Invite not found' }, 404);
+            }
+
+            await userDBPrismaClient.organizationInvite.delete({
+                where: { id: existingInvite.id },
+            });
+
+            return c.json({ message: 'Invite revoked successfully.' });
+        }
+    );
 
 export default app;

@@ -12,6 +12,9 @@ import {
 } from "@/components/ui/select";
 import { useCurrentMemberRole } from "@/hooks/use-current-team-role";
 import { OrganizationUserRole } from "@/prisma-user-database/user-database-client-types";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { toast } from "sonner";
+import { useUpdateOrgRoles } from "../api/use-change-role";
 
 type Member = {
   id: string;
@@ -28,14 +31,18 @@ type Member = {
 type Props = {
   members: Member[];
   selectedOrgId: string;
-  onSave: (roleEdits: Record<string, OrganizationUserRole>) => void;
 };
 
-const MemberRoleEditor = ({ members, selectedOrgId, onSave }: Props) => {
+const MemberRoleEditor = ({ members, selectedOrgId }: Props) => {
   const [roleEdits, setRoleEdits] = useState<
     Record<string, OrganizationUserRole>
   >({});
+  const currentUser = useCurrentUser();
   const currentUserRole = useCurrentMemberRole(members, selectedOrgId);
+  const changeMemberRole = useUpdateOrgRoles({
+    adminUserId: currentUser?.id ?? "",
+    orgId: selectedOrgId ?? "",
+  });
 
   useEffect(() => {
     setRoleEdits({});
@@ -45,8 +52,21 @@ const MemberRoleEditor = ({ members, selectedOrgId, onSave }: Props) => {
     setRoleEdits((prev) => ({ ...prev, [userId]: newRole }));
   };
 
-  const handleSubmit = () => {
-    onSave(roleEdits);
+  // Save edited roles
+  const handleSaveRoles = (roleEdits: Record<string, OrganizationUserRole>) => {
+    if (!selectedOrgId || !currentUser?.id) return;
+
+    changeMemberRole.mutate(
+      { updates: roleEdits },
+      {
+        onSuccess: (data) => {
+          toast.success(`${data.updated} roles updated successfully!`);
+        },
+        onError: (error) => {
+          toast.error(error.message);
+        },
+      }
+    );
   };
 
   return (
@@ -88,7 +108,7 @@ const MemberRoleEditor = ({ members, selectedOrgId, onSave }: Props) => {
 
               <div className="flex flex-row justify-center gap-4 items-center">
                 <Select
-                  disabled={!isEditable}
+                  disabled={!isEditable || currentUser?.id === m.id} // Disable if editing own role
                   value={currentRole}
                   onValueChange={(val) =>
                     handleChange(m.id, val as OrganizationUserRole)
@@ -121,7 +141,7 @@ const MemberRoleEditor = ({ members, selectedOrgId, onSave }: Props) => {
       </div>
       <div className="flex gap-4">
         <Button
-          onClick={handleSubmit}
+          onClick={() => handleSaveRoles(roleEdits)}
           disabled={Object.keys(roleEdits).length === 0}
         >
           Save Role Changes

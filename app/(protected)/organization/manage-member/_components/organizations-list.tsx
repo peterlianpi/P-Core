@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import OrganizationCard from "../../_components/organization-card";
+import OrganizationCard from "../../../../../features/org/components/organization-card";
 import { useRouter } from "next/navigation";
 
 export type Organization = {

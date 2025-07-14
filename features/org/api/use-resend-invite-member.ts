@@ -9,7 +9,7 @@ import { InviteSuccessResponse } from "@/helpers/organization-type";
 // type ResponseType = InferResponseType<typeof client.api.invite.$post>;
 type RequestType = InferRequestType<typeof client.api.invite.$post>["json"];
 
-export const useInviteMember = (userId: string) => {
+export const useResendInviteMember = (userId: string) => {
   // userId is passed as a parameter
   const queryClient = useQueryClient();
 

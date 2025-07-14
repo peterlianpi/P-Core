@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/providers/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { DataProvider } from "@/providers/data-provider";
 import localFont from "next/font/local";
+import { ConfirmDialogProvider } from "@/providers/confirm-dialog-provider";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -52,7 +53,9 @@ export default async function RootLayout({
             <QueryProvider>
               <Sonner />
               <Toaster />
-              <DataProvider>{children}</DataProvider>
+              <DataProvider>
+                <ConfirmDialogProvider>{children}</ConfirmDialogProvider>
+              </DataProvider>
             </QueryProvider>
             <Analytics />
           </ThemeProvider>

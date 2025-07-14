@@ -3,7 +3,11 @@
 
 import { Button } from "@/components/ui/button";
 import { useIsOrgOwner } from "@/hooks/use-current-team-role";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { OrganizationUserRole } from "@/prisma-user-database/user-database-client-types";
+import { useConfirmDialog } from "@/providers/confirm-dialog-provider";
+import { useRemoveOrgMember } from "../api/use-remove-member";
+import { toast } from "sonner";
 
 type Member = {
   id: string;
@@ -19,12 +23,37 @@ type Member = {
 
 type Props = {
   members: Member[];
-  onRemove: (id: string) => void;
   selectedOrgId: string | null;
 };
 
-const MemberRemoveList = ({ members, onRemove, selectedOrgId }: Props) => {
+const MemberRemoveList = ({ members, selectedOrgId }: Props) => {
   const isOwner = useIsOrgOwner(members, selectedOrgId);
+  const currentUser = useCurrentUser();
+  const removeOrgMember = useRemoveOrgMember({
+    adminUserId: currentUser?.id ?? "",
+    orgId: selectedOrgId ?? "",
+  });
+  const confirm = useConfirmDialog();
+
+  // Remove user from org
+  const handleRemoveUser = async (userId: string) => {
+    if (!selectedOrgId) return;
+
+    const ok = await confirm(`Are you sure you want to remove this user?`);
+    if (!ok) return;
+
+    removeOrgMember.mutate(
+      { userId },
+      {
+        onSuccess: (data) => {
+          toast.success(data.message || "Member removed successfully!");
+        },
+        onError: (error: Error) => {
+          toast.error(error.message);
+        },
+      }
+    );
+  };
 
   return (
     <div className="flex py-4 flex-wrap justify-start md:justify-center items-center gap-4 w-full">
@@ -50,8 +79,12 @@ const MemberRemoveList = ({ members, onRemove, selectedOrgId }: Props) => {
             <Button
               variant={status === "REMOVED" ? "secondary" : "destructive"}
               size="sm"
-              onClick={() => onRemove(m.id)}
-              disabled={!isOwner || status === "REMOVED"}
+              onClick={() => handleRemoveUser(m.id)}
+              disabled={
+                !isOwner || // viewer must be owner
+                currentUser?.id === m.id || // don't allow self-remove
+                status === "REMOVED"
+              }
             >
               {status === "REMOVED" ? "Removed" : "Remove"}
             </Button>

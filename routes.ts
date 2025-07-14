@@ -8,7 +8,7 @@ export const publicRoutes = [
   "/auth/new-verification",
   "/dashboard",
   "/accept",
-  "/api/invite",
+  // "/api/invite",
   // "/lower-third",
   // "/lyrics",
 ];

@@ -14,7 +14,7 @@ function OrganizationCard({ organization }: { organization: Organization }) {
   return (
     <div
       key={organization.id}
-      className="flex flex-col w-40 h-64 p-3 rounded-lg border shadow-lg border-red-600"
+      className="flex flex-col w-40 h-64 p-3 rounded-lg border shadow-lg border-green-400"
     >
       <img
         src={

@@ -2,10 +2,10 @@
 import { getOrganizationsByUserId } from "@/actions/features/org/organization";
 import { currentUser } from "@/lib/auth";
 import { getAllUsers } from "@/data/users";
-import OrganizationListsPage from "./_components/organization-lists";
+import OrganizationListsPage from "../../../features/org/components/organization-lists";
 import { OrganizationUserRole } from "@/prisma-user-database/user-database-client-types";
-import { OrgDataProvider } from "@/context/org-context";
-import { SelectedOrgProvider } from "@/context/selected-org-context";
+import { OrgDataProvider } from "@/features/org/context/org-context";
+import { SelectedOrgProvider } from "@/features/org/context/selected-org-context";
 
 const OrganizationPage = async () => {
   const user = await currentUser();

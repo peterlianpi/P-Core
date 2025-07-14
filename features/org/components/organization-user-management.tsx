@@ -9,21 +9,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { OrganizationUserRole } from "@/prisma-user-database/user-database-client-types";
 import MemberCardPage from "./member-card";
 import MemberRemoveList from "./member-remove-list";
 import MemberRoleEditor from "./member-role-editor";
-import { useCurrentUser } from "@/hooks/use-current-user";
-import { useInviteMember } from "../api/use-invite-member";
-import { toast } from "sonner";
-import { useUpdateOrgRoles } from "../api/use-change-role";
 import { useCurrentMemberRole } from "@/hooks/use-current-team-role";
-import { useRemoveOrgMember } from "../api/use-remove-member";
-import { useOrgData } from "@/context/org-context";
-import { useSelectedOrg } from "@/context/selected-org-context";
+import { useOrgData } from "@/features/org/context/org-context";
+import { useSelectedOrg } from "@/features/org/context/selected-org-context";
 import { useData } from "@/providers/data-provider";
+import OrganizationInviteList from "./organization-invite-list";
+import OrganizationInviteForm from "./organization-user-invite-form";
 
 type User = {
   id: string;
@@ -39,9 +34,7 @@ type User = {
 
 export default function OrganizationUserManagementPage() {
   // Get current user (assumes it's the first user in the users array)
-  const currentUser = useCurrentUser();
   const { orgId } = useData();
-  const createInviteMember = useInviteMember(currentUser?.id ?? "");
 
   const { organizations, users } = useOrgData();
 
@@ -54,20 +47,10 @@ export default function OrganizationUserManagementPage() {
 
   useEffect(() => setSelectedOrgId(orgId), [orgId, setSelectedOrgId]);
 
-  const changeMemberRole = useUpdateOrgRoles({
-    adminUserId: currentUser?.id ?? "",
-    orgId: selectedOrgId ?? "",
-  });
-  const removeOrgMember = useRemoveOrgMember({
-    adminUserId: currentUser?.id ?? "",
-    orgId: selectedOrgId ?? "",
-  });
   const [activeTab, setActiveTab] = useState<
-    "members" | "add" | "remove" | "roles"
+    "members" | "add" | "remove" | "roles" | "invites"
   >("members");
   const [orgMembers, setOrgMembers] = useState<User[]>([]);
-  const [addEmail, setAddEmail] = useState("");
-  const [addRole, setAddRole] = useState("");
   const currentUserRole = useCurrentMemberRole(users ?? [], selectedOrgId);
 
   // Filter users in selected org
@@ -86,63 +69,6 @@ export default function OrganizationUserManagementPage() {
 
     setOrgMembers(filtered);
   }, [currentUserRole, selectedOrgId, users]);
-
-  // Add user invite
-  const handleAddUser = async () => {
-    if (!addEmail || !selectedOrgId) return alert("Fill email and select org");
-
-    const values = {
-      email: addEmail,
-      organizationId: selectedOrgId!,
-      role: addRole as OrganizationUserRole,
-    };
-
-    createInviteMember.mutate(values, {
-      onSuccess: () => {
-        toast.success(`Invite mail sent to ${values.email} successfully!`);
-        setAddEmail("");
-        setActiveTab("members");
-      },
-      onError: (error) => {
-        toast.error(error.message || "Failed to send invite");
-      },
-    });
-  };
-
-  // Remove user from org
-  const handleRemoveUser = async (userId: string) => {
-    if (!selectedOrgId) return;
-    if (!confirm("Are you sure you want to remove this user?")) return;
-    console.log("org id 222 : ", selectedOrgId);
-    removeOrgMember.mutate(
-      { userId },
-      {
-        onSuccess: (data) => {
-          toast.success(data.message || "Member removed successfully!");
-        },
-        onError: (error: Error) => {
-          toast.error(error.message);
-        },
-      }
-    );
-  };
-
-  // Save edited roles
-  const handleSaveRoles = (roleEdits: Record<string, OrganizationUserRole>) => {
-    if (!selectedOrgId || !currentUser?.id) return;
-
-    changeMemberRole.mutate(
-      { updates: roleEdits },
-      {
-        onSuccess: (data) => {
-          toast.success(`${data.updated} roles updated successfully!`);
-        },
-        onError: (error) => {
-          toast.error(error.message);
-        },
-      }
-    );
-  };
 
   return (
     <div className="p-4 w-full">
@@ -190,6 +116,12 @@ export default function OrganizationUserManagementPage() {
             >
               Roles
             </Button>
+            <Button
+              variant={activeTab === "invites" ? "default" : "outline"}
+              onClick={() => setActiveTab("invites")}
+            >
+              Invites
+            </Button>
           </>
         )}
       </div>
@@ -221,51 +153,15 @@ export default function OrganizationUserManagementPage() {
         )}
 
         {activeTab === "add" && currentUserRole === "OWNER" && (
-          <div className="max-w-md space-y-4 py-4">
-            <div>
-              <Label htmlFor="addEmail">User Email to Invite</Label>
-              <Input
-                id="addEmail"
-                type="email"
-                placeholder="user@example.com"
-                value={addEmail}
-                onChange={(e) => setAddEmail(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="addRole">Select Role</Label>
-              <Select value={addRole} onValueChange={(val) => setAddRole(val)}>
-                <SelectTrigger id="addRole" className="w-full">
-                  <SelectValue placeholder="Choose a role" />
-                </SelectTrigger>
-                <SelectContent>
-                  {[
-                    // "OWNER",
-                    "ADMIN",
-                    "MEMBER",
-                    "ACCOUNTANT",
-                    "OFFICE_STAFF",
-                  ].map((role) => (
-                    <SelectItem key={role} value={role}>
-                      {role}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <Button onClick={handleAddUser} disabled={!addEmail || !addRole}>
-              Send Invite
-            </Button>
-          </div>
+          <>
+            <OrganizationInviteForm selectedOrgId={selectedOrgId} />
+          </>
         )}
 
         {activeTab === "remove" && currentUserRole === "OWNER" && (
           <div className="w-full">
             <MemberRemoveList
               members={orgMembers}
-              onRemove={handleRemoveUser}
               selectedOrgId={selectedOrgId}
             />
           </div>
@@ -278,10 +174,13 @@ export default function OrganizationUserManagementPage() {
               <MemberRoleEditor
                 members={orgMembers}
                 selectedOrgId={selectedOrgId}
-                onSave={handleSaveRoles}
               />
             </div>
           )}
+
+        {activeTab === "invites" &&
+          currentUserRole === "OWNER" &&
+          selectedOrgId && <OrganizationInviteList orgId={selectedOrgId} />}
       </div>
     </div>
   );

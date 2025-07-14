@@ -8,7 +8,7 @@ import { useData } from "@/providers/data-provider";
 import { updateOrganization } from "@/actions/features/org/organization";
 import { useTransition } from "react";
 import { isError } from "@/helpers/organization-type";
-import { useSelectedOrg } from "@/context/selected-org-context";
+import { useSelectedOrg } from "@/features/org/context/selected-org-context";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const formSchema = teamFormSchema.omit({

@@ -22,7 +22,7 @@ import { teamFormSchema } from "@/schemas";
 import { useData } from "@/providers/data-provider";
 import CustomUploadImagePage from "@/features/image-upload/components/upload-image";
 import { useIsOrgOwner } from "@/hooks/use-current-team-role";
-import { useOrgData } from "@/context/org-context";
+import { useOrgData } from "@/features/org/context/org-context";
 
 const apiSchema = teamFormSchema.omit({
   id: true,
