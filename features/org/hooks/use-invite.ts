@@ -1,20 +1,18 @@
-// hooks/useInvite.ts
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useGetInviteDetailsByToken } from "@/features/org/api/invite-client";
 
 export const useInvite = () => {
-    const router = useRouter();
     const searchParams = useSearchParams();
-
     const tokenFromUrl = searchParams.get("token");
 
     const [token, setToken] = useState<string>("");
+    const [isHydrated, setIsHydrated] = useState(false); // ✅ new state
 
-    // Save token from URL or load from localStorage once
+    // ✅ Step 1: Load token
     useEffect(() => {
         if (tokenFromUrl) {
             localStorage.setItem("inviteToken", tokenFromUrl);
@@ -25,16 +23,17 @@ export const useInvite = () => {
                 setToken(savedToken);
             }
         }
+        setIsHydrated(true); // ✅ Only set true after loading localStorage
     }, [tokenFromUrl]);
 
-    // Fetch invite using token from state/localStorage
+    // ✅ Step 2: Fetch invite
     const {
         data: invite,
         isLoading,
         isError,
     } = useGetInviteDetailsByToken(token ?? "");
 
-    // Handle invalid/expired token
+    // ✅ Step 3: Handle invalid or expired token
     useEffect(() => {
         if (!token || isLoading) return;
 
@@ -45,23 +44,21 @@ export const useInvite = () => {
                 toast.error("This invite has expired.");
                 localStorage.removeItem("inviteToken");
                 setToken("");
-                // Optionally navigate away here
             }
         }
 
         if (isError) {
             toast.error("Invalid invite token.");
             localStorage.removeItem("inviteToken");
-            setToken('');
-            // Optionally navigate away here
+            setToken("");
         }
-    }, [invite, isError, isLoading, token, router]);
+    }, [invite, isError, isLoading, token]);
 
     return {
         token,
         invite,
         isLoading,
         isError,
+        isHydrated, // ✅ return hydration flag
     };
 };
-

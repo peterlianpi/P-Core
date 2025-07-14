@@ -10,7 +10,7 @@ import { useSelectedOrg } from "@/context/selected-org-context";
 function OrganizationListsPage() {
   const { isEditTeam, setIsEditTeam } = useData();
   const { organizations } = useOrgData(); // 👈 access context
-  const { setSelectedOrg } = useSelectedOrg();
+  const { setSelectedOrg, setSelectedOrgId } = useSelectedOrg();
 
   // Map to OrganizationType for display
   const result = organizations.map((org) => ({
@@ -30,6 +30,7 @@ function OrganizationListsPage() {
           key={r.id}
           onClick={() => {
             setSelectedOrg(r);
+            setSelectedOrgId(r.id);
             setIsEditTeam(!isEditTeam);
           }}
         >

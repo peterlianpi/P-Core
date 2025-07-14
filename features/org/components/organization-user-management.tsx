@@ -52,7 +52,7 @@ export default function OrganizationUserManagementPage() {
   }));
   const { selectedOrgId, setSelectedOrgId } = useSelectedOrg();
 
-  useEffect(() => setSelectedOrgId(orgId), []);
+  useEffect(() => setSelectedOrgId(orgId), [orgId, setSelectedOrgId]);
 
   const changeMemberRole = useUpdateOrgRoles({
     adminUserId: currentUser?.id ?? "",

@@ -22,6 +22,7 @@ import { teamFormSchema } from "@/schemas";
 import { useData } from "@/providers/data-provider";
 import CustomUploadImagePage from "@/features/image-upload/components/upload-image";
 import { useIsOrgOwner } from "@/hooks/use-current-team-role";
+import { useOrgData } from "@/context/org-context";
 
 const apiSchema = teamFormSchema.omit({
   id: true,
@@ -53,6 +54,7 @@ export function TeamForm({
   const { setIsAddTeam, setIsEditTeam, isEditTeam } = useData();
   const [isClient, setIsClient] = useState(false);
   const [imageUrl, setImageUrl] = useState(defaultValues?.logoImage || null);
+  const { users } = useOrgData();
 
   // Initialize FileReader only on the client side
   useEffect(() => {
@@ -64,7 +66,7 @@ export function TeamForm({
     defaultValues: defaultValues,
   });
 
-  const isOwner = useIsOrgOwner();
+  const isOwner = useIsOrgOwner(users ?? [], id);
   const isEditing = !!id;
   const canEdit = !isEditing || isOwner; // new team: anyone, existing: only owner
 

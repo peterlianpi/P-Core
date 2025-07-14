@@ -2,13 +2,16 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { OrganizationUserRole } from "@/prisma-user-database/user-database-client-types";
 import { useRouter } from "next/navigation";
 
 type Props = {
   invite: {
-    organizationName: string;
     email: string;
+    organizationName: string;
     expiresAt: string;
+    accepted: boolean;
+    role: OrganizationUserRole | null;
   };
   isLoggedIn: boolean;
   onAccept?: () => void;

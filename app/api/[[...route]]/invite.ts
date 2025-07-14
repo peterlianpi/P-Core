@@ -183,9 +183,7 @@ const app = new Hono()
             }
 
             return c.json({
-                id: invite.id,
                 email: invite.email,
-                organizationId: invite.organizationId,
                 organizationName: invite.organization.name,
                 expiresAt: invite.expiresAt,
                 accepted: invite.accepted,

@@ -4,18 +4,10 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useAcceptMember } from "@/features/org/api/use-accept-member";
 import { useInvite } from "@/features/org/hooks/use-invite";
+import { InviteDialog } from "@/features/org/components/invite-dialog";
 
 const AfterLoginPage = () => {
   const router = useRouter();
@@ -23,22 +15,14 @@ const AfterLoginPage = () => {
   const currentUser = useCurrentUser();
   const [showDialog, setShowDialog] = useState(false);
 
-  const { token, invite, isLoading, isError } = useInvite();
+  const { token, invite, isLoading, isError, isHydrated } = useInvite();
   const acceptMember = useAcceptMember(currentUser?.id ?? "");
 
-  // ✅ Redirect if no invite token (normal login)
-  // ✅ Show dialog if invite is valid
+  // ✅ Step 1: Handle routing and dialog visibility
   useEffect(() => {
-    if (isLoading) return;
-
-    if (!isLoading && !token) {
-      // router.push("/settings");
-      console.log("Invalid :", !isLoading && !token);
-      return;
-    }
+    if (!isHydrated || isLoading) return;
 
     if (token && invite) {
-      console.log("Invite :", token && invite);
       setShowDialog(true);
       return;
     }
@@ -46,12 +30,17 @@ const AfterLoginPage = () => {
     if (token && isError) {
       toast.error("Invalid or expired invite.");
       localStorage.removeItem("inviteToken");
-      console.log("Invalid :", token);
+      router.push("/settings");
+      return;
+    }
+
+    // ✅ Only redirect when everything is loaded and no valid invite
+    if (!token && !invite && !isError) {
       router.push("/settings");
     }
-  }, [isLoading, token, invite, router, isError]);
+  }, [token, invite, isError, isLoading, isHydrated, router]);
 
-  // ✅ Remove token from URL
+  // ✅ Step 2: Clean token from URL after reading it
   useEffect(() => {
     if (searchParams.get("token")) {
       const params = new URLSearchParams(window.location.search);
@@ -64,9 +53,9 @@ const AfterLoginPage = () => {
     }
   }, [searchParams]);
 
-  // ✅ Accept invite
+  // ✅ Step 3: Accept invite
   const handleAccept = () => {
-    if (!token || !currentUser?.id) {
+    if (!token && !currentUser?.id) {
       router.push("/settings");
       return;
     }
@@ -88,63 +77,25 @@ const AfterLoginPage = () => {
     );
   };
 
-  // ✅ Cancel invite
-  const handleCancel = () => {
-    localStorage.removeItem("inviteToken");
-    toast.info("Invite was ignored.");
-    router.push("/settings");
-  };
-
-  // ✅ Show loading
+  // ✅ Step 5: Show loading screen while fetching
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <p className="text-sm text-muted-foreground">Loading invite...</p>
+        <p className="text-sm text-muted-foreground">Loading...</p>
       </div>
     );
   }
 
-  // ✅ Dialog (if token & invite are valid)
+  // ✅ Step 6: Show Invite Dialog if valid
   return (
-    <Dialog open={showDialog} onOpenChange={(open) => setShowDialog(open)}>
-      <DialogContent
-        onInteractOutside={(e) => e.preventDefault()}
-        onEscapeKeyDown={(e) => e.preventDefault()}
-      >
-        <DialogHeader>
-          <DialogTitle>Accept Organization Invite</DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-2">
-          <p>
-            You’ve been invited to join{" "}
-            <strong>{invite?.organizationName}</strong>.
-          </p>
-          <p>
-            Invite sent to: <strong>{invite?.email}</strong>
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Expires at:{" "}
-            {invite?.expiresAt
-              ? new Date(invite.expiresAt).toLocaleString()
-              : "Unknown"}
-          </p>
-        </div>
-
-        <DialogFooter className="pt-4 gap-4">
-          <Button onClick={handleAccept} disabled={acceptMember.isPending}>
-            {acceptMember.isPending ? "Accepting..." : "Accept"}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleCancel}
-            disabled={acceptMember.isPending}
-          >
-            Cancel
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <>
+      <InviteDialog
+        open={showDialog}
+        onAccept={handleAccept}
+        isAccepting={acceptMember.isPending}
+        invite={invite}
+      />
+    </>
   );
 };
 
