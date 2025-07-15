@@ -124,6 +124,7 @@ exports.Prisma.StudentScalarFieldEnum = {
   id: 'id',
   name: 'name',
   birthDate: 'birthDate',
+  image: 'image',
   gender: 'gender',
   phone: 'phone',
   address: 'address',
