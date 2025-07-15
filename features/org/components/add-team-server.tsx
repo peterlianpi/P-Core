@@ -7,7 +7,7 @@ import { TeamForm } from "./team-form";
 import { useData } from "@/providers/data-provider";
 import { createOrganization } from "@/actions/features/org/organization";
 import { useTransition } from "react";
-import { isError } from "@/helpers/organization-type";
+import { isError } from "@/features/org/helper/organization-type";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

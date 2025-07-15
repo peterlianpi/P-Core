@@ -21,14 +21,16 @@ function OrganizationCard({ organization }: { organization: Organization }) {
           organization.logoImage ? organization.logoImage : "/image/profile.png"
         }
         alt={organization.name}
-        className="w-full object-cover rounded-2xl py-2 h-[70%]"
+        className="w-full h-full object-contain rounded-md"
       />
-      <div className="text-sm font-semibold">{organization.name}</div>
-      <div className="text-sm">Role : {organization.role}</div>
-      <div className="text-sm">
-        Since :{organization.startedAt?.getDate() ?? "-"}/
-        {organization.startedAt?.getMonth() ?? "-"}/
-        {organization.startedAt?.getFullYear() ?? "-"}
+      <div className="mt-2">
+        <div className="text-sm font-semibold">{organization.name}</div>
+        <div className="text-sm">Role : {organization.role}</div>
+        <div className="text-sm">
+          Since :{organization.startedAt?.getDate() ?? "-"}/
+          {organization.startedAt?.getMonth() ?? "-"}/
+          {organization.startedAt?.getFullYear() ?? "-"}
+        </div>
       </div>
     </div>
   );

@@ -7,7 +7,14 @@ import org from "./org";
 import versionInfo from "./version";
 import feedback from "./feedback";
 import invite from "./invite";
-import lyrics from "./lyrics";
+import students from "./students";
+import studentCourses from "./studentCourses";
+import courses from "./courses";
+import lessonBooks from "./lessonBooks";
+import purchases from "./purchases";
+import courseStatusLogs from "./courseStatusLogs";
+
+
 
 // Set runtime to edge for serverless deployment.
 // This ensures the app is optimized for edge environments like Vercel.
@@ -26,7 +33,14 @@ const routes = app
   .route("/versionInfo", versionInfo)
   .route("/feedback", feedback)
   .route("/invite", invite)
-  .route("/lyrics", lyrics); // This handles requests to /api/*
+  .route("/students", students)
+  .route("/studentCourses", studentCourses)
+  .route("/courses", courses)
+  .route("/lessonBooks", lessonBooks)
+  .route("/purchases", purchases)
+  .route("/courseStatusLogs", courseStatusLogs);
+
+; // This handles requests to /api/*
 // Define HTTP methods for each route handler.
 // The handle function from Hono processes requests based on their methods (GET, POST, PATCH, DELETE).
 // These exports allow your app to be deployed to an edge platform like Vercel.

@@ -5,7 +5,7 @@ import {
 } from "hono";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { client } from "@/lib/hono";
-import { ChangeOrgRole } from "@/helpers/organization-type";
+import { ChangeOrgRole } from "@/features/org/helper/organization-type";
 
 
 // type ResponseType = InferResponseType<(typeof client.api.org)[":id"]["update-roles"]["$patch"]>;

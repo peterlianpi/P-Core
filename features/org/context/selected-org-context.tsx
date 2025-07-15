@@ -1,7 +1,7 @@
 // context/selected-org-context.tsx
 "use client";
 
-import { OrganizationType } from "@/helpers/organization-type";
+import { OrganizationType } from "@/features/org/helper/organization-type";
 import { createContext, useContext, useState } from "react";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
 

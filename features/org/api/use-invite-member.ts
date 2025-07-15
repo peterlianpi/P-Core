@@ -4,7 +4,7 @@ import {
 } from "hono";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { client } from "@/lib/hono";
-import { InviteSuccessResponse } from "@/helpers/organization-type";
+import { InviteSuccessResponse } from "@/features/org/helper/organization-type";
 
 // type ResponseType = InferResponseType<typeof client.api.invite.$post>;
 type RequestType = InferRequestType<typeof client.api.invite.$post>["json"];

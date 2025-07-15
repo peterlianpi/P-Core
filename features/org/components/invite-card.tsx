@@ -3,6 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { OrganizationUserRole } from "@/prisma-user-database/user-database-client-types";
+import { capitalizeFormat } from "../../../helpers/custom-function";
 
 type Invite = {
   email: string;
@@ -18,15 +19,20 @@ type Props = {
 
 export default function InviteCard({ invite, onResend, onRevoke }: Props) {
   return (
-    <div className="flex justify-between items-center border p-2 rounded">
-      <div>
+    <div className="flex justify-between items-center border  rounded-lg shadow-sm hover:shadow-md transition-shadow  px-4 py-2">
+      <div className="flex-grow">
         <p>{invite.email}</p>
-        <p className="text-sm text-muted-foreground">
-          Role: {invite.role ?? "Unknown"} | Status:{" "}
-          {invite.accepted ? "Accepted" : "Pending"}
-        </p>
+        <div className="sm:flex gap-2">
+          {" "}
+          <p className="text-sm text-muted-foreground capitalize">
+            Role: {invite.role ? capitalizeFormat(invite.role) : "Unknown"}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Status: {invite.accepted ? "Accepted" : "Pending"}
+          </p>
+        </div>
       </div>
-      <div className="space-x-2">
+      <div className="flex flex-col sm:flex-row justify-center items-center gap-2">
         {!invite.accepted && (
           <>
             <Button

@@ -120,13 +120,78 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   Serializable: 'Serializable'
 });
 
-exports.Prisma.UserSettingsScalarFieldEnum = {
+exports.Prisma.StudentScalarFieldEnum = {
   id: 'id',
-  userId: 'userId',
-  apiKey: 'apiKey',
-  settings: 'settings',
+  name: 'name',
+  birthDate: 'birthDate',
+  gender: 'gender',
+  phone: 'phone',
+  address: 'address',
+  email: 'email',
+  guardian: 'guardian',
+  joinedAt: 'joinedAt',
+  orgId: 'orgId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.CourseScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  level: 'level',
+  orgId: 'orgId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.LessonBookScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  author: 'author',
+  price: 'price',
+  courseId: 'courseId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.StudentCourseScalarFieldEnum = {
+  id: 'id',
+  studentId: 'studentId',
+  courseId: 'courseId',
+  enrolledAt: 'enrolledAt',
+  status: 'status'
+};
+
+exports.Prisma.CourseStatusLogScalarFieldEnum = {
+  id: 'id',
+  studentCourseId: 'studentCourseId',
+  status: 'status',
+  changedAt: 'changedAt',
+  note: 'note'
+};
+
+exports.Prisma.LessonProgressScalarFieldEnum = {
+  id: 'id',
+  studentId: 'studentId',
+  lessonBookId: 'lessonBookId',
+  completed: 'completed',
+  completedAt: 'completedAt',
+  notes: 'notes'
+};
+
+exports.Prisma.PurchaseScalarFieldEnum = {
+  id: 'id',
+  studentId: 'studentId',
+  courseId: 'courseId',
+  type: 'type',
+  amount: 'amount',
+  description: 'description',
+  paidAt: 'paidAt',
+  forMonth: 'forMonth',
+  method: 'method',
+  invoiceId: 'invoiceId',
+  orgId: 'orgId'
 };
 
 exports.Prisma.SortOrder = {
@@ -134,24 +199,50 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
-exports.Prisma.JsonNullValueInput = {
-  JsonNull: Prisma.JsonNull
-};
-
 exports.Prisma.QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
 };
 
-exports.Prisma.JsonNullValueFilter = {
-  DbNull: Prisma.DbNull,
-  JsonNull: Prisma.JsonNull,
-  AnyNull: Prisma.AnyNull
+exports.Prisma.NullsOrder = {
+  first: 'first',
+  last: 'last'
+};
+exports.Gender = exports.$Enums.Gender = {
+  MALE: 'MALE',
+  FEMALE: 'FEMALE',
+  OTHER: 'OTHER'
 };
 
+exports.CourseStatus = exports.$Enums.CourseStatus = {
+  ENROLLED: 'ENROLLED',
+  PAUSED: 'PAUSED',
+  RESUMED: 'RESUMED',
+  FINISHED: 'FINISHED',
+  CANCELLED: 'CANCELLED'
+};
+
+exports.PurchaseType = exports.$Enums.PurchaseType = {
+  MONTHLY_FEE: 'MONTHLY_FEE',
+  LESSON_BOOK: 'LESSON_BOOK',
+  OTHER: 'OTHER'
+};
+
+exports.PaymentMethod = exports.$Enums.PaymentMethod = {
+  CASH: 'CASH',
+  BANK: 'BANK',
+  ONLINE: 'ONLINE',
+  TRANSFER: 'TRANSFER'
+};
 
 exports.Prisma.ModelName = {
-  UserSettings: 'UserSettings'
+  Student: 'Student',
+  Course: 'Course',
+  LessonBook: 'LessonBook',
+  StudentCourse: 'StudentCourse',
+  CourseStatusLog: 'CourseStatusLog',
+  LessonProgress: 'LessonProgress',
+  Purchase: 'Purchase'
 };
 
 /**

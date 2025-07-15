@@ -23,7 +23,7 @@ function OrganizationListsPage() {
   }));
 
   return (
-    <div className="flex flex-wrap justify-start items-center w-full gap-2">
+    <div className="flex flex-wrap justify-start items-center w-full mt-4 gap-2">
       {isEditTeam && <EditTeamPage />}
       {result.map((r) => (
         <div

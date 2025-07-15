@@ -17,11 +17,131 @@ datasource db {
   url      = env("PPG_FEATURES_DATABASE_URL")
 }
 
-model UserSettings {
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum CourseStatus {
+  ENROLLED
+  PAUSED
+  RESUMED
+  FINISHED
+  CANCELLED
+}
+
+enum PurchaseType {
+  MONTHLY_FEE
+  LESSON_BOOK
+  OTHER
+}
+
+enum PaymentMethod {
+  CASH
+  BANK
+  ONLINE
+  TRANSFER
+}
+
+model Student {
+  id        String    @id @default(cuid())
+  name      String
+  birthDate DateTime?
+  gender    Gender?
+  phone     String?
+  address   String?
+  email     String?
+  guardian  String?
+  joinedAt  DateTime  @default(now())
+  orgId     String // Link to system DB
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  courses  StudentCourse[]
+  payments Purchase[]
+  progress LessonProgress[]
+}
+
+model Course {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  level       String? // Beginner, Intermediate, etc.
+  orgId       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  lessonBooks LessonBook[]
+  students    StudentCourse[]
+  payments    Purchase[]
+}
+
+model LessonBook {
   id        String   @id @default(cuid())
-  userId    String
-  apiKey    String   @unique
-  settings  Json
+  title     String
+  author    String?
+  price     Float    @default(0)
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  progress LessonProgress[]
+}
+
+model StudentCourse {
+  id         String       @id @default(cuid())
+  studentId  String
+  courseId   String
+  enrolledAt DateTime     @default(now())
+  status     CourseStatus @default(ENROLLED)
+
+  student Student @relation(fields: [studentId], references: [id])
+  course  Course  @relation(fields: [courseId], references: [id])
+
+  statusLogs CourseStatusLog[]
+
+  @@unique([studentId, courseId])
+}
+
+model CourseStatusLog {
+  id              String       @id @default(cuid())
+  studentCourseId String
+  status          CourseStatus
+  changedAt       DateTime     @default(now())
+  note            String?
+
+  studentCourse StudentCourse @relation(fields: [studentCourseId], references: [id])
+}
+
+model LessonProgress {
+  id           String    @id @default(cuid())
+  studentId    String
+  lessonBookId String
+  completed    Boolean   @default(false)
+  completedAt  DateTime?
+  notes        String?
+
+  student    Student    @relation(fields: [studentId], references: [id])
+  lessonBook LessonBook @relation(fields: [lessonBookId], references: [id])
+
+  @@unique([studentId, lessonBookId])
+}
+
+model Purchase {
+  id          String        @id @default(cuid())
+  studentId   String
+  courseId    String?
+  type        PurchaseType
+  amount      Float
+  description String?
+  paidAt      DateTime      @default(now())
+  forMonth    DateTime? // Use for monthly fee tracking
+  method      PaymentMethod @default(CASH)
+  invoiceId   String?
+  orgId       String
+
+  student Student @relation(fields: [studentId], references: [id])
+  course  Course? @relation(fields: [courseId], references: [id])
 }
