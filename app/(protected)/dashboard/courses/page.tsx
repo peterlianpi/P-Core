@@ -11,20 +11,23 @@ export default async function Page() {
         {
           id: "s1",
           name: "John Doe",
+          image: "/image/profile.png",
           gender: "MALE",
           age: 12,
           status: "ENROLLED",
         },
         {
           id: "s2",
-          name: "Sarah Lin",
-          gender: "FEMALE",
+          name: "Peter Pau Sian Lian",
+          image: "/image/profile.png",
+          gender: "MALE",
           age: 10,
           status: "PAUSED",
         },
         {
           id: "s3",
           name: "Emma Grace",
+          image: "/image/profile.png",
           gender: "FEMALE",
           age: 9,
           status: "ENROLLED",
@@ -38,6 +41,7 @@ export default async function Page() {
         {
           id: "s4",
           name: "Mike Chan",
+          image: "/image/profile.png",
           gender: "MALE",
           age: 14,
           status: "RESUMED",
@@ -45,6 +49,7 @@ export default async function Page() {
         {
           id: "s5",
           name: "Kevin Lee",
+          image: "/image/profile.png",
           gender: "MALE",
           age: 11,
           status: "ENROLLED",
@@ -58,6 +63,7 @@ export default async function Page() {
         {
           id: "s6",
           name: "Olivia Kim",
+          image: "/image/profile.png",
           gender: "FEMALE",
           age: 13,
           status: "FINISHED",
@@ -65,6 +71,7 @@ export default async function Page() {
         {
           id: "s7",
           name: "Liam Park",
+          image: "/image/profile.png",
           gender: "MALE",
           age: 12,
           status: "ENROLLED",
@@ -78,6 +85,7 @@ export default async function Page() {
         {
           id: "s8",
           name: "Ava Lian",
+          image: "/image/profile.png",
           gender: "FEMALE",
           age: 10,
           status: "ENROLLED",
@@ -85,6 +93,7 @@ export default async function Page() {
         {
           id: "s9",
           name: "Noah Win",
+          image: "/image/profile.png",
           gender: "MALE",
           age: 11,
           status: "CANCELLED",
@@ -94,8 +103,8 @@ export default async function Page() {
   ];
 
   return (
-    <main className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Course Overview</h1>
+    <main className="w-full mt-4">
+      <h1 className="text-4xl font-bold mb-6">Course Overview</h1>
       <CourseOverview courses={courses} />
     </main>
   );

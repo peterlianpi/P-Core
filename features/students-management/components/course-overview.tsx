@@ -6,8 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import StudentCardPage from "./student-card";
 
 type Student = {
   id: string;
@@ -15,6 +14,7 @@ type Student = {
   gender: string;
   age: number;
   status: string;
+  image: string; // URL to the student's image
 };
 
 type Course = {
@@ -25,7 +25,7 @@ type Course = {
 
 export function CourseOverview({ courses }: { courses: Course[] }) {
   return (
-    <Accordion type="multiple" className="w-full space-y-4">
+    <Accordion type="single" collapsible className="w-full space-y-4">
       {courses.map((course) => (
         <AccordionItem key={course.id} value={course.id}>
           <AccordionTrigger className="text-lg font-semibold">
@@ -33,33 +33,11 @@ export function CourseOverview({ courses }: { courses: Course[] }) {
           </AccordionTrigger>
 
           <AccordionContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="flex flex-wrap gap-2 justify-start">
               {course.students.map((student) => (
-                <Card key={student.id}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-md">{student.name}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex flex-col gap-1 text-sm">
-                    <div>Age: {student.age}</div>
-                    <div>
-                      Gender: <Badge>{student.gender}</Badge>
-                    </div>
-                    <Badge
-                      variant={
-                        student.status === "ENROLLED" ||
-                        student.status === "FINISHED" ||
-                        student.status === "RESUMED"
-                          ? "success"
-                          : student.status === "CANCELLED"
-                            ? "destructive"
-                            : "default"
-                      }
-                      className="text-xs"
-                    >
-                      {student.status}
-                    </Badge>
-                  </CardContent>
-                </Card>
+                <div key={student.id}>
+                  <StudentCardPage student={student} />
+                </div>
               ))}
             </div>
           </AccordionContent>
