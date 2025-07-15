@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { usePathname } from "next/navigation";
-import { Settings2, GroupIcon } from "lucide-react";
+import { Settings2, GroupIcon, BookIcon } from "lucide-react";
 
 import { NavUser } from "@/components/admin-panel/nav-user";
 import { NavMain } from "@/components/admin-panel/nav-main";
@@ -49,9 +49,21 @@ export function AppSidebar({
   // const hasAdminOrg = organizations.some(
   //   (org) => org.role === "OWNER" || org.role === "ADMIN"
   // );
+
   const hasOrg = organizations.length > 0;
   // Dynamic nav with isActive
   const navMain = [
+    {
+      title: "Courses Overview",
+      url: "/dashboard/courses",
+      icon: BookIcon,
+      isActive: pathname.startsWith("/dashboard/courses"),
+      items: [
+        { title: "Course Overview", url: "/dashboard/courses" },
+        // { title: "Create Course", url: "/courses/create" },
+      ],
+    },
+
     ...(hasOrg
       ? [
           {
