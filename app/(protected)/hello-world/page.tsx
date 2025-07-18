@@ -1,11 +1,11 @@
 "use client";
 
-const MembersPage = () => {
-  return (
-    <section className="">
-      <h1>Hello World!</h1>
-    </section>
-  );
-};
+import EditStudentFormPage from "@/features/music-school-management/features/students-management/components/update-student";
 
-export default MembersPage;
+export default function StudentFormDemo() {
+  return (
+    <div className="p-4">
+      <EditStudentFormPage />
+    </div>
+  );
+}

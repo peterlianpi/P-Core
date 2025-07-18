@@ -78,16 +78,17 @@ export default function OrganizationInviteList({ orgId }: Props) {
       {pendingInvites.length > 0 && (
         <div>
           <h3 className="text-lg font-semibold mb-2">Pending Invites</h3>
-          <div className="space-y-2">
-            {pendingInvites.map((invite) => (
+          {pendingInvites.map((invite) => (
+            <>
               <InviteCard
                 key={invite.email}
                 invite={invite}
                 onResend={handleResend}
                 onRevoke={handleRevoke}
               />
-            ))}
-          </div>
+              <hr className="mt-2 border-t border-gray-500" />
+            </>
+          ))}
         </div>
       )}
 

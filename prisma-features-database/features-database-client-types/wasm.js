@@ -20,12 +20,12 @@ exports.Prisma = Prisma
 exports.$Enums = {}
 
 /**
- * Prisma Client JS version: 6.11.1
- * Query Engine version: f40f79ec31188888a2e33acda0ecc8fd10a853a9
+ * Prisma Client JS version: 6.12.0
+ * Query Engine version: 8047c96bbd92db98a2abc7c9323ce77c02c89dbc
  */
 Prisma.prismaVersion = {
-  client: "6.11.1",
-  engine: "f40f79ec31188888a2e33acda0ecc8fd10a853a9"
+  client: "6.12.0",
+  engine: "8047c96bbd92db98a2abc7c9323ce77c02c89dbc"
 }
 
 Prisma.PrismaClientKnownRequestError = () => {
@@ -122,6 +122,7 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
 
 exports.Prisma.StudentScalarFieldEnum = {
   id: 'id',
+  number: 'number',
   name: 'name',
   birthDate: 'birthDate',
   image: 'image',
@@ -129,7 +130,14 @@ exports.Prisma.StudentScalarFieldEnum = {
   phone: 'phone',
   address: 'address',
   email: 'email',
-  guardian: 'guardian',
+  rollNumber: 'rollNumber',
+  parentName: 'parentName',
+  parentPhone: 'parentPhone',
+  notes: 'notes',
+  isActive: 'isActive',
+  isArchived: 'isArchived',
+  isDeleted: 'isDeleted',
+  isProspect: 'isProspect',
   joinedAt: 'joinedAt',
   orgId: 'orgId',
   createdAt: 'createdAt',
@@ -140,8 +148,17 @@ exports.Prisma.CourseScalarFieldEnum = {
   id: 'id',
   name: 'name',
   description: 'description',
+  price: 'price',
+  duration: 'duration',
+  startDate: 'startDate',
+  endDate: 'endDate',
+  isActive: 'isActive',
+  isArchived: 'isArchived',
+  isDeleted: 'isDeleted',
   level: 'level',
   orgId: 'orgId',
+  teacherId: 'teacherId',
+  roomId: 'roomId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -151,9 +168,16 @@ exports.Prisma.LessonBookScalarFieldEnum = {
   title: 'title',
   author: 'author',
   price: 'price',
+  description: 'description',
+  isActive: 'isActive',
+  isArchived: 'isArchived',
+  isDeleted: 'isDeleted',
+  orgId: 'orgId',
   courseId: 'courseId',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  coverImage: 'coverImage',
+  publicationDate: 'publicationDate'
 };
 
 exports.Prisma.StudentCourseScalarFieldEnum = {
@@ -161,7 +185,11 @@ exports.Prisma.StudentCourseScalarFieldEnum = {
   studentId: 'studentId',
   courseId: 'courseId',
   enrolledAt: 'enrolledAt',
-  status: 'status'
+  status: 'status',
+  notes: 'notes',
+  orgId: 'orgId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.CourseStatusLogScalarFieldEnum = {
@@ -169,7 +197,10 @@ exports.Prisma.CourseStatusLogScalarFieldEnum = {
   studentCourseId: 'studentCourseId',
   status: 'status',
   changedAt: 'changedAt',
-  note: 'note'
+  note: 'note',
+  orgId: 'orgId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.LessonProgressScalarFieldEnum = {
@@ -178,7 +209,16 @@ exports.Prisma.LessonProgressScalarFieldEnum = {
   lessonBookId: 'lessonBookId',
   completed: 'completed',
   completedAt: 'completedAt',
-  notes: 'notes'
+  progress: 'progress',
+  lessonNumber: 'lessonNumber',
+  lessonTitle: 'lessonTitle',
+  lessonDate: 'lessonDate',
+  studentNotes: 'studentNotes',
+  teacherNotes: 'teacherNotes',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  orgId: 'orgId'
 };
 
 exports.Prisma.PurchaseScalarFieldEnum = {
@@ -192,7 +232,76 @@ exports.Prisma.PurchaseScalarFieldEnum = {
   forMonth: 'forMonth',
   method: 'method',
   invoiceId: 'invoiceId',
-  orgId: 'orgId'
+  orgId: 'orgId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ScheduleScalarFieldEnum = {
+  id: 'id',
+  courseId: 'courseId',
+  teacherId: 'teacherId',
+  roomId: 'roomId',
+  dayOfWeek: 'dayOfWeek',
+  startTime: 'startTime',
+  endTime: 'endTime',
+  isActive: 'isActive',
+  isArchived: 'isArchived',
+  isDeleted: 'isDeleted',
+  orgId: 'orgId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.StudentScheduleScalarFieldEnum = {
+  id: 'id',
+  scheduleId: 'scheduleId',
+  studentId: 'studentId',
+  status: 'status',
+  notes: 'notes',
+  attended: 'attended',
+  orgId: 'orgId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.TeacherScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  email: 'email',
+  phone: 'phone',
+  avatar: 'avatar',
+  bio: 'bio',
+  orgId: 'orgId',
+  subject: 'subject',
+  isAvailable: 'isAvailable',
+  isActive: 'isActive',
+  isArchived: 'isArchived',
+  isDeleted: 'isDeleted',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.RoomScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  location: 'location',
+  capacity: 'capacity',
+  orgId: 'orgId',
+  isActive: 'isActive',
+  isArchived: 'isArchived',
+  isDeleted: 'isDeleted',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.InvoiceScalarFieldEnum = {
+  id: 'id',
+  number: 'number',
+  studentId: 'studentId',
+  orgId: 'orgId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.SortOrder = {
@@ -213,6 +322,12 @@ exports.Gender = exports.$Enums.Gender = {
   MALE: 'MALE',
   FEMALE: 'FEMALE',
   OTHER: 'OTHER'
+};
+
+exports.CourseLevel = exports.$Enums.CourseLevel = {
+  BEGINNER: 'BEGINNER',
+  INTERMEDIATE: 'INTERMEDIATE',
+  ADVANCED: 'ADVANCED'
 };
 
 exports.CourseStatus = exports.$Enums.CourseStatus = {
@@ -243,7 +358,12 @@ exports.Prisma.ModelName = {
   StudentCourse: 'StudentCourse',
   CourseStatusLog: 'CourseStatusLog',
   LessonProgress: 'LessonProgress',
-  Purchase: 'Purchase'
+  Purchase: 'Purchase',
+  Schedule: 'Schedule',
+  StudentSchedule: 'StudentSchedule',
+  Teacher: 'Teacher',
+  Room: 'Room',
+  Invoice: 'Invoice'
 };
 
 /**
