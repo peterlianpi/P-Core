@@ -1,37 +1,90 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { StudentForm } from "@/features/music-school-management/features/students-management/components/student-form";
 import { StudentFormData } from "@/features/music-school-management/types/schemas";
-import { useSelectedOrg } from "@/features/org/context/selected-org-context";
 import { useGetStudentByIdAndOrgId } from "../api/use-get-student-by-id-and-orgId";
 import { useParams } from "next/navigation";
+import { useData } from "@/providers/data-provider";
+import { useEditStudent } from "../api/use-edit-student";
 
 export default function EditStudentFormPage() {
-  const { selectedOrgId } = useSelectedOrg();
-  const [open, setOpen] = useState(false);
+  const { orgId } = useData();
   const params = useParams();
-  const id = params.id as string;
-  const { data: fetchedStudent, isLoading: isFetchingStudent } =
-    useGetStudentByIdAndOrgId({ id, orgId: selectedOrgId });
+  const id = (params.id as string) || "cmd939z07000095ec1xbgcf95"; // Use fallback only for dev
 
-  const student: StudentFormData | undefined = fetchedStudent
+  const {
+    data: fetchedStudent,
+    isLoading,
+    error,
+  } = useGetStudentByIdAndOrgId({
+    id,
+    orgId,
+  });
+  const [student, setStudent] = useState<StudentFormData | undefined>(
+    undefined
+  );
+
+  useEffect(() => {
+    setStudent(
+      fetchedStudent && {
+        orgId: fetchedStudent?.orgId,
+        id: fetchedStudent?.id,
+        name: fetchedStudent?.name,
+        isActive: fetchedStudent?.isActive ?? true,
+        isArchived: fetchedStudent?.isArchived ?? false,
+        isDeleted: fetchedStudent?.isDeleted ?? false,
+        isProspect: fetchedStudent?.isProspect ?? false,
+        joinedAt: fetchedStudent?.joinedAt
+          ? new Date(fetchedStudent.joinedAt)
+          : new Date(),
+        birthDate: fetchedStudent?.birthDate
+          ? new Date(fetchedStudent.birthDate)
+          : undefined,
+        number: fetchedStudent?.number ?? undefined,
+        image: fetchedStudent?.image ?? undefined,
+        gender: fetchedStudent?.gender ?? undefined,
+        phone: fetchedStudent?.phone ?? undefined,
+        address: fetchedStudent?.address ?? undefined,
+        email: fetchedStudent?.email ?? undefined,
+        rollNumber: fetchedStudent?.rollNumber ?? undefined,
+        parentName: fetchedStudent?.parentName ?? undefined,
+        parentPhone: fetchedStudent?.parentPhone ?? undefined,
+        notes: fetchedStudent?.notes ?? undefined,
+        courseIds: fetchedStudent?.courses?.map((c) => c.course.id) ?? [],
+      }
+    );
+  }, []);
+
+  const editStudentMutation = useEditStudent({ orgId, id });
+
+  const mockCourses = [
+    {
+      id: "cmd93cmvz000195ecirwf2rw6",
+      name: "Piano",
+      levels: ["Beginner", "Advanced"],
+    },
+    { id: "course2", name: "Guitar", levels: ["Beginner", "Advanced"] },
+    { id: "course3", name: "Violin", levels: ["Beginner", "Advanced"] },
+  ];
+
+  const defaultValues: StudentFormData = fetchedStudent
     ? {
         id: fetchedStudent.id,
         number: fetchedStudent.number ?? undefined,
         name: fetchedStudent.name,
-        email: fetchedStudent.email ?? undefined,
-        phone: fetchedStudent.phone ?? undefined,
+        email: fetchedStudent.email ?? "",
+        phone: fetchedStudent.phone ?? "",
         birthDate: fetchedStudent.birthDate
           ? new Date(fetchedStudent.birthDate)
           : undefined,
         gender: fetchedStudent.gender ?? undefined,
-        image: fetchedStudent.image ?? undefined,
-        rollNumber: fetchedStudent.rollNumber ?? undefined,
-        parentName: fetchedStudent.parentName ?? undefined,
-        parentPhone: fetchedStudent.parentPhone ?? undefined,
-        notes: fetchedStudent.notes ?? undefined,
-        address: fetchedStudent.address ?? undefined,
+        image: fetchedStudent.image ?? "",
+        rollNumber: fetchedStudent.rollNumber ?? "",
+        parentName: fetchedStudent.parentName ?? "",
+        parentPhone: fetchedStudent.parentPhone ?? "",
+        notes: fetchedStudent.notes ?? "",
+        address: fetchedStudent.address ?? "",
         courseIds: fetchedStudent.courses?.map((c) => c.course.id) ?? [],
         isActive: fetchedStudent.isActive ?? true,
         isArchived: fetchedStudent.isArchived ?? false,
@@ -40,50 +93,61 @@ export default function EditStudentFormPage() {
         joinedAt: fetchedStudent.joinedAt
           ? new Date(fetchedStudent.joinedAt)
           : new Date(),
-        orgId: fetchedStudent.orgId || selectedOrgId,
+        orgId: fetchedStudent.orgId || orgId,
       }
-    : undefined;
-
-  const mockCourses = [
-    { id: "course1", name: "Piano", levels: ["Beginner", "Advanced"] },
-    { id: "course2", name: "Guitar", levels: ["Beginner", "Advanced"] },
-    { id: "course3", name: "Violin", levels: ["Beginner", "Advanced"] },
-  ];
+    : {
+        id: "",
+        number: undefined,
+        name: "",
+        email: "",
+        phone: "",
+        birthDate: new Date(),
+        gender: "MALE",
+        image: "",
+        rollNumber: "",
+        parentName: "",
+        parentPhone: "",
+        notes: "",
+        address: "",
+        courseIds: [],
+        isActive: true,
+        isArchived: false,
+        isDeleted: false,
+        isProspect: false,
+        joinedAt: new Date(),
+        orgId: orgId,
+      };
 
   const handleSave = (data: StudentFormData) => {
-    console.log("📦 Submitted Student Data:", data);
+    setStudent(data);
+    console.log("Student information:", student);
+
+    console.log("Update student!");
+    editStudentMutation.mutate(data, {
+      onSuccess: () => {
+        console.log(`Student ${data.name} updated successfully:`);
+      },
+      onError: (error) => {
+        console.error("Failed to update student:", error);
+      },
+    });
   };
 
   return (
-    <div className="p-4">
-      <button
-        onClick={() => setOpen(true)}
-        className="bg-blue-600 text-white px-4 py-2 rounded"
-      >
-        Open Student Form
-      </button>
-
+    <>
       <StudentForm
-        open={open}
-        onOpenChange={setOpen}
-        onSave={handleSave}
+        id={id}
+        disabled={isLoading}
+        onSubmit={handleSave}
         availableCourses={mockCourses}
-        student={student} // ✅ Pass the transformed one
+        defaultValues={defaultValues}
       />
 
-      <button
-        onClick={() => setOpen(true)}
-        className="bg-blue-600 text-white px-4 py-2 rounded"
-        disabled={isFetchingStudent}
-      >
-        {isFetchingStudent ? "Loading..." : "Open Student Form"}
-      </button>
-
-      <div className="mt-4">
-        <pre>
-          {student ? JSON.stringify(student, null, 2) : "No student data yet."}
-        </pre>
-      </div>
-    </div>
+      {error && (
+        <div className="text-red-500 mt-4">
+          Error fetching student: {error.message}
+        </div>
+      )}
+    </>
   );
 }

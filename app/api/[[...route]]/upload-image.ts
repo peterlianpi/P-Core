@@ -13,7 +13,7 @@ cloudinary.config({
 // Define schema for image upload
 const formUploadSchema = z.object({
   image: z.string().nonempty("Image is required"),
-  type: z.enum(["user", "member", "goods", "team"]).default("user"),
+  type: z.enum(["user", "member", "material", "team"]).default("user"),
 });
 
 // Define schema for deleting image
@@ -25,15 +25,15 @@ const formDeleteSchema = z.object({
 const getFolder = (type: string) => {
   switch (type) {
     case "user":
-      return "church-member-management/users-photo";
+      return "music-school-management/users-photo";
     case "member":
-      return "church-member-management/members-photo";
-    case "goods":
-      return "church-member-management/goods-photo";
+      return "music-school-management/members-photo";
+    case "material":
+      return "music-school-management/material-photo";
     case "team":
-      return "church-member-management/teams-photo";
+      return "music-school-management/teams-photo";
     default:
-      return "church-member-management/others";
+      return "music-school-management/others";
   }
 };
 

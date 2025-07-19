@@ -9,6 +9,7 @@ import { Prisma } from "@/prisma-features-database/features-database-client-type
 import {
   studentFormSchema,
   studentImportSchema,
+  StudentSchema,
 } from "@/features/music-school-management/types/schemas";
 
 cloudinary.config({
@@ -226,19 +227,15 @@ const app = new Hono()
     zValidator(
       "param",
       z.object({
-        id: z
-          .string()
-          .min(1, "ID is required")
-          .regex(/^\d+$/, "ID must be a numeric string"),
+        id: z.string(),
       })
     ),
     zValidator(
       "json",
-      studentFormSchema
-        .extend({
-          courseIds: z.array(z.string()).optional(),
-        })
-        .omit({ id: true })
+      StudentSchema.extend({ courseIds: z.array(z.string()).optional() }).omit({
+        id: true,
+        orgId: true,
+      })
     ),
     zValidator(
       "query",
@@ -248,7 +245,7 @@ const app = new Hono()
     ),
     async (c) => {
       const { id } = c.req.valid("param");
-      if (!id || isNaN(Number(id))) {
+      if (!id) {
         return c.json({ error: "Invalid or missing ID" }, 400);
       }
 
@@ -256,14 +253,14 @@ const app = new Hono()
       if ("json" in authResult) return authResult;
       const { organizationId } = authResult;
 
-      const values = c.req.valid("json");
+      const { courseIds, ...restValues } = c.req.valid("json");
 
       try {
         // Step 1: Update student base data
         await featuresDBPrismaClient.student.update({
           where: { id, orgId: organizationId },
           data: {
-            ...values,
+            ...restValues,
           },
         });
 
@@ -278,7 +275,7 @@ const app = new Hono()
           existingCourses.map((sc) => [sc.courseId, sc.id])
         );
 
-        const incomingCourseIds = new Set(values.courseIds ?? []);
+        const incomingCourseIds = new Set(courseIds ?? []);
         const existingCourseIds = new Set(existingCourseMap.keys());
 
         // Step 3: Compare for changes

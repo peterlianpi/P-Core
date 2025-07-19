@@ -9,8 +9,8 @@ export const useGetStudentByIdAndOrgId = ({
   orgId: string;
 }) => {
   const query = useQuery({
-    enabled: !!id, // only run the query if id is defined
-    queryKey: ["students", { id }],
+    enabled: !!id && !!orgId, // only run the query if id, orgId are defined
+    queryKey: ["student", { id, orgId }],
     queryFn: async () => {
       if (!id) throw new Error("User ID is required");
 

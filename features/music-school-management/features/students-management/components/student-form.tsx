@@ -1,16 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
   FormField,
@@ -18,129 +11,103 @@ import {
   FormLabel,
   FormControl,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   CustomCourseFormData,
   StudentFormData,
   studentFormSchema,
 } from "@/features/music-school-management/types/schemas";
+import { useEffect, useState, useTransition } from "react";
+import { DatePicker } from "@/components/date-picker";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import CustomUploadImagePage from "@/features/image-upload/components/upload-image";
+import { Trash } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 interface StudentFormProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  student?: StudentFormData;
-  onSave: (data: StudentFormData) => void;
+  defaultValues?: StudentFormData;
+  onSubmit: (values: StudentFormData) => void;
+  disabled?: boolean;
+  ConfirmDialog?: React.FC<{ children: React.ReactNode }> | null;
+  id?: string;
   availableCourses: CustomCourseFormData[];
 }
 
 export function StudentForm({
-  open,
-  onOpenChange,
-  student,
-  onSave,
+  defaultValues,
+  onSubmit,
+  disabled = false,
+  ConfirmDialog = null,
+  id,
   availableCourses,
 }: StudentFormProps) {
+  const [isClient, setIsClient] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [imageUrl, setImageUrl] = useState(defaultValues?.image || null);
+
+  // Initialize FileReader only on the client side
+  useEffect(() => {
+    setIsClient(true); // Ensures code only runs on the client side
+  }, []);
+
+  // Initialize form with default values from defaultValues prop
   const form = useForm<StudentFormData>({
-    resolver: zodResolver(studentFormSchema),
-    defaultValues: {
-      // Initialize with empty values or student data if available
-      id: "", // You may want to handle this conditionally
-      number: undefined,
-      name: "",
-      email: "",
-      phone: "",
-      birthDate: new Date(),
-      gender: undefined,
-      image: "",
-      rollNumber: "",
-      parentName: "",
-      parentPhone: "",
-      notes: "",
-      address: "",
-      courseIds: [],
-      isActive: true,
-      isArchived: false,
-      isDeleted: false,
-      isProspect: false,
-      joinedAt: undefined,
-    },
+    resolver: zodResolver(studentFormSchema.omit({ id: true })),
+    defaultValues: defaultValues,
   });
 
-  const {
-    control,
-    handleSubmit,
-    reset,
-    // setValue
-  } = form;
+  const fileRef = form.register("image");
 
-  useEffect(() => {
-    if (student) {
-      reset(student);
-    } else {
-      reset({
-        name: "",
-        email: "",
-        phone: "",
-        address: "",
-        orgId: "",
-        courseIds: [],
-        isActive: true,
-        isArchived: false,
-        isDeleted: false,
+  const handleSubmit = async (values: StudentFormData) => {
+    startTransition(async () => {
+      console.log("Form submitted with values:", values);
+      onSubmit({
+        ...values,
+        image: imageUrl ?? undefined,
       });
-    }
-  }, [student, reset, open]);
-
-  const onSubmit = (values: StudentFormData) => {
-    onSave(values);
-    onOpenChange(false);
-    reset();
+    });
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>
-            {student ? "Edit Student" : "Add New Student"}
-          </DialogTitle>
-          <DialogDescription>
-            {student
-              ? "Update the student's information and enrolled courses."
-              : "Add a new student and assign them to courses."}
-          </DialogDescription>
-        </DialogHeader>
-
+    <Card>
+      <CardHeader className="font-semibold text-lg">
+        Student Information
+      </CardHeader>
+      <CardContent>
         <Form {...form}>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* Basic Fields */}
-            <FormField
-              control={control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Full Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="John Doe" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-6"
+          >
+            {/* Image Section */}
+            <CustomUploadImagePage
+              type="member"
+              canEdit={!disabled}
+              isClient={isClient}
+              imageUrl={imageUrl}
+              setImageUrl={setImageUrl}
+              fileRef={fileRef}
             />
-
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Full Name */}
               <FormField
-                control={control}
-                name="email"
+                control={form.control}
+                name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>Full Name</FormLabel>
                     <FormControl>
                       <Input
-                        type="email"
-                        placeholder="email@example.com"
+                        disabled={disabled || isPending}
+                        placeholder="John Doe"
                         {...field}
                       />
                     </FormControl>
@@ -149,14 +116,175 @@ export function StudentForm({
                 )}
               />
 
+              {/* Email */}
               <FormField
-                control={control}
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        disabled={disabled || isPending}
+                        type="email"
+                        placeholder="john@example.com"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Phone */}
+              <FormField
+                control={form.control}
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Phone</FormLabel>
                     <FormControl>
-                      <Input placeholder="+959123456789" {...field} />
+                      <Input
+                        disabled={disabled || isPending}
+                        placeholder="+959123456789"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Gender */}
+              <FormField
+                control={form.control}
+                name="gender"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Gender</FormLabel>
+                    <FormControl>
+                      <Select
+                        {...field}
+                        disabled={disabled || isPending}
+                        onValueChange={field.onChange}
+                        value={field.value || ""}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Gender" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem key="gender-male" value="MALE">
+                            Male
+                          </SelectItem>
+                          <SelectItem key="gender-female" value="FEMALE">
+                            Female
+                          </SelectItem>
+                          <SelectItem key="gender-other" value="OTHER">
+                            Other
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Roll Number */}
+              <FormField
+                control={form.control}
+                name="rollNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Roll Number</FormLabel>
+                    <FormControl>
+                      <Input
+                        disabled={disabled || isPending}
+                        placeholder="MS001"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Birth Date */}
+              <FormField
+                name="birthDate"
+                control={form.control}
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Date of Birth</FormLabel>
+                    <FormControl>
+                      <DatePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        disabled={disabled || isPending}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Your date of birth is used to calculate your age.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Joined At */}
+              <FormField
+                control={form.control}
+                name="joinedAt"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Joined Date</FormLabel>
+                    <FormControl>
+                      <DatePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        disabled={disabled || isPending}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Your joined date is used to track your enrollment.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Parent Name */}
+              <FormField
+                control={form.control}
+                name="parentName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Parent Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        disabled={disabled || isPending}
+                        placeholder="Parent Full Name"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Parent Phone */}
+              <FormField
+                control={form.control}
+                name="parentPhone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Parent Phone</FormLabel>
+                    <FormControl>
+                      <Input
+                        disabled={disabled || isPending}
+                        placeholder="+959..."
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -164,14 +292,30 @@ export function StudentForm({
               />
             </div>
 
+            {/* Address */}
             <FormField
-              control={control}
+              control={form.control}
               name="address"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Address</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Full address..." {...field} />
+                    <Textarea placeholder="Full Address..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Notes */}
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notes</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Extra notes..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -180,17 +324,17 @@ export function StudentForm({
 
             {/* Course Selection */}
             <FormField
-              control={control}
+              control={form.control}
               name="courseIds"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Assigned Courses</FormLabel>
                   <FormControl>
-                    <div className="space-y-2 max-h-40 overflow-y-auto border rounded p-2">
+                    <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-2 border rounded p-3 max-h-48 overflow-y-auto">
                       {availableCourses.map((course) => (
                         <label
                           key={course.id}
-                          className="flex items-center space-x-2 cursor-pointer"
+                          className="flex items-center space-x-2"
                         >
                           <input
                             type="checkbox"
@@ -206,7 +350,6 @@ export function StudentForm({
                                 field.onChange([...current, course.id]);
                               }
                             }}
-                            className="cursor-pointer"
                           />
                           <span>{course.name}</span>
                         </label>
@@ -221,12 +364,31 @@ export function StudentForm({
               )}
             />
 
-            <Button type="submit" className="w-full mt-4">
-              {student ? "Save Changes" : "Add Student"}
-            </Button>
+            {/* Submit Button */}
+            <div className="flex gap-4">
+              <Button type="submit" className="w-full">
+                {id ? "Update Student" : "Add Student"}
+              </Button>
+              {ConfirmDialog && (
+                <ConfirmDialog>
+                  {!!id && (
+                    <Button
+                      type="button"
+                      disabled={disabled || isPending}
+                      // onClick={onDelete}
+                      className="w-full"
+                      variant="outline"
+                    >
+                      <Trash className="size-4 mr-2" />
+                      Delete student
+                    </Button>
+                  )}
+                </ConfirmDialog>
+              )}
+            </div>
           </form>
         </Form>
-      </DialogContent>
-    </Dialog>
+      </CardContent>
+    </Card>
   );
 }

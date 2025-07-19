@@ -28,7 +28,8 @@ export const useCreateStudent = ({ orgId }: { orgId: string }) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["students"] });
+      queryClient.invalidateQueries({ queryKey: ["student", { orgId }] });
+      queryClient.invalidateQueries({ queryKey: ["students", { orgId }] });
     },
   });
 

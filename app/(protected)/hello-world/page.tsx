@@ -4,7 +4,7 @@ import EditStudentFormPage from "@/features/music-school-management/features/stu
 
 export default function StudentFormDemo() {
   return (
-    <div className="p-4">
+    <div className="">
       <EditStudentFormPage />
     </div>
   );

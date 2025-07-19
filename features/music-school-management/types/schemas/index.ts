@@ -58,7 +58,8 @@ export const studentFormBulkSchema = z.object({
   id: z.string().cuid(),
   number: z.number().int().optional(),
   name: z.string(),
-  birthDate: z.date().optional(),
+  birthDate: z.union([z.string().datetime(), z.date()]).optional(), // This makes the field optional (it can be undefined)
+
   image: z.string().url().optional(),
   gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
   phone: z.string().optional(),
@@ -81,15 +82,19 @@ export type StudentFormBulkData = z.infer<typeof studentFormBulkSchema>;
 
 // Student Schema
 export const StudentSchema = z.object({
-  id: z.string().cuid(),
-  number: z.number().int().optional(),
+  id: z.string(),
+  number: z.number().optional(),
   name: z.string(),
-  birthDate: z.date().optional(),
-  image: z.string().url().optional(),
+  birthDate: z.union([z.string().datetime(), z.date()]).optional(), // This makes the field optional (it can be undefined)
+  image: z.string().optional(),
   gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
   phone: z.string().optional(),
   address: z.string().optional(),
-  email: z.string().email().optional(),
+  email: z
+    .string()
+    .email({ message: "Invalid email address." })
+    .or(z.literal(""))
+    .optional(),
   rollNumber: z.string().optional(),
   parentName: z.string().optional(),
   parentPhone: z.string().optional(),
@@ -98,7 +103,8 @@ export const StudentSchema = z.object({
   isArchived: z.boolean().default(false),
   isDeleted: z.boolean().default(false),
   isProspect: z.boolean().default(false),
-  joinedAt: z.date().default(new Date()),
+  joinedAt: z.union([z.string().datetime(), z.date()]).optional(), // This makes the field optional (it can be undefined)
+
   orgId: z.string(),
 });
 export type StudentForm = z.infer<typeof StudentSchema>;
@@ -106,6 +112,12 @@ export type StudentForm = z.infer<typeof StudentSchema>;
 // This is used for inputs like create or update (not DB model)
 export const studentFormSchema = StudentSchema.extend({
   courseIds: z.array(z.string()).optional(),
+
+  // Override birthDate to accept only Date
+  birthDate: z.date().optional(),
+
+  // Override joinedAt to accept only Date
+  joinedAt: z.date().optional(),
 });
 
 export type StudentFormData = z.infer<typeof studentFormSchema>;
@@ -126,8 +138,10 @@ export const courseSchema = z.object({
   description: z.string().optional(),
   price: z.number().default(0),
   duration: z.number().int().optional(),
-  startDate: z.date().optional(),
-  endDate: z.date().optional(),
+  startDate: z.union([z.string().datetime(), z.date()]).optional(), // This makes the field optional (it can be undefined)
+
+  endDate: z.union([z.string().datetime(), z.date()]).optional(), // This makes the field optional (it can be undefined)
+
   isActive: z.boolean().default(true),
   isArchived: z.boolean().default(false),
   isDeleted: z.boolean().default(false),
@@ -174,18 +188,16 @@ export type TeacherForm = z.infer<typeof TeacherSchema>;
 export const lessonBookSchema = z.object({
   id: z.string().cuid().optional(),
   title: z.string(),
-  author: z.string().optional().nullable(),
+  author: z.string().optional(),
   price: z.number().default(0),
-  description: z.string().optional().nullable(),
+  description: z.string().optional(),
   isActive: z.boolean().default(true),
   isArchived: z.boolean().default(false),
   isDeleted: z.boolean().default(false),
   orgId: z.string(),
   courseId: z.string(),
-  createdAt: z.date().optional(),
-  updatedAt: z.date().optional(),
-  coverImage: z.string().optional().nullable(),
-  publicationDate: z.date().optional().nullable(),
+  coverImage: z.string().optional(),
+  publicationDate: z.date().optional(),
 });
 
 export type LessonBookForm = z.infer<typeof lessonBookSchema>;
@@ -195,14 +207,13 @@ export const studentCourseSchema = z.object({
   id: z.string().cuid().optional(),
   studentId: z.string(),
   courseId: z.string(),
-  enrolledAt: z.date().optional(),
+  enrolledAt: z.union([z.string().datetime(), z.date()]).optional(), // This makes the field optional (it can be undefined)
+
   status: z
     .enum(["ENROLLED", "PAUSED", "RESUMED", "FINISHED", "CANCELLED"])
     .default("ENROLLED"),
-  notes: z.string().optional().nullable(),
+  notes: z.string().optional(),
   orgId: z.string(),
-  createdAt: z.date().optional(),
-  updatedAt: z.date().optional(),
 });
 export type StudentCourseForm = z.infer<typeof studentCourseSchema>;
 
@@ -211,11 +222,10 @@ export const courseStatusLogSchema = z.object({
   id: z.string().cuid().optional(),
   studentCourseId: z.string(),
   status: z.enum(["ENROLLED", "PAUSED", "RESUMED", "FINISHED", "CANCELLED"]),
-  changedAt: z.date().optional(),
-  note: z.string().optional().nullable(),
+  changedAt: z.union([z.string().datetime(), z.date()]).optional(), // This makes the field optional (it can be undefined)
+
+  note: z.string().optional(),
   orgId: z.string(),
-  createdAt: z.date().optional(),
-  updatedAt: z.date().optional(),
 });
 export type CourseStatusLogForm = z.infer<typeof courseStatusLogSchema>;
 
@@ -225,16 +235,14 @@ export const lessonProgressSchema = z.object({
   studentId: z.string(),
   lessonBookId: z.string(),
   completed: z.boolean().default(false),
-  completedAt: z.date().optional().nullable(),
+  completedAt: z.date().optional(),
   progress: z.number().int().min(0).max(100).default(0),
-  lessonNumber: z.number().int().optional().nullable(),
-  lessonTitle: z.string().optional().nullable(),
-  lessonDate: z.date().optional().nullable(),
-  studentNotes: z.string().optional().nullable(),
-  teacherNotes: z.string().optional().nullable(),
-  notes: z.string().optional().nullable(),
-  createdAt: z.date().optional(),
-  updatedAt: z.date().optional(),
+  lessonNumber: z.number().int().optional(),
+  lessonTitle: z.string().optional(),
+  lessonDate: z.date().optional(),
+  studentNotes: z.string().optional(),
+  teacherNotes: z.string().optional(),
+  notes: z.string().optional(),
   orgId: z.string(),
 });
 export type LessonProgressForm = z.infer<typeof lessonProgressSchema>;
@@ -243,17 +251,16 @@ export type LessonProgressForm = z.infer<typeof lessonProgressSchema>;
 export const purchaseSchema = z.object({
   id: z.string().cuid().optional(),
   studentId: z.string(),
-  courseId: z.string().optional().nullable(),
+  courseId: z.string().optional(),
   type: z.enum(["MONTHLY_FEE", "LESSON_BOOK", "OTHER"]).default("MONTHLY_FEE"),
   amount: z.number(),
-  description: z.string().optional().nullable(),
-  paidAt: z.date().optional(),
-  forMonth: z.date().optional().nullable(),
+  description: z.string().optional(),
+  paidAt: z.union([z.string().datetime(), z.date()]).optional(), // This makes the field optional (it can be undefined)
+
+  forMonth: z.date().optional(),
   method: z.enum(["CASH", "BANK", "ONLINE", "TRANSFER"]).default("CASH"),
-  invoiceId: z.string().optional().nullable(),
+  invoiceId: z.string().optional(),
   orgId: z.string(),
-  createdAt: z.date().optional(),
-  updatedAt: z.date().optional(),
 });
 export type PurchaseForm = z.infer<typeof purchaseSchema>;
 
@@ -270,8 +277,6 @@ export const scheduleSchema = z.object({
   isArchived: z.boolean().default(false),
   isDeleted: z.boolean().default(false),
   orgId: z.string(),
-  createdAt: z.date().optional(),
-  updatedAt: z.date().optional(),
 });
 export type ScheduleForm = z.infer<typeof scheduleSchema>;
 
@@ -283,11 +288,9 @@ export const studentScheduleSchema = z.object({
   status: z
     .enum(["ENROLLED", "PAUSED", "RESUMED", "FINISHED", "CANCELLED"])
     .default("ENROLLED"),
-  notes: z.string().optional().nullable(),
+  notes: z.string().optional(),
   attended: z.boolean().default(false),
   orgId: z.string(),
-  createdAt: z.date().optional(),
-  updatedAt: z.date().optional(),
 });
 export type StudentScheduleForm = z.infer<typeof studentScheduleSchema>;
 
@@ -295,14 +298,12 @@ export type StudentScheduleForm = z.infer<typeof studentScheduleSchema>;
 export const roomSchema = z.object({
   id: z.string().cuid().optional(),
   name: z.string(),
-  location: z.string().optional().nullable(),
-  capacity: z.number().int().optional().nullable(),
+  location: z.string().optional(),
+  capacity: z.number().int().optional(),
   orgId: z.string(),
   isActive: z.boolean().default(true),
   isArchived: z.boolean().default(false),
   isDeleted: z.boolean().default(false),
-  createdAt: z.date().optional(),
-  updatedAt: z.date().optional(),
 });
 export type RoomForm = z.infer<typeof roomSchema>;
 
@@ -312,7 +313,5 @@ export const invoiceSchema = z.object({
   number: z.string(),
   studentId: z.string(),
   orgId: z.string(),
-  createdAt: z.date().optional(),
-  updatedAt: z.date().optional(),
 });
 export type InvoiceForm = z.infer<typeof invoiceSchema>;

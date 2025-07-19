@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useUploadImage } from "../api/use-upload-image";
 
 type Props = {
+  type?: "user" | "member" | "material" | "team";
   canEdit?: boolean;
   fileRef: any;
   isClient: boolean;
@@ -16,6 +17,7 @@ type Props = {
 };
 
 const CustomUploadImagePage = ({
+  type,
   canEdit,
   fileRef,
   isClient,
@@ -41,7 +43,7 @@ const CustomUploadImagePage = ({
           fileLink = reader.result as string;
 
           uploadImageMutation.mutate(
-            { image: fileLink },
+            { image: fileLink, type },
             {
               onSuccess: (response: any) => {
                 const link = response?.link; // Assuming the backend returns { link: "URL" }

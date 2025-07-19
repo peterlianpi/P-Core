@@ -9,7 +9,13 @@ type RequestType = InferRequestType<
   (typeof client.api.students)[":id"]["$patch"]
 >["json"];
 
-export const useEditStudent = (orgId: string, id: string) => {
+export const useEditStudent = ({
+  orgId,
+  id,
+}: {
+  orgId: string;
+  id: string;
+}) => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation<ResponseType, Error, RequestType>({
@@ -33,8 +39,8 @@ export const useEditStudent = (orgId: string, id: string) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["students", { id }] });
-      queryClient.invalidateQueries({ queryKey: ["students"] });
+      queryClient.invalidateQueries({ queryKey: ["student", { id, orgId }] });
+      queryClient.invalidateQueries({ queryKey: ["students", { orgId }] });
     },
   });
   return mutation;
