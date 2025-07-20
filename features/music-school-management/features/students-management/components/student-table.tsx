@@ -1,51 +1,71 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal } from "lucide-react"
-import type { Student, Course } from "@/lib/types"
+import { useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
+import {
+  CustomCourseFormData,
+  StudentFormData,
+} from "@/features/music-school-management/types/schemas";
 
 interface StudentTableProps {
-  students: Student[]
-  courses: Course[]
-  onEdit: (student: Student) => void
-  onDelete: (id: string) => void
+  students: StudentFormData[];
+  courses: CustomCourseFormData[];
+  onEdit: (student: StudentFormData) => void;
+  onDelete: (id: string) => void;
 }
 
-export function StudentTable({ students, courses, onEdit, onDelete }: StudentTableProps) {
-  const [filter, setFilter] = useState("")
+export function StudentTable({
+  students,
+  courses,
+  onEdit,
+  onDelete,
+}: StudentTableProps) {
+  const [filter, setFilter] = useState("");
 
   const filteredStudents = students.filter(
     (student) =>
       student.name.toLowerCase().includes(filter.toLowerCase()) ||
-      student.email.toLowerCase().includes(filter.toLowerCase()) ||
+      student?.email.toLowerCase().includes(filter.toLowerCase()) ||
       student.rollNumber?.toLowerCase().includes(filter.toLowerCase()) ||
-      student.level.toLowerCase().includes(filter.toLowerCase()),
-  )
+      student?.level.toLowerCase().includes(filter.toLowerCase())
+  );
 
   const getCourse = (courseId: string) => {
-    return courses.find((c) => c.id === courseId)
-  }
+    return courses.find((c) => c.id === courseId);
+  };
 
   const getStatusVariant = (status: Student["status"]) => {
     switch (status) {
       case "active":
-        return "default" as const
+        return "default" as const;
       case "inactive":
-        return "secondary" as const
+        return "secondary" as const;
       case "suspended":
-        return "destructive" as const
+        return "destructive" as const;
       case "graduated":
-        return "outline" as const
+        return "outline" as const;
       default:
-        return "secondary" as const
+        return "secondary" as const;
     }
-  }
+  };
 
   return (
     <div className="space-y-4">
@@ -70,7 +90,7 @@ export function StudentTable({ students, courses, onEdit, onDelete }: StudentTab
         </TableHeader>
         <TableBody>
           {filteredStudents.map((student) => {
-            const course = getCourse(student.courseId)
+            const course = getCourse(student.courseId);
             return (
               <TableRow key={student.id}>
                 <TableCell>
@@ -86,25 +106,40 @@ export function StudentTable({ students, courses, onEdit, onDelete }: StudentTab
                     </Avatar>
                     <div>
                       <div className="font-medium">{student.name}</div>
-                      <div className="text-sm text-muted-foreground">{student.email}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {student.email}
+                      </div>
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="font-mono text-sm">{student.rollNumber || "N/A"}</TableCell>
+                <TableCell className="font-mono text-sm">
+                  {student.rollNumber || "N/A"}
+                </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    {course && <div className="w-3 h-3 rounded-full" style={{ backgroundColor: course.color }} />}
+                    {course && (
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: course.color }}
+                      />
+                    )}
                     {course?.name || "Unknown"}
                   </div>
                 </TableCell>
                 <TableCell>{student.level}</TableCell>
                 <TableCell>
-                  <Badge variant={getStatusVariant(student.status)}>{student.status}</Badge>
+                  <Badge variant={getStatusVariant(student.status)}>
+                    {student.status}
+                  </Badge>
                 </TableCell>
                 <TableCell>
                   <div className="text-sm">
                     <div>{student.phone || "N/A"}</div>
-                    {student.parentName && <div className="text-muted-foreground">Parent: {student.parentName}</div>}
+                    {student.parentName && (
+                      <div className="text-muted-foreground">
+                        Parent: {student.parentName}
+                      </div>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -116,16 +151,20 @@ export function StudentTable({ students, courses, onEdit, onDelete }: StudentTab
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => onEdit(student)}>Edit</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onDelete(student.id)}>Delete</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onEdit(student)}>
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onDelete(student.id)}>
+                        Delete
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
               </TableRow>
-            )
+            );
           })}
         </TableBody>
       </Table>
     </div>
-  )
+  );
 }

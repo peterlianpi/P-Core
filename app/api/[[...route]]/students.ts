@@ -256,6 +256,17 @@ const app = new Hono()
       const { courseIds, ...restValues } = c.req.valid("json");
 
       try {
+        // Validate student exists
+        const existingStudent = await featuresDBPrismaClient.student.findUnique(
+          {
+            where: { id, orgId: organizationId },
+          }
+        );
+
+        if (!existingStudent) {
+          return c.json({ error: "Student not found" }, 404);
+        }
+
         // Step 1: Update student base data
         await featuresDBPrismaClient.student.update({
           where: { id, orgId: organizationId },
@@ -346,8 +357,7 @@ const app = new Hono()
           });
 
         return c.json(studentWithCourses);
-      } catch (error) {
-        console.error("Update student error:", error);
+      } catch {
         return c.json({ error: "Failed to update student" }, 500);
       }
     }
@@ -383,6 +393,8 @@ const app = new Hono()
           select: {
             id: true,
             name: true,
+            number: true,
+            rollNumber: true,
             phone: true,
             gender: true,
             image: true,
@@ -393,6 +405,11 @@ const app = new Hono()
             parentName: true,
             parentPhone: true,
             joinedAt: true,
+            isActive: true,
+            isArchived: true,
+            isDeleted: true,
+            isProspect: true,
+
             courses: {
               include: {
                 course: true,
@@ -504,9 +521,12 @@ const app = new Hono()
           select: {
             id: true,
             name: true,
+            number: true,
+            rollNumber: true,
             phone: true,
             gender: true,
             image: true,
+            notes: true,
             email: true,
             orgId: true,
             birthDate: true,
@@ -514,6 +534,10 @@ const app = new Hono()
             parentName: true,
             parentPhone: true,
             joinedAt: true,
+            isActive: true,
+            isArchived: true,
+            isDeleted: true,
+            isProspect: true,
             courses: {
               include: {
                 course: true,
@@ -607,6 +631,35 @@ const app = new Hono()
       } catch (err) {
         console.error("Error fetching student:", err);
         return c.json({ error: "Error fetching student" }, 500);
+      }
+    }
+  )
+
+  // GET: Retrieve stat
+  .get(
+    "/stats",
+    zValidator(
+      "query",
+      z.object({
+        orgId: z.string().optional(),
+      })
+    ),
+    async (c) => {
+      const authResult = await ensureUserInOrganization(c);
+      if ("json" in authResult) return authResult; // Return error if unauthorized
+      const { organizationId } = authResult;
+
+      try {
+        const stats = await featuresDBPrismaClient.student.groupBy({
+          by: ["isActive", "isArchived", "isProspect"],
+          _count: true,
+          where: { orgId: organizationId },
+        });
+
+        return c.json(stats);
+      } catch (err) {
+        console.error("Error fetching student stats:", err);
+        return c.json({ error: "Error fetching student stats" }, 500);
       }
     }
   )

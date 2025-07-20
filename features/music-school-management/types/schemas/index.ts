@@ -1,59 +1,5 @@
 import { z } from "zod";
 
-// // Status options updated to match your Prisma CourseStatus enum
-// const statusOptions = [
-//   "ENROLLED",
-//   "PAUSED",
-//   "RESUMED",
-//   "FINISHED",
-//   "CANCELLED",
-// ] as const;
-
-// export const courseEnrollmentSchema = z.object({
-//   courseId: z.string().min(1, "Course is required"),
-//   level: z.string().min(1, "Level is required"),
-//   enrollmentDate: z
-//     .string()
-//     .min(1, "Enrollment date is required")
-//     .refine((date) => !isNaN(Date.parse(date)), {
-//       message: "Invalid date format",
-//     }),
-//   status: z.enum(statusOptions),
-// });
-
-// export const studentFormSchema = z.object({
-//   id: z.string().optional(),
-//   number: z.number().optional(),
-//   name: z.string().min(1, "Name is required"),
-//   birthDate: z
-//     .string()
-//     .optional()
-//     .refine((date) => !date || !isNaN(Date.parse(date)), {
-//       message: "Invalid birthDate format",
-//     }),
-//   image: z.string().optional(),
-//   gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
-//   phone: z.string().optional(),
-//   address: z.string().optional(),
-//   email: z.string().email("Invalid email").optional(),
-//   guardian: z.string().optional(),
-//   joinedAt: z
-//     .string()
-//     .min(1, "Join date is required")
-//     .refine((date) => !isNaN(Date.parse(date)), {
-//       message: "Invalid joinedAt date format",
-//     }),
-//   orgId: z.string(),
-//   rollNumber: z.string().optional(),
-//   parentName: z.string().optional(),
-//   parentPhone: z.string().optional(),
-//   courses: z
-//     .array(courseEnrollmentSchema)
-//     .min(1, "At least one course is required"),
-// });
-
-// export type StudentFormData = z.infer<typeof studentFormSchema>;
-
 export const studentFormBulkSchema = z.object({
   id: z.string().cuid(),
   number: z.number().int().optional(),

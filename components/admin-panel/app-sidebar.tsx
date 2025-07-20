@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { usePathname } from "next/navigation";
-import { Settings2, GroupIcon, BookIcon } from "lucide-react";
 
 import { NavUser } from "@/components/admin-panel/nav-user";
 import { NavMain } from "@/components/admin-panel/nav-main";
@@ -17,6 +16,7 @@ import {
 
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { UserRole } from "@/prisma-user-database/user-database-client-types";
+import { getNavByRole } from "@/features/music-school-management/site/config";
 
 type Organizations = {
   organization: {
@@ -46,46 +46,7 @@ export function AppSidebar({
   };
 
   const teams = organizations.map((org) => org.organization);
-  // const hasAdminOrg = organizations.some(
-  //   (org) => org.role === "OWNER" || org.role === "ADMIN"
-  // );
-
-  const hasOrg = organizations.length > 0;
-  // Dynamic nav with isActive
-  const navMain = [
-    {
-      title: "Courses Overview",
-      url: "/dashboard/courses",
-      icon: BookIcon,
-      isActive: pathname.startsWith("/dashboard/courses"),
-      items: [
-        { title: "Course Overview", url: "/dashboard/courses" },
-        // { title: "Create Course", url: "/courses/create" },
-      ],
-    },
-
-    ...(hasOrg
-      ? [
-          {
-            title: "Organization",
-            url: "/organization",
-            icon: GroupIcon,
-            isActive: pathname.startsWith("/organization"),
-            items: [
-              { title: "Organization", url: "/organization" },
-              { title: "Manage Member", url: "/organization/manage-member" },
-            ],
-          },
-        ]
-      : []),
-    {
-      title: "Settings",
-      url: "/settings",
-      icon: Settings2,
-      isActive: pathname.startsWith("/settings"),
-      items: [{ title: "Profile", url: "/settings" }],
-    },
-  ];
+  const navMain = getNavByRole(pathname, organizations);
 
   return (
     <Sidebar variant="floating" collapsible="icon" {...props}>

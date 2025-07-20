@@ -3,15 +3,19 @@
 import { StudentForm } from "@/features/music-school-management/features/students-management/components/student-form";
 import { StudentFormData } from "@/features/music-school-management/types/schemas";
 import { useGetStudentByIdAndOrgId } from "../api/use-get-student-by-id-and-orgId";
-import { useParams } from "next/navigation";
+// import { useParams } from "next/navigation";
 import { useData } from "@/providers/data-provider";
+import { toast } from "sonner";
 import { useEditStudent } from "../api/use-edit-student";
+import StudentFormSkeleton from "./student-form-skeleton";
+import { useParams } from "next/navigation";
 
 export default function EditStudentFormPage() {
   const { orgId } = useData();
   const params = useParams();
-  const id = (params.id as string) || "cmd939z07000095ec1xbgcf95"; // Use fallback only for dev
-
+  const id = params.id as string;
+  // ||
+  // "cmd939z07000095ec1xbgcf95"; // Use fallback only for dev
   const { data: fetchedStudent, isLoading } = useGetStudentByIdAndOrgId({
     id,
     orgId,
@@ -80,18 +84,23 @@ export default function EditStudentFormPage() {
       };
 
   const handleSave = (data: StudentFormData) => {
-    console.log("Student information:", data);
-
-    console.log("Update student!");
     editStudentMutation.mutate(data, {
       onSuccess: () => {
-        console.log(`Student ${data.name} updated successfully:`);
+        toast.success(`Student "${data.name}" updated successfully.`);
       },
       onError: (error) => {
-        console.error("Failed to update student:", error);
+        toast.error(`${error.message || "Failed to update student!"}`);
       },
     });
   };
+
+  if (isLoading) {
+    return (
+      <>
+        <StudentFormSkeleton />
+      </>
+    );
+  }
 
   return (
     <>
