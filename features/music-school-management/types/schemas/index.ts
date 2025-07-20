@@ -113,6 +113,9 @@ export type StudentForm = z.infer<typeof StudentSchema>;
 export const studentFormSchema = StudentSchema.extend({
   courseIds: z.array(z.string()).optional(),
 
+  // Accept any type for image, can be string or File
+  image: z.any().optional(),
+
   // Override birthDate to accept only Date
   birthDate: z.date().optional(),
 

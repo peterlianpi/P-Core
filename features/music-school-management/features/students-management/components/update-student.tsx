@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { StudentForm } from "@/features/music-school-management/features/students-management/components/student-form";
 import { StudentFormData } from "@/features/music-school-management/types/schemas";
 import { useGetStudentByIdAndOrgId } from "../api/use-get-student-by-id-and-orgId";
@@ -13,48 +12,10 @@ export default function EditStudentFormPage() {
   const params = useParams();
   const id = (params.id as string) || "cmd939z07000095ec1xbgcf95"; // Use fallback only for dev
 
-  const {
-    data: fetchedStudent,
-    isLoading,
-    error,
-  } = useGetStudentByIdAndOrgId({
+  const { data: fetchedStudent, isLoading } = useGetStudentByIdAndOrgId({
     id,
     orgId,
   });
-  const [student, setStudent] = useState<StudentFormData | undefined>(
-    undefined
-  );
-
-  useEffect(() => {
-    setStudent(
-      fetchedStudent && {
-        orgId: fetchedStudent?.orgId,
-        id: fetchedStudent?.id,
-        name: fetchedStudent?.name,
-        isActive: fetchedStudent?.isActive ?? true,
-        isArchived: fetchedStudent?.isArchived ?? false,
-        isDeleted: fetchedStudent?.isDeleted ?? false,
-        isProspect: fetchedStudent?.isProspect ?? false,
-        joinedAt: fetchedStudent?.joinedAt
-          ? new Date(fetchedStudent.joinedAt)
-          : new Date(),
-        birthDate: fetchedStudent?.birthDate
-          ? new Date(fetchedStudent.birthDate)
-          : undefined,
-        number: fetchedStudent?.number ?? undefined,
-        image: fetchedStudent?.image ?? undefined,
-        gender: fetchedStudent?.gender ?? undefined,
-        phone: fetchedStudent?.phone ?? undefined,
-        address: fetchedStudent?.address ?? undefined,
-        email: fetchedStudent?.email ?? undefined,
-        rollNumber: fetchedStudent?.rollNumber ?? undefined,
-        parentName: fetchedStudent?.parentName ?? undefined,
-        parentPhone: fetchedStudent?.parentPhone ?? undefined,
-        notes: fetchedStudent?.notes ?? undefined,
-        courseIds: fetchedStudent?.courses?.map((c) => c.course.id) ?? [],
-      }
-    );
-  }, []);
 
   const editStudentMutation = useEditStudent({ orgId, id });
 
@@ -119,8 +80,7 @@ export default function EditStudentFormPage() {
       };
 
   const handleSave = (data: StudentFormData) => {
-    setStudent(data);
-    console.log("Student information:", student);
+    console.log("Student information:", data);
 
     console.log("Update student!");
     editStudentMutation.mutate(data, {
@@ -142,12 +102,6 @@ export default function EditStudentFormPage() {
         availableCourses={mockCourses}
         defaultValues={defaultValues}
       />
-
-      {error && (
-        <div className="text-red-500 mt-4">
-          Error fetching student: {error.message}
-        </div>
-      )}
     </>
   );
 }
