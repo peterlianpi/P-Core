@@ -88,7 +88,7 @@ model Student {
   phone       String? // Contact number
   address     String? // Home address
   email       String?   @unique // Optional email (must be unique)
-  rollNumber  String?   @unique // Optional school roll number
+  rollNumber  String?
   parentName  String? // Guardian's name
   parentPhone String? // Guardian's phone
   notes       String? // Additional notes

@@ -26,7 +26,7 @@ export function SearchBar({
       placeholder={placeholder}
       value={searchTerm}
       onChange={handleSearch}
-      className="max-w-md max-md:w-full"
+      className="max-w-md max-md:w-full border-none text-primary placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:border-none"
     />
   );
 }

@@ -1,7 +1,6 @@
 import { useData } from "@/providers/data-provider";
 import { useEffect, useState } from "react";
 import { StudentFormData } from "@/features/music-school-management/types/schemas";
-import { INITIAL_IMPORT_RESULTS } from "@/components/import-data/import-helper/import-data";
 import { usePagination } from "@/helpers/use-pagination";
 import { useSearchStudents } from "../api/use-search-students";
 import ErrorBox from "@/components/error-box";
@@ -13,14 +12,9 @@ import { getStudentColumns } from "@/app/(protected)/music-school-management/stu
 type Props = {
   students: StudentFormData[];
   items: number;
-  onUpload?: (results: typeof INITIAL_IMPORT_RESULTS) => void;
 };
 
-export default function SearchStudentPage({
-  students,
-  items,
-  onUpload,
-}: Props) {
+export default function SearchStudentPage({ students, items }: Props) {
   const [searchQuery, setSearchQuery] = useState(""); // Track search input
   const { orgId, setLoading } = useData();
   const { take, skip, onPaginationChange, pagination } = usePagination();
@@ -89,7 +83,7 @@ export default function SearchStudentPage({
 
   return (
     <section className="space-y-4">
-      <div className="flex items-center gap-4 bg-secondary opacity-95 px-4 rounded-md sticky top-14 z-10 py-4">
+      <div className="flex items-center gap-4 px-2 border rounded-md py-4">
         <SearchBar onSearch={handleSearch} placeholder="Search ..." />
       </div>
       <DataTable
@@ -97,7 +91,6 @@ export default function SearchStudentPage({
         items={total}
         columns={columns}
         searchField="name"
-        onUpload={onUpload}
         pagination={pagination}
         onPaginationChange={onPaginationChange}
       />

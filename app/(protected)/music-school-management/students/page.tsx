@@ -1,18 +1,31 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Users, UserCheck, UserX, GraduationCap } from "lucide-react";
+import { Users, UserCheck, UserX, GraduationCap } from "lucide-react";
 
 import { useData } from "@/providers/data-provider";
 import { useGetStudents } from "@/features/music-school-management/features/students-management/api/use-get-students";
 import { useRouter } from "next/navigation";
 import SearchStudentPage from "@/features/music-school-management/features/students-management/components/students-search-box";
+import { useImportData } from "@/components/import-data/import-helper/import-data";
+import { useBulkCreateStudents } from "@/features/music-school-management/features/students-management/api/use-bulk-create-students";
+import { ImportCard } from "@/components/import-data/import-card";
+import { StudentActions } from "@/features/music-school-management/features/students-management/components/add-import-student";
 
 export default function StudentsPage() {
   const { orgId } = useData();
   const router = useRouter();
   const { data: students, isLoading } = useGetStudents({ orgId });
+  const createStudents = useBulkCreateStudents(orgId);
+
+  const {
+    variant,
+    VARIANTS,
+    importResults,
+    onUpload,
+    onCancelImport,
+    onSubmitImport,
+  } = useImportData({ entity: "Students", createMutation: createStudents });
 
   const handleAddNew = () => {
     router.push("/music-school-management/students/add");
@@ -53,6 +66,20 @@ export default function StudentsPage() {
     graduated: students?.data.filter((s) => s.isProspect).length ?? 0,
   };
 
+  if (variant === VARIANTS.IMPORT) {
+    return (
+      <>
+        <ImportCard
+          entity="Students"
+          data={importResults.data}
+          requiredFields={["name", "gender", "phone", "courses"]}
+          onCancel={onCancelImport}
+          onSubmit={onSubmitImport}
+        />
+      </>
+    );
+  }
+
   return (
     <div className="w-full flex flex-col gap-4 mt-4 sm:p-4">
       {/* Header */}
@@ -64,10 +91,10 @@ export default function StudentsPage() {
               Manage your music school students
             </p>
           </div>
-          <Button onClick={handleAddNew}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Student
-          </Button>
+
+          <div>
+            <StudentActions onUpload={onUpload} handleAddNew={handleAddNew} />
+          </div>
         </div>
       </div>
 

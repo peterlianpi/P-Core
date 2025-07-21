@@ -13197,6 +13197,9 @@ export namespace Prisma {
     Address: string | null
     createdAt: Date | null
     updatedAt: Date | null
+    type: string | null
+    deletedAt: Date | null
+    isActive: boolean | null
     createdById: string | null
   }
 
@@ -13210,6 +13213,9 @@ export namespace Prisma {
     Address: string | null
     createdAt: Date | null
     updatedAt: Date | null
+    type: string | null
+    deletedAt: Date | null
+    isActive: boolean | null
     createdById: string | null
   }
 
@@ -13223,6 +13229,9 @@ export namespace Prisma {
     Address: number
     createdAt: number
     updatedAt: number
+    type: number
+    deletedAt: number
+    isActive: number
     createdById: number
     _all: number
   }
@@ -13246,6 +13255,9 @@ export namespace Prisma {
     Address?: true
     createdAt?: true
     updatedAt?: true
+    type?: true
+    deletedAt?: true
+    isActive?: true
     createdById?: true
   }
 
@@ -13259,6 +13271,9 @@ export namespace Prisma {
     Address?: true
     createdAt?: true
     updatedAt?: true
+    type?: true
+    deletedAt?: true
+    isActive?: true
     createdById?: true
   }
 
@@ -13272,6 +13287,9 @@ export namespace Prisma {
     Address?: true
     createdAt?: true
     updatedAt?: true
+    type?: true
+    deletedAt?: true
+    isActive?: true
     createdById?: true
     _all?: true
   }
@@ -13372,6 +13390,9 @@ export namespace Prisma {
     Address: string | null
     createdAt: Date
     updatedAt: Date
+    type: string | null
+    deletedAt: Date | null
+    isActive: boolean
     createdById: string
     _count: OrganizationCountAggregateOutputType | null
     _avg: OrganizationAvgAggregateOutputType | null
@@ -13404,6 +13425,9 @@ export namespace Prisma {
     Address?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    type?: boolean
+    deletedAt?: boolean
+    isActive?: boolean
     createdById?: boolean
     createdBy?: boolean | UserDefaultArgs<ExtArgs>
     UserOrganization?: boolean | Organization$UserOrganizationArgs<ExtArgs>
@@ -13423,6 +13447,9 @@ export namespace Prisma {
     Address?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    type?: boolean
+    deletedAt?: boolean
+    isActive?: boolean
     createdById?: boolean
     createdBy?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["organization"]>
@@ -13437,6 +13464,9 @@ export namespace Prisma {
     Address?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    type?: boolean
+    deletedAt?: boolean
+    isActive?: boolean
     createdById?: boolean
     createdBy?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["organization"]>
@@ -13451,10 +13481,13 @@ export namespace Prisma {
     Address?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    type?: boolean
+    deletedAt?: boolean
+    isActive?: boolean
     createdById?: boolean
   }
 
-  export type OrganizationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "number" | "name" | "description" | "startedAt" | "logoImage" | "Address" | "createdAt" | "updatedAt" | "createdById", ExtArgs["result"]["organization"]>
+  export type OrganizationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "number" | "name" | "description" | "startedAt" | "logoImage" | "Address" | "createdAt" | "updatedAt" | "type" | "deletedAt" | "isActive" | "createdById", ExtArgs["result"]["organization"]>
   export type OrganizationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     createdBy?: boolean | UserDefaultArgs<ExtArgs>
     UserOrganization?: boolean | Organization$UserOrganizationArgs<ExtArgs>
@@ -13489,6 +13522,9 @@ export namespace Prisma {
       Address: string | null
       createdAt: Date
       updatedAt: Date
+      type: string | null
+      deletedAt: Date | null
+      isActive: boolean
       createdById: string
     }, ExtArgs["result"]["organization"]>
     composites: {}
@@ -13927,6 +13963,9 @@ export namespace Prisma {
     readonly Address: FieldRef<"Organization", 'String'>
     readonly createdAt: FieldRef<"Organization", 'DateTime'>
     readonly updatedAt: FieldRef<"Organization", 'DateTime'>
+    readonly type: FieldRef<"Organization", 'String'>
+    readonly deletedAt: FieldRef<"Organization", 'DateTime'>
+    readonly isActive: FieldRef<"Organization", 'Boolean'>
     readonly createdById: FieldRef<"Organization", 'String'>
   }
     
@@ -18916,6 +18955,9 @@ export namespace Prisma {
     Address: 'Address',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
+    type: 'type',
+    deletedAt: 'deletedAt',
+    isActive: 'isActive',
     createdById: 'createdById'
   };
 
@@ -19851,6 +19893,9 @@ export namespace Prisma {
     Address?: StringNullableFilter<"Organization"> | string | null
     createdAt?: DateTimeFilter<"Organization"> | Date | string
     updatedAt?: DateTimeFilter<"Organization"> | Date | string
+    type?: StringNullableFilter<"Organization"> | string | null
+    deletedAt?: DateTimeNullableFilter<"Organization"> | Date | string | null
+    isActive?: BoolFilter<"Organization"> | boolean
     createdById?: StringFilter<"Organization"> | string
     createdBy?: XOR<UserScalarRelationFilter, UserWhereInput>
     UserOrganization?: UserOrganizationListRelationFilter
@@ -19869,6 +19914,9 @@ export namespace Prisma {
     Address?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    type?: SortOrderInput | SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    isActive?: SortOrder
     createdById?: SortOrder
     createdBy?: UserOrderByWithRelationInput
     UserOrganization?: UserOrganizationOrderByRelationAggregateInput
@@ -19890,6 +19938,9 @@ export namespace Prisma {
     Address?: StringNullableFilter<"Organization"> | string | null
     createdAt?: DateTimeFilter<"Organization"> | Date | string
     updatedAt?: DateTimeFilter<"Organization"> | Date | string
+    type?: StringNullableFilter<"Organization"> | string | null
+    deletedAt?: DateTimeNullableFilter<"Organization"> | Date | string | null
+    isActive?: BoolFilter<"Organization"> | boolean
     createdById?: StringFilter<"Organization"> | string
     createdBy?: XOR<UserScalarRelationFilter, UserWhereInput>
     UserOrganization?: UserOrganizationListRelationFilter
@@ -19908,6 +19959,9 @@ export namespace Prisma {
     Address?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    type?: SortOrderInput | SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    isActive?: SortOrder
     createdById?: SortOrder
     _count?: OrganizationCountOrderByAggregateInput
     _avg?: OrganizationAvgOrderByAggregateInput
@@ -19929,6 +19983,9 @@ export namespace Prisma {
     Address?: StringNullableWithAggregatesFilter<"Organization"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Organization"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Organization"> | Date | string
+    type?: StringNullableWithAggregatesFilter<"Organization"> | string | null
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"Organization"> | Date | string | null
+    isActive?: BoolWithAggregatesFilter<"Organization"> | boolean
     createdById?: StringWithAggregatesFilter<"Organization"> | string
   }
 
@@ -20991,6 +21048,9 @@ export namespace Prisma {
     Address?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    type?: string | null
+    deletedAt?: Date | string | null
+    isActive?: boolean
     createdBy: UserCreateNestedOneWithoutOrganizationCreatedInput
     UserOrganization?: UserOrganizationCreateNestedManyWithoutOrganizationInput
     featureAccess?: OrganizationFeatureAccessCreateNestedManyWithoutOrganizationInput
@@ -21008,6 +21068,9 @@ export namespace Prisma {
     Address?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    type?: string | null
+    deletedAt?: Date | string | null
+    isActive?: boolean
     createdById: string
     UserOrganization?: UserOrganizationUncheckedCreateNestedManyWithoutOrganizationInput
     featureAccess?: OrganizationFeatureAccessUncheckedCreateNestedManyWithoutOrganizationInput
@@ -21025,6 +21088,9 @@ export namespace Prisma {
     Address?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    type?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     createdBy?: UserUpdateOneRequiredWithoutOrganizationCreatedNestedInput
     UserOrganization?: UserOrganizationUpdateManyWithoutOrganizationNestedInput
     featureAccess?: OrganizationFeatureAccessUpdateManyWithoutOrganizationNestedInput
@@ -21042,6 +21108,9 @@ export namespace Prisma {
     Address?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    type?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     createdById?: StringFieldUpdateOperationsInput | string
     UserOrganization?: UserOrganizationUncheckedUpdateManyWithoutOrganizationNestedInput
     featureAccess?: OrganizationFeatureAccessUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -21059,6 +21128,9 @@ export namespace Prisma {
     Address?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    type?: string | null
+    deletedAt?: Date | string | null
+    isActive?: boolean
     createdById: string
   }
 
@@ -21072,6 +21144,9 @@ export namespace Prisma {
     Address?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    type?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type OrganizationUncheckedUpdateManyInput = {
@@ -21084,6 +21159,9 @@ export namespace Prisma {
     Address?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    type?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     createdById?: StringFieldUpdateOperationsInput | string
   }
 
@@ -22026,6 +22104,9 @@ export namespace Prisma {
     Address?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    type?: SortOrder
+    deletedAt?: SortOrder
+    isActive?: SortOrder
     createdById?: SortOrder
   }
 
@@ -22043,6 +22124,9 @@ export namespace Prisma {
     Address?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    type?: SortOrder
+    deletedAt?: SortOrder
+    isActive?: SortOrder
     createdById?: SortOrder
   }
 
@@ -22056,6 +22140,9 @@ export namespace Prisma {
     Address?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    type?: SortOrder
+    deletedAt?: SortOrder
+    isActive?: SortOrder
     createdById?: SortOrder
   }
 
@@ -23290,6 +23377,9 @@ export namespace Prisma {
     Address?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    type?: string | null
+    deletedAt?: Date | string | null
+    isActive?: boolean
     createdBy: UserCreateNestedOneWithoutOrganizationCreatedInput
     UserOrganization?: UserOrganizationCreateNestedManyWithoutOrganizationInput
     featureAccess?: OrganizationFeatureAccessCreateNestedManyWithoutOrganizationInput
@@ -23306,6 +23396,9 @@ export namespace Prisma {
     Address?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    type?: string | null
+    deletedAt?: Date | string | null
+    isActive?: boolean
     createdById: string
     UserOrganization?: UserOrganizationUncheckedCreateNestedManyWithoutOrganizationInput
     featureAccess?: OrganizationFeatureAccessUncheckedCreateNestedManyWithoutOrganizationInput
@@ -23387,6 +23480,9 @@ export namespace Prisma {
     Address?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    type?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     createdBy?: UserUpdateOneRequiredWithoutOrganizationCreatedNestedInput
     UserOrganization?: UserOrganizationUpdateManyWithoutOrganizationNestedInput
     featureAccess?: OrganizationFeatureAccessUpdateManyWithoutOrganizationNestedInput
@@ -23403,6 +23499,9 @@ export namespace Prisma {
     Address?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    type?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     createdById?: StringFieldUpdateOperationsInput | string
     UserOrganization?: UserOrganizationUncheckedUpdateManyWithoutOrganizationNestedInput
     featureAccess?: OrganizationFeatureAccessUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -23500,6 +23599,9 @@ export namespace Prisma {
     Address?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    type?: string | null
+    deletedAt?: Date | string | null
+    isActive?: boolean
     UserOrganization?: UserOrganizationCreateNestedManyWithoutOrganizationInput
     featureAccess?: OrganizationFeatureAccessCreateNestedManyWithoutOrganizationInput
     telegramBot?: TelegramSettingCreateNestedManyWithoutOrgInput
@@ -23516,6 +23618,9 @@ export namespace Prisma {
     Address?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    type?: string | null
+    deletedAt?: Date | string | null
+    isActive?: boolean
     UserOrganization?: UserOrganizationUncheckedCreateNestedManyWithoutOrganizationInput
     featureAccess?: OrganizationFeatureAccessUncheckedCreateNestedManyWithoutOrganizationInput
     telegramBot?: TelegramSettingUncheckedCreateNestedManyWithoutOrgInput
@@ -23678,6 +23783,9 @@ export namespace Prisma {
     Address?: StringNullableFilter<"Organization"> | string | null
     createdAt?: DateTimeFilter<"Organization"> | Date | string
     updatedAt?: DateTimeFilter<"Organization"> | Date | string
+    type?: StringNullableFilter<"Organization"> | string | null
+    deletedAt?: DateTimeNullableFilter<"Organization"> | Date | string | null
+    isActive?: BoolFilter<"Organization"> | boolean
     createdById?: StringFilter<"Organization"> | string
   }
 
@@ -24061,6 +24169,9 @@ export namespace Prisma {
     Address?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    type?: string | null
+    deletedAt?: Date | string | null
+    isActive?: boolean
     createdBy: UserCreateNestedOneWithoutOrganizationCreatedInput
     featureAccess?: OrganizationFeatureAccessCreateNestedManyWithoutOrganizationInput
     telegramBot?: TelegramSettingCreateNestedManyWithoutOrgInput
@@ -24077,6 +24188,9 @@ export namespace Prisma {
     Address?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    type?: string | null
+    deletedAt?: Date | string | null
+    isActive?: boolean
     createdById: string
     featureAccess?: OrganizationFeatureAccessUncheckedCreateNestedManyWithoutOrganizationInput
     telegramBot?: TelegramSettingUncheckedCreateNestedManyWithoutOrgInput
@@ -24158,6 +24272,9 @@ export namespace Prisma {
     Address?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    type?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     createdBy?: UserUpdateOneRequiredWithoutOrganizationCreatedNestedInput
     featureAccess?: OrganizationFeatureAccessUpdateManyWithoutOrganizationNestedInput
     telegramBot?: TelegramSettingUpdateManyWithoutOrgNestedInput
@@ -24174,6 +24291,9 @@ export namespace Prisma {
     Address?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    type?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     createdById?: StringFieldUpdateOperationsInput | string
     featureAccess?: OrganizationFeatureAccessUncheckedUpdateManyWithoutOrganizationNestedInput
     telegramBot?: TelegramSettingUncheckedUpdateManyWithoutOrgNestedInput
@@ -24190,6 +24310,9 @@ export namespace Prisma {
     Address?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    type?: string | null
+    deletedAt?: Date | string | null
+    isActive?: boolean
     createdBy: UserCreateNestedOneWithoutOrganizationCreatedInput
     UserOrganization?: UserOrganizationCreateNestedManyWithoutOrganizationInput
     featureAccess?: OrganizationFeatureAccessCreateNestedManyWithoutOrganizationInput
@@ -24206,6 +24329,9 @@ export namespace Prisma {
     Address?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    type?: string | null
+    deletedAt?: Date | string | null
+    isActive?: boolean
     createdById: string
     UserOrganization?: UserOrganizationUncheckedCreateNestedManyWithoutOrganizationInput
     featureAccess?: OrganizationFeatureAccessUncheckedCreateNestedManyWithoutOrganizationInput
@@ -24238,6 +24364,9 @@ export namespace Prisma {
     Address?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    type?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     createdBy?: UserUpdateOneRequiredWithoutOrganizationCreatedNestedInput
     UserOrganization?: UserOrganizationUpdateManyWithoutOrganizationNestedInput
     featureAccess?: OrganizationFeatureAccessUpdateManyWithoutOrganizationNestedInput
@@ -24254,6 +24383,9 @@ export namespace Prisma {
     Address?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    type?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     createdById?: StringFieldUpdateOperationsInput | string
     UserOrganization?: UserOrganizationUncheckedUpdateManyWithoutOrganizationNestedInput
     featureAccess?: OrganizationFeatureAccessUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -24308,6 +24440,9 @@ export namespace Prisma {
     Address?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    type?: string | null
+    deletedAt?: Date | string | null
+    isActive?: boolean
     createdBy: UserCreateNestedOneWithoutOrganizationCreatedInput
     UserOrganization?: UserOrganizationCreateNestedManyWithoutOrganizationInput
     telegramBot?: TelegramSettingCreateNestedManyWithoutOrgInput
@@ -24324,6 +24459,9 @@ export namespace Prisma {
     Address?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    type?: string | null
+    deletedAt?: Date | string | null
+    isActive?: boolean
     createdById: string
     UserOrganization?: UserOrganizationUncheckedCreateNestedManyWithoutOrganizationInput
     telegramBot?: TelegramSettingUncheckedCreateNestedManyWithoutOrgInput
@@ -24377,6 +24515,9 @@ export namespace Prisma {
     Address?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    type?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     createdBy?: UserUpdateOneRequiredWithoutOrganizationCreatedNestedInput
     UserOrganization?: UserOrganizationUpdateManyWithoutOrganizationNestedInput
     telegramBot?: TelegramSettingUpdateManyWithoutOrgNestedInput
@@ -24393,6 +24534,9 @@ export namespace Prisma {
     Address?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    type?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     createdById?: StringFieldUpdateOperationsInput | string
     UserOrganization?: UserOrganizationUncheckedUpdateManyWithoutOrganizationNestedInput
     telegramBot?: TelegramSettingUncheckedUpdateManyWithoutOrgNestedInput
@@ -24460,6 +24604,9 @@ export namespace Prisma {
     Address?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    type?: string | null
+    deletedAt?: Date | string | null
+    isActive?: boolean
   }
 
   export type TelegramSettingCreateManyUserInput = {
@@ -24556,6 +24703,9 @@ export namespace Prisma {
     Address?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    type?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     UserOrganization?: UserOrganizationUpdateManyWithoutOrganizationNestedInput
     featureAccess?: OrganizationFeatureAccessUpdateManyWithoutOrganizationNestedInput
     telegramBot?: TelegramSettingUpdateManyWithoutOrgNestedInput
@@ -24572,6 +24722,9 @@ export namespace Prisma {
     Address?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    type?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     UserOrganization?: UserOrganizationUncheckedUpdateManyWithoutOrganizationNestedInput
     featureAccess?: OrganizationFeatureAccessUncheckedUpdateManyWithoutOrganizationNestedInput
     telegramBot?: TelegramSettingUncheckedUpdateManyWithoutOrgNestedInput
@@ -24588,6 +24741,9 @@ export namespace Prisma {
     Address?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    type?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type TelegramSettingUpdateWithoutUserInput = {

@@ -17398,7 +17398,6 @@ export namespace Prisma {
   export type StudentWhereUniqueInput = Prisma.AtLeast<{
     id?: string
     email?: string
-    rollNumber?: string
     email_orgId?: StudentEmailOrgIdCompoundUniqueInput
     AND?: StudentWhereInput | StudentWhereInput[]
     OR?: StudentWhereInput[]
@@ -17410,6 +17409,7 @@ export namespace Prisma {
     gender?: EnumGenderNullableFilter<"Student"> | $Enums.Gender | null
     phone?: StringNullableFilter<"Student"> | string | null
     address?: StringNullableFilter<"Student"> | string | null
+    rollNumber?: StringNullableFilter<"Student"> | string | null
     parentName?: StringNullableFilter<"Student"> | string | null
     parentPhone?: StringNullableFilter<"Student"> | string | null
     notes?: StringNullableFilter<"Student"> | string | null
@@ -17426,7 +17426,7 @@ export namespace Prisma {
     payments?: PurchaseListRelationFilter
     progress?: LessonProgressListRelationFilter
     invoices?: InvoiceListRelationFilter
-  }, "id" | "email" | "rollNumber" | "email_orgId">
+  }, "id" | "email" | "email_orgId">
 
   export type StudentOrderByWithAggregationInput = {
     id?: SortOrder

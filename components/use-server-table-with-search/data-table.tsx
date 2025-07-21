@@ -33,13 +33,10 @@ import {
   DataTablePagination,
   DataTablePaginationLoading,
 } from "./data-table-pagination";
-import { UploadButton } from "../import-data/upload-button";
-import { INITIAL_IMPORT_RESULTS } from "../import-data/import-helper/import-data";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  onUpload?: (results: typeof INITIAL_IMPORT_RESULTS) => void;
   items: number;
   searchField: string;
   pagination: {
@@ -57,7 +54,6 @@ interface DataTableProps<TData, TValue> {
 export function DataTable<TData, TValue>({
   columns,
   data,
-  onUpload,
   pagination,
   onPaginationChange,
   items,
@@ -94,9 +90,8 @@ export function DataTable<TData, TValue>({
 
   return (
     <section className="space-y-4">
-      <div className="flex items-center fixed gap-4 bg-transparent opacity-95 px-4 rounded-md z-20 top-[60px] right-2 max-md:right-12 max-md:top-[-6px] py-4">
+      <div className="flex items-center fixed gap-4 bg-transparent opacity-95 px-4 rounded-md z-20 top-[-8px] right-12 py-4">
         <div className="flex gap-4 flex-grow"></div>
-        {onUpload && <UploadButton onUpload={onUpload} />}
         {!isMobile && (
           <div className="max-sm:hidden">
             <DropdownMenu>

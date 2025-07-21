@@ -7,7 +7,6 @@ import { ensureUserInOrganization } from "@/lib/auth-helpers";
 import { featuresDBPrismaClient } from "@/lib/prisma-client/features-prisma-client";
 import { Prisma } from "@/prisma-features-database/features-database-client-types";
 import {
-  studentFormSchema,
   studentImportSchema,
   StudentSchema,
 } from "@/features/music-school-management/types/schemas";
@@ -176,8 +175,9 @@ const app = new Hono()
     "/",
     zValidator(
       "json",
-      studentFormSchema.omit({
+      StudentSchema.extend({ courseIds: z.array(z.string()).optional() }).omit({
         id: true,
+        orgId: true,
       })
     ),
     zValidator(
@@ -187,12 +187,23 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const values = c.req.valid("json");
+      const { courseIds, ...values } = c.req.valid("json");
       const authResult = await ensureUserInOrganization(c);
       if ("json" in authResult) return authResult; // Return error if unauthorized
       const { organizationId } = authResult;
 
       try {
+        const existingEmail = await featuresDBPrismaClient.student.findFirst({
+          where: {
+            email: values.email,
+            orgId: organizationId,
+          },
+        });
+
+        if (existingEmail) {
+          return c.json({ error: "Email already exists" }, 409);
+        }
+
         // Create student without courses relation
         const student = await featuresDBPrismaClient.student.create({
           data: {
@@ -202,8 +213,8 @@ const app = new Hono()
         });
 
         // Create enrollments if courseIds provided
-        if (values.courseIds && values.courseIds.length > 0) {
-          await createEnrollments(student.id, values.courseIds, organizationId);
+        if (courseIds && courseIds.length > 0) {
+          await createEnrollments(student.id, courseIds, organizationId);
         }
 
         // Fetch student with courses to return

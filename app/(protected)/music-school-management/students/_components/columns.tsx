@@ -33,6 +33,7 @@ export function getStudentColumns(
           </Avatar>
         );
       },
+      meta: { hidden: true },
     },
     {
       accessorKey: "name",
@@ -47,6 +48,7 @@ export function getStudentColumns(
           </Button>
         </CenteredCell>
       ),
+      cell: ({ row }) => <CenteredCell>{row.getValue("name")}</CenteredCell>,
     },
     {
       accessorKey: "phone",
@@ -88,8 +90,7 @@ export function getStudentColumns(
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            Is Active
-            <ArrowUpDown className="ml-2 h-4 w-4" />
+            Status
           </Button>
         </CenteredCell>
       ),

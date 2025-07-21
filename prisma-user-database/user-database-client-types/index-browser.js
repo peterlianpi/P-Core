@@ -242,6 +242,9 @@ exports.Prisma.OrganizationScalarFieldEnum = {
   Address: 'Address',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
+  type: 'type',
+  deletedAt: 'deletedAt',
+  isActive: 'isActive',
   createdById: 'createdById'
 };
 

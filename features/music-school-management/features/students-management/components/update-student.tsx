@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useEditStudent } from "../api/use-edit-student";
 import StudentFormSkeleton from "./student-form-skeleton";
 import { useParams } from "next/navigation";
+import { useGetCourses } from "../../courses/api/use-get-courses";
 
 export default function EditStudentFormPage() {
   const { orgId } = useData();
@@ -23,15 +24,7 @@ export default function EditStudentFormPage() {
 
   const editStudentMutation = useEditStudent({ orgId, id });
 
-  const mockCourses = [
-    {
-      id: "cmd93cmvz000195ecirwf2rw6",
-      name: "Piano",
-      levels: ["Beginner", "Advanced"],
-    },
-    { id: "course2", name: "Guitar", levels: ["Beginner", "Advanced"] },
-    { id: "course3", name: "Violin", levels: ["Beginner", "Advanced"] },
-  ];
+  const { data: availableCourses } = useGetCourses({ orgId });
 
   const defaultValues: StudentFormData = fetchedStudent
     ? {
@@ -108,7 +101,7 @@ export default function EditStudentFormPage() {
         id={id}
         disabled={isLoading}
         onSubmit={handleSave}
-        availableCourses={mockCourses}
+        availableCourses={availableCourses ?? []}
         defaultValues={defaultValues}
       />
     </>

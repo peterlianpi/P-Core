@@ -5,6 +5,7 @@ import { StudentFormData } from "@/features/music-school-management/types/schema
 import { toast } from "sonner";
 import { useData } from "@/providers/data-provider";
 import { useCreateStudent } from "../api/use-create-student";
+import { useGetCourses } from "../../courses/api/use-get-courses";
 
 export default function AddStudentFormPage() {
   // Fetching orgId from data provider
@@ -16,17 +17,9 @@ export default function AddStudentFormPage() {
   // This will handle the creation of a new student
   const createStudentMutation = useCreateStudent({ orgId });
 
-  // Mock courses data
-  // This is used to populate the available courses in the student form
-  const mockCourses = [
-    {
-      id: "cmd93cmvz000195ecirwf2rw6",
-      name: "Piano",
-      levels: ["Beginner", "Advanced"],
-    },
-    { id: "course2", name: "Guitar", levels: ["Beginner", "Advanced"] },
-    { id: "course3", name: "Violin", levels: ["Beginner", "Advanced"] },
-  ];
+  // Course data fetching
+  // This will fetch the available courses for the student to enroll in
+  const { data: availableCourses } = useGetCourses({ orgId });
 
   // Handle form submission
   // This function will be called when the form is submitted
@@ -52,7 +45,7 @@ export default function AddStudentFormPage() {
     birthDate: undefined,
     gender: undefined,
     image: "",
-    rollNumber: "",
+    rollNumber: undefined,
     parentName: "",
     parentPhone: "",
     notes: "",
@@ -71,7 +64,7 @@ export default function AddStudentFormPage() {
       <StudentForm
         onSubmit={handleSave}
         defaultValues={defaultValues}
-        availableCourses={mockCourses}
+        availableCourses={availableCourses ?? []}
       />
     </div>
   );
