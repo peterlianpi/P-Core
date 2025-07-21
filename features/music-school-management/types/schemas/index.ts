@@ -71,6 +71,14 @@ export const studentFormSchema = StudentSchema.extend({
 
 export type StudentFormData = z.infer<typeof studentFormSchema>;
 
+// create a new schema omitting id and orgId
+export const studentFormDataSchema = studentFormSchema.omit({
+  id: true,
+  orgId: true,
+});
+
+export type studentFormData = z.infer<typeof studentFormDataSchema>;
+
 // This is used for importing students from CSV or other sources
 export const studentImportSchema = StudentSchema.omit({
   joinedAt: true,
