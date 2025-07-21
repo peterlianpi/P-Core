@@ -7,13 +7,14 @@ export type FieldType =
   | "date"
   | "select"
   | "checkbox"
-  | "checkbox-group";
+  | "checkbox-group"
+  | "switch";
 
 export interface FieldConfig {
   name: string;
   label: string;
   type: FieldType;
   placeholder?: string;
-  options?: string[]; // for select/checkbox-group
+  options?: string[] | { label: string; value: string }[];
   multiple?: boolean; // for multiselect if needed
 }

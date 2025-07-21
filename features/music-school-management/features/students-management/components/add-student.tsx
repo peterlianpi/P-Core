@@ -1,17 +1,23 @@
 "use client";
 
 import { StudentForm } from "@/features/music-school-management/features/students-management/components/student-form";
-import { StudentFormData } from "@/features/music-school-management/types/schemas";
+import { studentFormData } from "@/features/music-school-management/types/schemas";
 import { toast } from "sonner";
 import { useData } from "@/providers/data-provider";
 import { useCreateStudent } from "../api/use-create-student";
-import { useGetCourses } from "../../courses/api/use-get-courses";
+import StudentFormSkeleton from "./student-form-skeleton";
+import { useEffect, useState } from "react";
 
 export default function AddStudentFormPage() {
   // Fetching orgId from data provider
   // This is necessary to ensure the student is created under the correct organization
   // This will be used in the mutation to create a new student
   const { orgId } = useData();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setIsLoading(true);
+  }, [orgId]);
 
   // Create student mutation
   // This will handle the creation of a new student
@@ -19,11 +25,10 @@ export default function AddStudentFormPage() {
 
   // Course data fetching
   // This will fetch the available courses for the student to enroll in
-  const { data: availableCourses } = useGetCourses({ orgId });
 
   // Handle form submission
   // This function will be called when the form is submitted
-  const handleSave = (values: StudentFormData) => {
+  const handleSave = (values: studentFormData) => {
     createStudentMutation.mutate(values, {
       onSuccess: () => {
         toast.success(`Student ${values.name} added successfully!`);
@@ -34,10 +39,17 @@ export default function AddStudentFormPage() {
     });
   };
 
+  if (isLoading) {
+    return (
+      <>
+        <StudentFormSkeleton />
+      </>
+    );
+  }
+
   // Default values for the form
   // These values will be used to initialize the form fields
-  const defaultValues: StudentFormData = {
-    id: "", // You may want to handle this conditionally
+  const defaultValues: studentFormData = {
     number: undefined,
     name: "",
     email: "",
@@ -51,20 +63,19 @@ export default function AddStudentFormPage() {
     notes: "",
     address: "",
     courseIds: [],
+    joinedAt: new Date(),
     isActive: true,
     isArchived: false,
     isDeleted: false,
     isProspect: false,
-    joinedAt: new Date(),
-    orgId: "",
   };
 
   return (
     <div className="mt-4">
       <StudentForm
+        title="Add New Student"
         onSubmit={handleSave}
         defaultValues={defaultValues}
-        availableCourses={availableCourses ?? []}
       />
     </div>
   );

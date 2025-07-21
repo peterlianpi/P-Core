@@ -1,17 +1,17 @@
 "use client";
 
 import { DynamicForm } from "@/features/dynamic-components/components/dynamic-form";
-import { studentFields } from "@/features/dynamic-components/schemas/student-field";
-import { studentFormDataSchema } from "../../../features/music-school-management/types/schemas/index";
-import { studentFormData } from "@/features/music-school-management/types/schemas";
+import {
+  studentFormData,
+  studentFormDataSchema,
+} from "@/features/music-school-management/types/schemas";
+import { useStudentFields } from "@/features/dynamic-components/schemas/student-field";
 
 export default function StudentDynamicFormPage() {
+  const studentFields = useStudentFields();
+
   const defaultValues: studentFormData = {
     name: "",
-    isActive: false,
-    isArchived: false,
-    isDeleted: false,
-    isProspect: false,
     number: undefined,
     email: "",
     birthDate: undefined,
@@ -29,8 +29,8 @@ export default function StudentDynamicFormPage() {
 
   return (
     <div className="p-6">
-      <h2 className="text-xl font-semibold mb-4">Dynamic Student Form</h2>
       <DynamicForm
+        title="Add New Student"
         schema={studentFormDataSchema}
         fields={studentFields}
         onSubmit={(data) => console.log(data)}

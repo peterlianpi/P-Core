@@ -5,7 +5,6 @@ export const studentFormBulkSchema = z.object({
   number: z.number().int().optional(),
   name: z.string(),
   birthDate: z.union([z.string().datetime(), z.date()]).optional(), // This makes the field optional (it can be undefined)
-
   image: z.string().url().optional(),
   gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
   phone: z.string().optional(),
@@ -67,6 +66,12 @@ export const studentFormSchema = StudentSchema.extend({
 
   // Override joinedAt to accept only Date
   joinedAt: z.date().optional(),
+
+  // Override isActive, isArchived, isProspect, and isDeleted to be optional
+  isActive: z.boolean().optional(),
+  isArchived: z.boolean().optional(),
+  isProspect: z.boolean().optional(),
+  isDeleted: z.boolean().optional(),
 });
 
 export type StudentFormData = z.infer<typeof studentFormSchema>;

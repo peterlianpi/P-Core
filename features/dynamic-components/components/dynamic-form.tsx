@@ -1,6 +1,12 @@
 "use client";
 
-import { DefaultValues, FieldValues, Path, useForm } from "react-hook-form";
+import {
+  DefaultValues,
+  FieldValues,
+  Path,
+  PathValue,
+  useForm,
+} from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
@@ -24,11 +30,16 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label"; // <-- import Label here
 import { ZodType } from "zod";
-import React, { useState } from "react";
+import React, { useEffect, useState, useTransition } from "react";
 import { FieldConfig } from "../types/field-config";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import CustomUploadImagePage from "@/features/image-upload/components/upload-image";
+import { Switch } from "@/components/ui/switch";
 
 type Props<T extends FieldValues> = {
+  id?: string;
+  imageType?: "user" | "member" | "material" | "team" | undefined; // Specify the type of image being uploaded
+  title?: string;
   schema: ZodType<T>;
   fields: FieldConfig[];
   onSubmit: (data: T) => void;
@@ -37,28 +48,57 @@ type Props<T extends FieldValues> = {
 };
 
 export function DynamicForm<T extends FieldValues>({
+  id,
+  title,
+  imageType = undefined,
   schema,
   fields,
   onSubmit,
   defaultValues,
-  submitLabel = "Submit",
 }: Props<T>) {
-  const [isPending, setIsPending] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [imageUrl, setImageUrl] = useState(defaultValues?.image || null);
+
+  // Initialize FileReader only on the client side
+  useEffect(() => {
+    setIsClient(true); // Ensures code only runs on the client side
+  }, []);
 
   const form = useForm<T>({
     resolver: zodResolver(schema),
     defaultValues,
   });
 
-  const handleSubmit = async (data: T) => {
-    setIsPending(true);
-    await onSubmit(data);
-    setIsPending(false);
+  useEffect(() => {
+    const subscription = form.watch((values) => {
+      if (values.isActive) {
+        form.setValue("isArchived" as Path<T>, false as PathValue<T, Path<T>>);
+        form.setValue("isDeleted" as Path<T>, false as PathValue<T, Path<T>>);
+        form.setValue("isProspect" as Path<T>, false as PathValue<T, Path<T>>);
+      }
+    });
+
+    return () => subscription.unsubscribe?.(); // Clean up on unmount
+  }, [form]);
+
+  const fileRef = form.register("image" as Path<T>);
+
+  const handleSubmit = async (values: T) => {
+    startTransition(async () => {
+      console.log("Form submitted with values:", values);
+      onSubmit({
+        ...values,
+        image: imageUrl ?? undefined,
+      });
+    });
   };
 
   return (
     <Card>
-      <CardHeader className="text-lg font-semibold">Dynamic Form</CardHeader>
+      <CardHeader className="font-semibold text-lg">
+        {title || "Dynamic Form"}
+      </CardHeader>{" "}
       <CardContent>
         <Form {...form}>
           <form
@@ -67,6 +107,16 @@ export function DynamicForm<T extends FieldValues>({
             })}
             className="space-y-6 max-w-2xl"
           >
+            {/* Image Section */}
+            <CustomUploadImagePage
+              type={imageType}
+              canEdit={true}
+              isClient={isClient}
+              imageUrl={imageUrl}
+              setImageUrl={setImageUrl}
+              fileRef={fileRef}
+            />
+
             {fields.map((f) => (
               <FormField
                 key={f.name}
@@ -101,11 +151,17 @@ export function DynamicForm<T extends FieldValues>({
                             <SelectValue placeholder={`Select ${f.label}`} />
                           </SelectTrigger>
                           <SelectContent>
-                            {f.options?.map((opt) => (
-                              <SelectItem key={opt} value={opt}>
-                                {opt}
-                              </SelectItem>
-                            ))}
+                            {f.options?.map((opt) => {
+                              const value =
+                                typeof opt === "string" ? opt : opt.value;
+                              const label =
+                                typeof opt === "string" ? opt : opt.label;
+                              return (
+                                <SelectItem key={value} value={value}>
+                                  {label}
+                                </SelectItem>
+                              );
+                            })}
                           </SelectContent>
                         </Select>
                       ) : f.type === "date" ? (
@@ -131,38 +187,92 @@ export function DynamicForm<T extends FieldValues>({
                       ) : f.type === "checkbox-group" ? (
                         <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-2 border p-3 rounded-md max-h-48 overflow-y-auto">
                           {f.options?.map((option) => {
+                            const { value, label } =
+                              typeof option === "string"
+                                ? { value: option, label: option }
+                                : option;
+
                             const values = (field.value as string[]) || [];
-                            const checked = values.includes(option);
+                            const checked = values.includes(value);
 
                             return (
                               <div
-                                key={option}
+                                key={value}
                                 className="flex items-center gap-2"
                               >
                                 <Checkbox
-                                  id={`${field.name}-${option}`}
+                                  id={`${field.name}-${value}`}
                                   checked={checked}
                                   onCheckedChange={(checked) => {
                                     if (checked) {
-                                      field.onChange([...values, option]);
+                                      field.onChange([...values, value]);
                                     } else {
                                       field.onChange(
-                                        values.filter((v) => v !== option)
+                                        values.filter((v) => v !== value)
                                       );
                                     }
                                   }}
                                   disabled={isPending}
                                 />
                                 <Label
-                                  htmlFor={`${field.name}-${option}`}
+                                  htmlFor={`${field.name}-${value}`}
                                   className="cursor-pointer"
                                 >
-                                  {option}
+                                  {label}
                                 </Label>
                               </div>
                             );
                           })}
                         </div>
+                      ) : f.type === "switch" ? (
+                        f.name === "isActive" ? (
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={field.value ?? false}
+                              onCheckedChange={(checked) => {
+                                field.onChange(checked);
+
+                                if (checked) {
+                                  form.setValue(
+                                    "isArchived" as Path<T>,
+                                    false as PathValue<T, Path<T>>
+                                  );
+                                  form.setValue(
+                                    "isDeleted" as Path<T>,
+                                    false as PathValue<T, Path<T>>
+                                  );
+                                  form.setValue(
+                                    "isProspect" as Path<T>,
+                                    false as PathValue<T, Path<T>>
+                                  );
+                                }
+                              }}
+                              disabled={isPending}
+                            />
+                            <Label
+                              htmlFor={field.name}
+                              className="cursor-pointer"
+                            >
+                              {f.label}
+                            </Label>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={field.value ?? false}
+                              onCheckedChange={(checked) => {
+                                field.onChange(checked);
+                              }}
+                              disabled={isPending}
+                            />
+                            <Label
+                              htmlFor={field.name}
+                              className="cursor-pointer"
+                            >
+                              {f.label}
+                            </Label>
+                          </div>
+                        )
                       ) : null}
                     </FormControl>
 
@@ -172,9 +282,28 @@ export function DynamicForm<T extends FieldValues>({
               />
             ))}
 
-            <Button type="submit" className="w-full" disabled={isPending}>
-              {submitLabel}
-            </Button>
+            {/* Submit Button */}
+            <div className="flex gap-4">
+              <Button type="submit" className="w-full" disabled={isPending}>
+                {id ? "Update Student" : "Add Student"}
+              </Button>
+              {/* {ConfirmDialog && (
+                <ConfirmDialog>
+                  {!!id && (
+                    <Button
+                      type="button"
+                      disabled={disabled || isPending}
+                      // onClick={onDelete}
+                      className="w-full"
+                      variant="outline"
+                    >
+                      <Trash className="size-4 mr-2" />
+                      Delete student
+                    </Button>
+                  )}
+                </ConfirmDialog>
+              )} */}
+            </div>
           </form>
         </Form>
       </CardContent>

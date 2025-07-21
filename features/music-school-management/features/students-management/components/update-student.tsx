@@ -1,15 +1,14 @@
 "use client";
 
 import { StudentForm } from "@/features/music-school-management/features/students-management/components/student-form";
-import { StudentFormData } from "@/features/music-school-management/types/schemas";
+import { studentFormData } from "@/features/music-school-management/types/schemas";
 import { useGetStudentByIdAndOrgId } from "../api/use-get-student-by-id-and-orgId";
-// import { useParams } from "next/navigation";
+
 import { useData } from "@/providers/data-provider";
 import { toast } from "sonner";
 import { useEditStudent } from "../api/use-edit-student";
 import StudentFormSkeleton from "./student-form-skeleton";
 import { useParams } from "next/navigation";
-import { useGetCourses } from "../../courses/api/use-get-courses";
 
 export default function EditStudentFormPage() {
   const { orgId } = useData();
@@ -24,11 +23,8 @@ export default function EditStudentFormPage() {
 
   const editStudentMutation = useEditStudent({ orgId, id });
 
-  const { data: availableCourses } = useGetCourses({ orgId });
-
-  const defaultValues: StudentFormData = fetchedStudent
+  const defaultValues: studentFormData = fetchedStudent
     ? {
-        id: fetchedStudent.id,
         number: fetchedStudent.number ?? undefined,
         name: fetchedStudent.name,
         email: fetchedStudent.email ?? "",
@@ -44,17 +40,15 @@ export default function EditStudentFormPage() {
         notes: fetchedStudent.notes ?? "",
         address: fetchedStudent.address ?? "",
         courseIds: fetchedStudent.courses?.map((c) => c.course.id) ?? [],
+        joinedAt: fetchedStudent.joinedAt
+          ? new Date(fetchedStudent.joinedAt)
+          : new Date(),
         isActive: fetchedStudent.isActive ?? true,
         isArchived: fetchedStudent.isArchived ?? false,
         isDeleted: fetchedStudent.isDeleted ?? false,
         isProspect: fetchedStudent.isProspect ?? false,
-        joinedAt: fetchedStudent.joinedAt
-          ? new Date(fetchedStudent.joinedAt)
-          : new Date(),
-        orgId: fetchedStudent.orgId || orgId,
       }
     : {
-        id: "",
         number: undefined,
         name: "",
         email: "",
@@ -73,10 +67,9 @@ export default function EditStudentFormPage() {
         isDeleted: false,
         isProspect: false,
         joinedAt: new Date(),
-        orgId: orgId,
       };
 
-  const handleSave = (data: StudentFormData) => {
+  const handleSave = (data: studentFormData) => {
     editStudentMutation.mutate(data, {
       onSuccess: () => {
         toast.success(`Student "${data.name}" updated successfully.`);
@@ -100,8 +93,8 @@ export default function EditStudentFormPage() {
       <StudentForm
         id={id}
         disabled={isLoading}
+        title="Edit Student"
         onSubmit={handleSave}
-        availableCourses={availableCourses ?? []}
         defaultValues={defaultValues}
       />
     </>
