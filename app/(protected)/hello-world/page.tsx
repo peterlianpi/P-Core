@@ -1,11 +1,9 @@
 "use client";
 
-import AddCourseFormPage from "@/features/music-school-management/features/courses/components/add-course";
-
 export default function StudentDynamicFormPage() {
   return (
     <div className="">
-      <AddCourseFormPage />
+      <p className="text-5xl font-semibold"> Hello World!</p>
     </div>
   );
 }

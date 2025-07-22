@@ -54,29 +54,46 @@ const courses = new Hono()
   // PATCH update course by id
   .patch(
     "/:id",
-    zValidator("json", courseSchema.omit({ id: true, orgId: true })),
     zValidator("param", z.object({ id: z.string() })),
     zValidator("query", z.object({ orgId: z.string() })),
+    zValidator("json", courseSchema.omit({ id: true, orgId: true })),
+
     async (c) => {
+      const { id } = c.req.valid("param");
       const authResult = await ensureUserInOrganization(c);
       if ("json" in authResult) return authResult; // Return error if unauthorized
       const { organizationId } = authResult;
 
       const values = c.req.valid("json");
-      const { id } = c.req.valid("param");
 
-      const updated = await featuresDBPrismaClient.course.updateMany({
-        where: {
-          id,
-          orgId: organizationId,
-        },
-        data: {
-          ...values,
-        },
-      });
-      if (!updated) return c.notFound();
+      try {
+        const existingCourse = await featuresDBPrismaClient.course.findUnique({
+          where: { id, orgId: organizationId },
+        });
 
-      return c.json(updated);
+        if (!existingCourse) {
+          return c.json({ error: "Course not found" }, 404);
+        }
+
+        const updated = await featuresDBPrismaClient.course.updateMany({
+          where: {
+            id,
+            orgId: organizationId,
+          },
+          data: {
+            ...values,
+          },
+        });
+
+        return c.json(updated);
+      } catch {
+        return c.json(
+          {
+            error: "Failed to update course",
+          },
+          500
+        );
+      }
     }
   )
 
