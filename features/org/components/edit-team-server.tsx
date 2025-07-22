@@ -23,8 +23,6 @@ const EditTeam = () => {
   const [isPending, startTransition] = useTransition();
   const { selectedOrg: organization } = useSelectedOrg();
 
-  console.log("Org : ", organization);
-
   const onSubmit = async (values: FormValues) => {
     startTransition(async () => {
       const result = await updateOrganization({

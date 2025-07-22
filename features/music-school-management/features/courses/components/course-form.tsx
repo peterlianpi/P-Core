@@ -25,7 +25,6 @@ export function CourseForm({
   const courseFields = useCourseFields();
 
   const handleSubmit = async (values: CourseFormData) => {
-    console.log("Form submitted with values:", values);
     onSubmit({
       ...values,
       isActive: values.status === "ACTIVE" ? true : false,

@@ -8,6 +8,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { TeamForm } from "./team-form";
 import { useData } from "@/providers/data-provider";
 import { useEditOrg } from "../api/use-edit-org";
+import { isValidTeamType } from "./team-type-helper";
 
 const formSchema = teamFormSchema.omit({
   id: true,
@@ -33,7 +34,6 @@ const EditTeam = ({
   const { setIsAddTeam } = useData();
 
   const onSubmit = (values: FormValues) => {
-    // console.log("Get date : ", values.startedAt?.toISOString());
     editMutation.mutate(values, {
       onSuccess: () => {
         toast.success(`${values.name} is added successfully!`);
@@ -50,7 +50,7 @@ const EditTeam = ({
     description: organization?.description,
     logoImage: organization?.logoImage,
     startedAt: organization?.startedAt ?? undefined,
-    type: organization?.type ?? undefined,
+    type: isValidTeamType(organization.type) ? organization.type : undefined,
   };
 
   return (

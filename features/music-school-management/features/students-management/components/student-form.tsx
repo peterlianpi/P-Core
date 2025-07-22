@@ -25,7 +25,6 @@ export function StudentForm({
   const studentFields = useStudentFields();
 
   const handleSubmit = async (values: studentFormData) => {
-    console.log("Form submitted with values:", values);
     onSubmit({
       ...values,
     });
