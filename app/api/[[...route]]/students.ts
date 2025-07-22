@@ -9,7 +9,7 @@ import { Prisma } from "@/prisma-features-database/features-database-client-type
 import {
   studentImportSchema,
   StudentSchema,
-} from "@/features/music-school-management/types/schemas";
+} from "@/features/school-management/types/schemas";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_NAME,

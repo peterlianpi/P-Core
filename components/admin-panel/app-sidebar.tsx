@@ -16,7 +16,8 @@ import {
 
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { UserRole } from "@/prisma-user-database/user-database-client-types";
-import { getNavByRole } from "@/features/music-school-management/site/config";
+import { getNavByRole } from "../../features/site/config";
+import { useData } from "@/providers/data-provider";
 
 type Organizations = {
   organization: {
@@ -37,6 +38,7 @@ export function AppSidebar({
 }) {
   const pathname = usePathname(); // <-- Get current route
   const users = useCurrentUser();
+  const { orgId } = useData();
 
   const user = {
     name: users?.name as string,
@@ -46,7 +48,7 @@ export function AppSidebar({
   };
 
   const teams = organizations.map((org) => org.organization);
-  const navMain = getNavByRole(pathname, organizations);
+  const navMain = getNavByRole(pathname, organizations, orgId);
 
   return (
     <Sidebar variant="floating" collapsible="icon" {...props}>
