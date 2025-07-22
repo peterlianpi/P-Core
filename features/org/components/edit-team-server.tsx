@@ -7,7 +7,8 @@ import { TeamForm } from "./team-form";
 import { useData } from "@/providers/data-provider";
 import { updateOrganization } from "@/actions/features/org/organization";
 import { useTransition } from "react";
-import { isError } from "@/helpers/organization-type";
+import { isError } from "@/features/org/helper/organization-type";
+import { useSelectedOrg } from "@/features/org/context/selected-org-context";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const formSchema = teamFormSchema.omit({
@@ -16,20 +17,10 @@ const formSchema = teamFormSchema.omit({
 
 type FormValues = z.input<typeof formSchema>;
 
-const EditTeam = ({
-  organization,
-}: {
-  organization: {
-    id: string;
-    name: string;
-    logoImage: string | undefined;
-    description: string | undefined;
-    startedAt: Date | undefined;
-    role: string | undefined;
-  };
-}) => {
+const EditTeam = () => {
   const { setIsAddTeam } = useData();
   const [isPending, startTransition] = useTransition();
+  const { selectedOrg: organization } = useSelectedOrg();
 
   const onSubmit = async (values: FormValues) => {
     startTransition(async () => {

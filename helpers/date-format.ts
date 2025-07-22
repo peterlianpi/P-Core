@@ -1,3 +1,5 @@
+// import { format } from "date-fns";
+
 export const loginDate = new Date().toLocaleString("en-US", {
   weekday: "long",
   year: "numeric",
@@ -7,3 +9,5 @@ export const loginDate = new Date().toLocaleString("en-US", {
   minute: "2-digit",
   hour12: true,
 });
+
+// export const timeRange = `${format(startTime, "hh:mm a")} - ${format(endTime, "hh:mm a")}`;

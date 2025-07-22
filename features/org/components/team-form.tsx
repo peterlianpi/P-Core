@@ -21,8 +21,9 @@ import { useEffect, useState } from "react";
 import { teamFormSchema } from "@/schemas";
 import { useData } from "@/providers/data-provider";
 import CustomUploadImagePage from "@/features/image-upload/components/upload-image";
+import { useIsOrgOwner } from "@/hooks/use-current-team-role";
+import { useOrgData } from "@/features/org/context/org-context";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const apiSchema = teamFormSchema.omit({
   id: true,
 });
@@ -53,6 +54,7 @@ export function TeamForm({
   const { setIsAddTeam, setIsEditTeam, isEditTeam } = useData();
   const [isClient, setIsClient] = useState(false);
   const [imageUrl, setImageUrl] = useState(defaultValues?.logoImage || null);
+  const { users } = useOrgData();
 
   // Initialize FileReader only on the client side
   useEffect(() => {
@@ -63,6 +65,10 @@ export function TeamForm({
     resolver: zodResolver(apiSchema),
     defaultValues: defaultValues,
   });
+
+  const isOwner = useIsOrgOwner(users ?? [], id);
+  const isEditing = !!id;
+  const canEdit = !isEditing || isOwner; // new team: anyone, existing: only owner
 
   const fileRef = form.register("logoImage");
 
@@ -93,6 +99,7 @@ export function TeamForm({
         >
           {/* Image Section */}
           <CustomUploadImagePage
+            canEdit={canEdit}
             isClient={isClient}
             imageUrl={imageUrl}
             setImageUrl={setImageUrl}
@@ -114,7 +121,7 @@ export function TeamForm({
                       {...field}
                       placeholder="Organization Name"
                       value={field.value}
-                      disabled={disabled || isPending}
+                      disabled={disabled || isPending || !canEdit}
                     />
                   </FormControl>
                 </FormItem>
@@ -132,7 +139,7 @@ export function TeamForm({
                     <DatePicker
                       value={field.value ?? undefined}
                       onChange={field.onChange}
-                      disabled={disabled || isPending}
+                      disabled={disabled || isPending || !canEdit}
                     />
                   </FormControl>
                   <FormDescription>
@@ -155,7 +162,7 @@ export function TeamForm({
                       {...field}
                       placeholder="Description"
                       value={field.value}
-                      disabled={disabled || isPending}
+                      disabled={disabled || isPending || !canEdit}
                     />
                   </FormControl>
                 </FormItem>
@@ -164,7 +171,10 @@ export function TeamForm({
 
             {/* Actions */}
             <div className="md:col-span-3 flex flex-col  gap-2">
-              <Button className="w-full" disabled={disabled || isPending}>
+              <Button
+                className="w-full"
+                disabled={disabled || isPending || !canEdit}
+              >
                 {id ? "Save changes" : "Create team"}
               </Button>
               {ConfirmDialog && (
@@ -172,7 +182,7 @@ export function TeamForm({
                   {!!id && (
                     <Button
                       type="button"
-                      disabled={disabled || isPending}
+                      disabled={disabled || isPending || !canEdit}
                       onClick={onDelete}
                       className="w-full"
                       variant="outline"

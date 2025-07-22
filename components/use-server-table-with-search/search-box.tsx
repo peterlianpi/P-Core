@@ -1,26 +1,23 @@
-// import { useSearchMember } from "@/features/goods/api/use-search-member";
 // import { useData } from "@/providers/data-provider";
 // import { useEffect, useState } from "react";
 // import { SearchBar } from "./search-bar";
 // import { DataTable } from "./data-table";
-// import { columns } from "@/app/(protected)/hello-world/_components/columns";
 // import { usePagination } from "@/helpers/use-pagination";
 // import ErrorBox from "../error-box";
-// import { Member } from "@/helpers/formatMember";
 // import { INITIAL_IMPORT_RESULTS } from "../import-data/import-helper/import-data";
 
 // type Props = {
-//   allMembers: Member[];
+//   data: Member[];
 //   items: number;
 //   onUpload?: (results: typeof INITIAL_IMPORT_RESULTS) => void;
 // };
 
-// export default function SearchPage({ allMembers, items, onUpload }: Props) {
+// export default function SearchPage({ data, items, onUpload }: Props) {
 //   const [searchQuery, setSearchQuery] = useState(""); // Track search input
 //   const { orgId, setLoading } = useData();
 //   const { take, skip, onPaginationChange, pagination } = usePagination();
 //   const [total, setTotal] = useState(items);
-//   const [myMembers, setMyMembers] = useState(allMembers);
+//   const [myMembers, setMyMembers] = useState(data);
 
 //   // Call the hook **at the top level** of the component
 //   const { data, isLoading, isError, error } = useSearchMember(

@@ -1,22 +1,11 @@
 "use client";
+
 import * as React from "react";
-import {
-  Server,
-  Settings2,
-  Users2,
-  Laptop,
-  KeySquare,
-  Map,
-  GemIcon,
-  HomeIcon,
-  ChartArea,
-} from "lucide-react"; // Make sure these icons are correctly imported from the lucide library
+import { usePathname } from "next/navigation";
 
 import { NavUser } from "@/components/admin-panel/nav-user";
-import { NavProjects } from "@/components/admin-panel/nav-projects";
 import { NavMain } from "@/components/admin-panel/nav-main";
 import { TeamSwitcher } from "@/components/admin-panel/team-switcher";
-
 import {
   Sidebar,
   SidebarContent,
@@ -24,108 +13,20 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { useCurrentUser } from "@/hooks/use-current-user";
-import { UserRole } from "@prisma/client";
 
-// This is a mock user data that simulates how your data is structured
-const data = {
-  navMain: [
-    {
-      title: "Analytics",
-      url: "#",
-      icon: ChartArea,
-      isActive: true,
-      items: [{ title: "Dashboard", url: "/stat" }],
-    },
-    {
-      title: "Goods",
-      url: "/goods",
-      icon: GemIcon,
-      isActive: true,
-      items: [
-        { title: "Goods", url: "/goods" },
-        { title: "Add goods", url: "/goods/add" },
-      ],
-    },
-    {
-      title: "Category",
-      url: "/category",
-      icon: Users2,
-      items: [
-        { title: "Category", url: "/category" },
-        { title: "Add category", url: "/category/add" },
-      ],
-    },
-    {
-      title: "Organization",
-      url: "/organization",
-      icon: HomeIcon,
-      items: [
-        { title: "Organization", url: "/organization" },
-        { title: "Add User", url: "/organization/add-user" },
-      ],
-    },
-    {
-      title: "All Users",
-      url: "#",
-      icon: Users2,
-      items: [{ title: "General", url: "/users" }],
-    },
-    {
-      title: "Server",
-      url: "/server",
-      icon: Server,
-      items: [
-        { title: "General", url: "/server" },
-        { title: "Logs", url: "#" },
-        { title: "API", url: "#" },
-      ],
-    },
-    {
-      title: "Settings",
-      url: "/settings",
-      icon: Settings2,
-      items: [{ title: "Profile", url: "/settings" }],
-    },
-  ],
-  projects: [
-    {
-      name: "Map",
-      url: "/map",
-      icon: Map,
-    },
-    {
-      name: "Server",
-      url: "/server",
-      icon: Server,
-    },
-    {
-      name: "Client",
-      url: "/client",
-      icon: Laptop,
-    },
-    {
-      name: "Admin",
-      url: "/admin",
-      icon: KeySquare,
-    },
-    {
-      name: "Users",
-      url: "/users",
-      icon: Users2,
-    },
-  ],
-};
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { UserRole } from "@/prisma-user-database/user-database-client-types";
+import { getNavByRole } from "@/features/music-school-management/site/config";
 
 type Organizations = {
   organization: {
     name: string;
     id: string;
-    description?: string | undefined;
-    startedAt?: Date | null | undefined;
-    logoImage?: string | undefined;
+    description?: string;
+    startedAt?: Date | null;
+    logoImage?: string;
   };
-  role?: string | undefined;
+  role?: string;
 };
 
 export function AppSidebar({
@@ -134,7 +35,9 @@ export function AppSidebar({
 }: {
   organizations: Organizations[];
 }) {
+  const pathname = usePathname(); // <-- Get current route
   const users = useCurrentUser();
+
   const user = {
     name: users?.name as string,
     email: users?.email as string,
@@ -143,6 +46,7 @@ export function AppSidebar({
   };
 
   const teams = organizations.map((org) => org.organization);
+  const navMain = getNavByRole(pathname, organizations);
 
   return (
     <Sidebar variant="floating" collapsible="icon" {...props}>
@@ -150,8 +54,7 @@ export function AppSidebar({
         <TeamSwitcher teams={teams} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        <NavMain items={navMain} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />

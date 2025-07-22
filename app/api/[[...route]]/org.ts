@@ -1,8 +1,9 @@
 import { Hono } from "hono";
-import { db } from "@/lib/db"; // Import Prisma client
+// Import Prisma client
 import { OrgSchema, teamFormSchema } from "@/schemas";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
+import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
 
 const org = new Hono()
 
@@ -11,7 +12,7 @@ const org = new Hono()
   .get("/org", async (c) => {
     try {
       // Fetch organizations linked to the user
-      const organization = await db.organization.findMany({
+      const organization = await userDBPrismaClient.organization.findMany({
         select: {
           id: true,
           name: true,
@@ -43,7 +44,7 @@ const org = new Hono()
         const { userId } = c.req.valid("query");
 
         // Fetch organizations linked to the user
-        const userOrganizations = await db.userOrganization.findMany({
+        const userOrganizations = await userDBPrismaClient.userOrganization.findMany({
           where: { userId },
           select: {
             role: true,
@@ -98,7 +99,7 @@ const org = new Hono()
         if (!parsed.success) return c.json({ error: "Invalid input" }, 400);
 
         // Start a transaction to create both the organization and the UserOrganization relation
-        const result = await db.$transaction(async (prisma) => {
+        const result = await userDBPrismaClient.$transaction(async (prisma) => {
           // Create the organization
           const organization = await prisma.organization.create({
             data: {
@@ -137,7 +138,7 @@ const org = new Hono()
   // ✅ Get All Organizations with Counts Only
   .get("/org-details", async (c) => {
     try {
-      const organizations = await db.organization.findMany({
+      const organizations = await userDBPrismaClient.organization.findMany({
         select: {
           id: true,
           name: true,
@@ -178,7 +179,7 @@ const org = new Hono()
         const { userId } = c.req.valid("query"); // You need to extract userId from query
 
         // Check if user is part of the organization
-        const userOrg = await db.userOrganization.findUnique({
+        const userOrg = await userDBPrismaClient.userOrganization.findUnique({
           where: {
             userId_organizationId: {
               userId,
@@ -193,7 +194,7 @@ const org = new Hono()
             403
           );
 
-        const organization = await db.organization.findUnique({
+        const organization = await userDBPrismaClient.organization.findUnique({
           where: { id: orgId },
         });
 
@@ -238,7 +239,7 @@ const org = new Hono()
         if (!parsed.success) return c.json({ error: "Invalid input" }, 400);
 
         // Check if the user is part of the organization
-        const userOrg = await db.userOrganization.findUnique({
+        const userOrg = await userDBPrismaClient.userOrganization.findUnique({
           where: {
             userId_organizationId: {
               userId,
@@ -253,7 +254,7 @@ const org = new Hono()
             403
           );
 
-        const updatedOrg = await db.organization.update({
+        const updatedOrg = await userDBPrismaClient.organization.update({
           where: { id: orgId },
           data: parsed.data,
         });
@@ -280,7 +281,7 @@ const org = new Hono()
         const { userId } = c.req.valid("query"); // Extract userId from query
 
         // Check if the user is part of the organization
-        const userOrg = await db.userOrganization.findUnique({
+        const userOrg = await userDBPrismaClient.userOrganization.findUnique({
           where: {
             userId_organizationId: {
               userId,
@@ -295,7 +296,7 @@ const org = new Hono()
             403
           );
 
-        await db.organization.delete({ where: { id: orgId } });
+        await userDBPrismaClient.organization.delete({ where: { id: orgId } });
         return c.json({ message: "Organization deleted" });
       } catch {
         return c.json({ error: "Failed to delete organization" }, 500);
@@ -320,7 +321,7 @@ const org = new Hono()
         const { userId, adminUserId } = c.req.valid("query"); // Assuming the user making the request is an admin or authorized user
 
         // Check if the admin user is part of the organization
-        const adminOrg = await db.userOrganization.findUnique({
+        const adminOrg = await userDBPrismaClient.userOrganization.findUnique({
           where: {
             userId_organizationId: {
               userId: adminUserId,
@@ -335,15 +336,15 @@ const org = new Hono()
             403
           );
 
-        const user = await db.user.findUnique({ where: { id: userId } });
-        const organization = await db.organization.findUnique({
+        const user = await userDBPrismaClient.user.findUnique({ where: { id: userId } });
+        const organization = await userDBPrismaClient.organization.findUnique({
           where: { id: orgId },
         });
 
         if (!user || !organization)
           return c.json({ error: "User or Organization not found" }, 404);
 
-        await db.userOrganization.create({
+        await userDBPrismaClient.userOrganization.create({
           data: { userId, organizationId: orgId, role: "OWNER" }, // Default role for the added user
         });
 
@@ -352,6 +353,163 @@ const org = new Hono()
         return c.json({ error: "Failed to add user to organization" }, 500);
       }
     }
+  )
+
+
+  .patch(
+    "/:id/update-roles",
+    zValidator(
+      "param",
+      z.object({
+        id: z.string(), // organizationId
+      })
+    ),
+    zValidator(
+      "query",
+      z.object({
+        userId: z.string()
+      })
+    ),
+    zValidator(
+      "json",
+      z.object({
+        updates: z.record(z.string(), z.enum([
+          "OWNER",
+          "ADMIN",
+          "MEMBER",
+          "ACCOUNTANT",
+          "OFFICE_STAFF",
+          "ADMIN"
+        ])),
+      })
+    ),
+    async (c) => {
+      const orgId = c.req.param("id");
+      const { userId: adminUserId } = c.req.valid("query")
+      const { updates } = c.req.valid("json");
+
+      // Check permission
+      const adminRecord = await userDBPrismaClient.userOrganization.findUnique({
+        where: {
+          userId_organizationId: {
+            userId: adminUserId,
+            organizationId: orgId,
+          },
+        },
+      });
+
+      if (!adminRecord || (adminRecord.role !== "OWNER" && adminRecord.role !== "ADMIN")) {
+        return c.json({ error: "You are not authorized to update roles" }, 403);
+      }
+
+      // Loop and update roles
+      const updatePromises = Object.entries(updates).map(([userId, role]) =>
+        userDBPrismaClient.userOrganization.update({
+          where: {
+            userId_organizationId: {
+              userId,
+              organizationId: orgId,
+            },
+          },
+          data: {
+            role: role,
+          },
+        })
+      );
+
+      try {
+        await Promise.all(updatePromises);
+        // Log to UpdateLog table
+        await userDBPrismaClient.updateLog.create({
+          data: {
+            name: "Role Update",
+            message: `Updated roles: ${Object.entries(updates)
+              .map(([id, role]) => `${id} => ${role}`)
+              .join(", ")}`,
+            updatedBy: adminUserId,
+            orgId: orgId,
+            type: "INFO",
+          },
+        });
+
+        return c.json({ success: true, updated: Object.keys(updates).length });
+      } catch (error) {
+        console.error("Error updating roles:", error);
+        return c.json({ error: "Failed to update roles" }, 500);
+      }
+    }
+  )
+
+
+  // PATCH /api/org/remove-member
+  .patch(
+    "/:id/remove-member",
+    zValidator("param", z.object({
+      id: z.string(),
+    })),
+    zValidator("query", z.object({
+      adminUserId: z.string(),
+    })),
+    zValidator("json", z.object({
+      userId: z.string(),
+    })),
+    async (c) => {
+      try {
+        const { id: orgId } = c.req.valid("param");
+        const { userId } = c.req.valid("json");
+        const { adminUserId } = c.req.valid("query");
+
+        // 🔐 Step 1: Check if adminUserId is OWNER of org
+        const adminOrgRole = await userDBPrismaClient.userOrganization.findUnique({
+          where: {
+            userId_organizationId: {
+              userId: adminUserId,
+              organizationId: orgId,
+            },
+          },
+          select: { role: true },
+        });
+
+        if (!adminOrgRole || adminOrgRole.role !== "OWNER") {
+          return c.json({ error: "Only organization OWNER can remove members." }, 403);
+        }
+
+        // ✅ Step 2: Check if user is in organization
+        const userOrg = await userDBPrismaClient.userOrganization.findUnique({
+          where: {
+            userId_organizationId: {
+              userId,
+              organizationId: orgId,
+            },
+          },
+        });
+
+        if (!userOrg) {
+          return c.json({ error: "User is not part of this organization" }, 404);
+        }
+
+        // ✅ Step 3: Soft-remove member
+        await userDBPrismaClient.userOrganization.update({
+          where: {
+            userId_organizationId: {
+              userId,
+              organizationId: orgId,
+            },
+          },
+          data: {
+            status: "REMOVED",
+            removedAt: new Date(),
+          },
+        });
+
+        return c.json({ message: "Member removed successfully", userId, organizationId: orgId });
+      } catch {
+        return c.json({ error: "Failed to remove member" }, 500);
+      }
+    }
   );
+
+
+
 
 export default org;

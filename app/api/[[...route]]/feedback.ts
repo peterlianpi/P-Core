@@ -1,9 +1,10 @@
 import { Hono } from "hono";
-import { db } from "@/lib/db"; // Prisma client
+// Prisma client
 import { zValidator } from "@hono/zod-validator";
 import { feedbackSchema, feedbackUpdateSchema } from "@/schemas";
 import { authenticate } from "@/lib/api-auth";
 import { cors } from "hono/cors";
+import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
 
 cors({
   origin: (origin) => {
@@ -52,7 +53,7 @@ const feedback = new Hono()
       const data = c.req.valid("json");
 
       // Save feedback to database
-      await db.feedback.create({ data });
+      await userDBPrismaClient.feedback.create({ data });
 
       // Format message for Telegram
       const message = `
@@ -83,7 +84,7 @@ ${data.anonymous ? "🕵️‍♂️ Anonymous" : `👤 Name: ${data.name || "N/
       const pageSize = 10;
       const skip = (page - 1) * pageSize;
 
-      const feedbacks = await db.feedback.findMany({
+      const feedbacks = await userDBPrismaClient.feedback.findMany({
         skip,
         take: pageSize,
         orderBy: { createdAt: "desc" },
@@ -101,7 +102,7 @@ ${data.anonymous ? "🕵️‍♂️ Anonymous" : `👤 Name: ${data.name || "N/
     try {
       const id = c.req.param("id");
 
-      const feedbackItem = await db.feedback.findUnique({
+      const feedbackItem = await userDBPrismaClient.feedback.findUnique({
         where: { id },
       });
 
@@ -119,7 +120,7 @@ ${data.anonymous ? "🕵️‍♂️ Anonymous" : `👤 Name: ${data.name || "N/
       const id = c.req.param("id");
       const { status } = c.req.valid("json");
 
-      const updatedFeedback = await db.feedback.update({
+      const updatedFeedback = await userDBPrismaClient.feedback.update({
         where: { id },
         data: { status },
       });
@@ -135,7 +136,7 @@ ${data.anonymous ? "🕵️‍♂️ Anonymous" : `👤 Name: ${data.name || "N/
     try {
       const id = c.req.param("id");
 
-      await db.feedback.delete({ where: { id } });
+      await userDBPrismaClient.feedback.delete({ where: { id } });
 
       return c.json({
         success: true,

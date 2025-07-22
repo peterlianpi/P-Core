@@ -1,9 +1,9 @@
 import crypto from "crypto";
 import { v4 as uuidv4 } from "uuid";
-import { db } from "./db";
 import { getVerificationTokenByEmail } from "@/data/verification-token";
 import { getPasswordResetTokenByEmail } from "@/data/password-reset-token";
 import { getTwoFactorTokenByEmail } from "@/data/two-factor-token";
+import { userDBPrismaClient } from "./prisma-client/user-prisma-client";
 
 /**
  * Generates a Two-Factor Authentication (2FA) token for a given email address.
@@ -23,7 +23,7 @@ export const generateTwoFactorToken = async (email: string) => {
 
   // If an existing token is found, delete it
   if (existingToken) {
-    await db.twoFactorToken.delete({
+    await userDBPrismaClient.twoFactorToken.delete({
       where: {
         id: existingToken.id,
       },
@@ -31,7 +31,7 @@ export const generateTwoFactorToken = async (email: string) => {
   }
 
   // Create and return a new 2FA token
-  return await db.twoFactorToken.create({
+  return await userDBPrismaClient.twoFactorToken.create({
     data: {
       email,
       token,
@@ -58,7 +58,7 @@ export const generatePasswordResetToken = async (email: string) => {
 
   // If an existing token is found, delete it
   if (existingToken) {
-    await db.passwordResetToken.delete({
+    await userDBPrismaClient.passwordResetToken.delete({
       where: {
         id: existingToken.id,
       },
@@ -66,7 +66,7 @@ export const generatePasswordResetToken = async (email: string) => {
   }
 
   // Create and return a new password reset token
-  return await db.passwordResetToken.create({
+  return await userDBPrismaClient.passwordResetToken.create({
     data: {
       email,
       token,
@@ -93,7 +93,7 @@ export const generateVerificationToken = async (email: string) => {
 
   // If an existing token is found, delete it
   if (existingToken) {
-    await db.verificationToken.delete({
+    await userDBPrismaClient.verificationToken.delete({
       where: {
         id: existingToken.id,
       },
@@ -101,7 +101,7 @@ export const generateVerificationToken = async (email: string) => {
   }
 
   // Create and return a new verification token
-  return await db.verificationToken.create({
+  return await userDBPrismaClient.verificationToken.create({
     data: {
       email,
       token,

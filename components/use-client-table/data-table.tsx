@@ -70,8 +70,8 @@ export function DataTable<TData, TValue>({
 
   return (
     <section className="space-y-4">
-      <div className="flex items-center gap-4 bg-secondary opacity-95 px-4 rounded-md sticky top-14 z-10 py-4">
-        <div className="flex gap-4 flex-grow">
+      <div className="flex items-center gap-4 opacity-95 border px-2 rounded-md sticky top-14 z-10 py-4">
+        <div className="flex gap-4 flex-grow border-none">
           <Input
             placeholder={`Search ${searchField}...`}
             value={
@@ -80,7 +80,7 @@ export function DataTable<TData, TValue>({
             onChange={(event) =>
               table.getColumn(searchField)?.setFilterValue(event.target.value)
             }
-            className="max-md:w-full flex-grow"
+            className="max-w-md max-md:w-full border-none text-primary placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:border-none"
           />
         </div>
         <div className="max-md:hidden">
@@ -177,11 +177,11 @@ export function DataTable<TData, TValue>({
 export const TableLoading = () => {
   return (
     <section className="space-y-4">
-      <div className="flex items-center gap-4 bg-secondary px-4 rounded-md sticky top-14 z-10 py-4">
+      <div className="flex items-center gap-4 px-4 rounded-md sticky top-14 z-10 py-4">
         <div className="flex gap-4 flex-grow">
           <Input
             placeholder="Search name..."
-            className="max-md:w-full flex-grow"
+            className="max-md:w-full flex-grow focus:ring-0 focus-visible:border-none"
           />
         </div>
         <div className="max-md:hidden">

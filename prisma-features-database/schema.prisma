@@ -1,0 +1,381 @@
+// This is your Prisma schema file.
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Speed up queries and scale easily with Prisma Accelerate:
+// https://pris.ly/cli/accelerate-init
+
+// Prisma schema file for database models and relationships
+// Define the generator for Prisma Client (JavaScript/TypeScript)
+// Generates the Prisma Client in JavaScript/TypeScript.
+generator client {
+  provider = "prisma-client-js"
+  output   = "../prisma-features-database/features-database-client-types"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("PPG_FEATURES_DATABASE_URL")
+}
+
+//
+// ENUMS
+//
+
+// Gender of the member
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+// Course status for students
+// ENROLLED: Student is enrolled in the course
+// PAUSED: Student has paused their course
+// RESUMED: Student has resumed their course after a pause
+// FINISHED: Student has completed the course
+// CANCELLED: Student has cancelled their course
+enum CourseStatus {
+  ENROLLED
+  PAUSED
+  RESUMED
+  FINISHED
+  CANCELLED
+}
+
+// Purchase types for payments made by students
+// MONTHLY_FEE: Regular monthly fee for the course
+// LESSON_BOOK: Payment for a lesson book
+// OTHER: Any other type of payment
+enum PurchaseType {
+  MONTHLY_FEE
+  LESSON_BOOK
+  OTHER
+}
+
+// Payment methods for purchases made by students
+// CASH: Payment made in cash
+// BANK: Payment made through bank transfer
+// ONLINE: Payment made through an online payment gateway
+// TRANSFER: Payment made through a transfer method
+enum PaymentMethod {
+  CASH
+  BANK
+  ONLINE
+  TRANSFER
+}
+
+// Course levels for categorizing courses
+// BEGINNER: Suitable for beginners
+// INTERMEDIATE: Suitable for intermediate learners
+// ADVANCED: Suitable for advanced learners
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+//
+// MODELS
+//
+
+model Student {
+  id          String    @id @default(cuid()) // Primary ID
+  number      Int? // Optional student number
+  name        String // Full name
+  birthDate   DateTime? // Optional birthdate
+  image       String? // Profile image URL
+  gender      Gender? // Gender
+  phone       String? // Contact number
+  address     String? // Home address
+  email       String?   @unique // Optional email (must be unique)
+  rollNumber  String?
+  parentName  String? // Guardian's name
+  parentPhone String? // Guardian's phone
+  notes       String? // Additional notes
+  isActive    Boolean   @default(true) // Currently active?
+  isArchived  Boolean   @default(false) // Archived from UI?
+  isDeleted   Boolean   @default(false) // Marked as deleted
+  isProspect  Boolean   @default(false) // Prospect, not yet enrolled
+  joinedAt    DateTime  @default(now()) // Enrollment date
+  orgId       String // Multi-tenant org ID
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  studentSchedules StudentSchedule[]
+  courses          StudentCourse[]
+  payments         Purchase[]
+  progress         LessonProgress[]
+  invoices         Invoice[] // Optional invoices
+
+  @@unique([email, orgId]) // Unique email per organization
+  @@index([orgId]) // Index for multi-tenant queries
+  @@index([isActive, orgId]) // Index for active students in org
+  @@index([isArchived, orgId]) // Index for archived students in org
+  @@index([isDeleted, orgId]) // Index for deleted students in org
+  @@index([joinedAt, orgId]) // Index for joined date in org
+  @@index([createdAt, orgId]) // Index for created date in org
+  @@index([updatedAt, orgId]) // Index for updated date in org
+}
+
+model Course {
+  id          String       @id @default(cuid())
+  name        String // Course name
+  description String? // Optional description
+  image       String?
+  price       Float        @default(0) // Course fee
+  duration    Int? // Weeks or months
+  startDate   DateTime? // Course start
+  endDate     DateTime? // Course end
+  isActive    Boolean      @default(true)
+  isArchived  Boolean      @default(false)
+  isDeleted   Boolean      @default(false)
+  level       CourseLevel? // Beginner/Intermediate/etc.
+  orgId       String // Multi-tenant org ID
+  teacherId   String? // Optional teacher ID
+  teacher     Teacher?     @relation(fields: [teacherId], references: [id])
+  roomId      String? // Optional room ID
+  room        Room?        @relation(fields: [roomId], references: [id])
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relations
+  schedules   Schedule[]
+  lessonBooks LessonBook[]
+  students    StudentCourse[]
+  payments    Purchase[]
+
+  @@unique([name, orgId]) // Prevent duplicate names in same org
+  @@index([orgId]) // Index for multi-tenant queries
+  @@index([isActive, orgId]) // Index for active courses in org
+  @@index([isArchived, orgId]) // Index for archived courses in org
+  @@index([isDeleted, orgId]) // Index for deleted courses in org
+}
+
+model LessonBook {
+  id              String    @id @default(cuid())
+  title           String // Book title
+  author          String? // Optional author
+  price           Float     @default(0)
+  description     String?
+  isActive        Boolean   @default(true)
+  isArchived      Boolean   @default(false)
+  isDeleted       Boolean   @default(false)
+  orgId           String
+  courseId        String
+  course          Course    @relation(fields: [courseId], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  // Optional: Add a cover image field
+  coverImage      String? // URL to book cover image
+  // Optional: Add a publication date field
+  publicationDate DateTime? // When the book was published
+
+  // Relations
+  progress LessonProgress[]
+
+  @@unique([title, orgId])
+  @@index([orgId]) // Index for multi-tenant queries
+  @@index([isActive, orgId]) // Index for active lesson books in org
+  @@index([isArchived, orgId]) // Index for archived lesson books in org
+  @@index([isDeleted, orgId]) // Index for deleted lesson books in org
+}
+
+model StudentCourse {
+  id         String       @id @default(cuid())
+  studentId  String
+  courseId   String
+  enrolledAt DateTime     @default(now())
+  status     CourseStatus @default(ENROLLED)
+  notes      String?
+  orgId      String
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  // Relations
+  student Student @relation(fields: [studentId], references: [id])
+  course  Course  @relation(fields: [courseId], references: [id])
+
+  statusLogs CourseStatusLog[]
+
+  @@unique([studentId, courseId])
+  @@index([orgId]) // Index for multi-tenant queries
+  @@index([status, studentId, orgId]) // Index for status by student in org
+  @@index([status, courseId, orgId]) // Index for status by course
+}
+
+model CourseStatusLog {
+  id              String       @id @default(cuid())
+  studentCourseId String
+  status          CourseStatus
+  changedAt       DateTime     @default(now()) // When status changed
+  note            String? // Optional reason
+  orgId           String
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  studentCourse StudentCourse @relation(fields: [studentCourseId], references: [id])
+
+  @@unique([studentCourseId, status, changedAt]) // Unique log per student course
+  @@index([orgId]) // Index for status logs in org
+  @@index([studentCourseId, orgId]) // Index for student course in org
+}
+
+model LessonProgress {
+  id           String    @id @default(cuid())
+  studentId    String
+  lessonBookId String
+  completed    Boolean   @default(false)
+  completedAt  DateTime?
+  progress     Int       @default(0) // 0–100 percent
+  lessonNumber Int? // Optional lesson #
+  lessonTitle  String?
+  lessonDate   DateTime?
+  studentNotes String?
+  teacherNotes String?
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  orgId        String
+
+  student    Student    @relation(fields: [studentId], references: [id])
+  lessonBook LessonBook @relation(fields: [lessonBookId], references: [id])
+
+  @@unique([studentId, lessonBookId])
+  @@index([orgId]) // Index for multi-tenant queries
+  @@index([lessonBookId, orgId]) // Index for lesson book in org
+}
+
+model Purchase {
+  id          String        @id @default(cuid())
+  studentId   String
+  courseId    String?
+  type        PurchaseType  @default(MONTHLY_FEE)
+  amount      Float
+  description String?
+  paidAt      DateTime      @default(now())
+  forMonth    DateTime? // Monthly fee tracker
+  method      PaymentMethod @default(CASH)
+  invoiceId   String? // Optional invoice
+  orgId       String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  invoice     Invoice?      @relation(fields: [invoiceId], references: [id])
+
+  student Student @relation(fields: [studentId], references: [id])
+  course  Course? @relation(fields: [courseId], references: [id])
+
+  @@unique([studentId, courseId, type, forMonth, orgId]) // Unique purchase per student/course/type/month
+  @@index([orgId]) // Index for multi-tenant queries
+  @@index([studentId, type, forMonth, orgId]) // Index for student purchases by type/month in org
+  @@index([type, orgId]) // Index for purchase type in org
+  @@index([invoiceId, orgId]) // Index for invoice in org
+}
+
+model Schedule {
+  id         String   @id @default(cuid())
+  courseId   String
+  teacherId  String
+  roomId     String
+  dayOfWeek  Int // 0 = Sunday, 6 = Saturday
+  startTime  DateTime // Start datetime
+  endTime    DateTime // End datetime
+  isActive   Boolean  @default(true)
+  isArchived Boolean  @default(false)
+  isDeleted  Boolean  @default(false)
+  orgId      String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  course           Course            @relation(fields: [courseId], references: [id])
+  teacher          Teacher           @relation(fields: [teacherId], references: [id])
+  room             Room              @relation(fields: [roomId], references: [id])
+  studentSchedules StudentSchedule[]
+
+  @@unique([courseId, teacherId, dayOfWeek, startTime, orgId]) // Unique schedule per course/teacher/day/time in org
+  @@index([orgId]) // Index for multi-tenant queries
+  @@index([dayOfWeek, startTime, orgId]) // Index for schedules by
+  @@index([courseId, teacherId, id, orgId]) // Index for course schedules in org
+}
+
+model StudentSchedule {
+  id         String       @id @default(cuid())
+  scheduleId String
+  studentId  String
+  status     CourseStatus @default(ENROLLED)
+  notes      String?
+  attended   Boolean      @default(false) // Attendance tracking
+  orgId      String
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  schedule Schedule @relation(fields: [scheduleId], references: [id])
+  student  Student  @relation(fields: [studentId], references: [id])
+
+  @@unique([scheduleId, studentId]) // Unique schedule per student
+  @@index([orgId]) // Index for multi-tenant queries
+  @@index([status, studentId, orgId]) // Index for status by student in
+  @@index([studentId, scheduleId, orgId]) // Index for student schedule in org
+}
+
+model Teacher {
+  id          String   @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  avatar      String? // Profile picture
+  bio         String? // Short intro
+  orgId       String // Multi-tenant org ID
+  subject     String? // Subject expertise
+  isAvailable Boolean  @default(true) // Availability status
+  isActive    Boolean  @default(true)
+  isArchived  Boolean  @default(false)
+  isDeleted   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  schedules Schedule[]
+  courses   Course[] // Optional courses assigned to this teacher
+
+  @@unique([email, orgId]) // Unique email per organization
+  @@index([orgId]) // Index for multi-tenant queries
+  @@index([isActive, orgId]) // Index for active teachers in org
+  @@index([isAvailable, orgId]) // Index for available teachers in org
+}
+
+model Room {
+  id         String   @id @default(cuid())
+  name       String // Room name (e.g., "Room A")
+  location   String? // Optional location
+  capacity   Int? // Capacity (max students)
+  orgId      String
+  isActive   Boolean  @default(true)
+  isArchived Boolean  @default(false)
+  isDeleted  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  schedules Schedule[]
+  courses   Course[] // Optional courses assigned to this room
+
+  @@unique([name, orgId]) // Room names unique per org
+  @@index([orgId]) // Index for multi-tenant queries
+  @@index([name, orgId]) // Index for room names in org
+}
+
+// Optional: Invoice model if using invoiceId
+model Invoice {
+  id        String   @id @default(cuid())
+  number    String   @unique // Invoice number
+  studentId String
+  orgId     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  purchases Purchase[] // Related purchases
+  student   Student    @relation(fields: [studentId], references: [id])
+
+  @@index([orgId]) // Index for multi-tenant queries
+  @@index([number, orgId]) // Index for invoice number in org
+  @@index([id, studentId, orgId]) // Index for invoice by student in org
+}

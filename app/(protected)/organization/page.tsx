@@ -1,12 +1,13 @@
-import { getOrganizationsByUserId } from "@/actions/features/org/organization";
-import { currentUser } from "@/lib/auth";
-import OrganizationListsPage from "./_components/organization-lists";
+// app/organization/page.tsx
+
+import OrganizationListsPage from "@/features/org/components/organization-lists";
 
 const OrganizationPage = async () => {
-  const user = await currentUser();
-  const organizationsResult = await getOrganizationsByUserId(user?.id);
-
-  return <OrganizationListsPage organizations={organizationsResult.data} />;
+  return (
+    <>
+      <OrganizationListsPage />
+    </>
+  );
 };
 
 export default OrganizationPage;

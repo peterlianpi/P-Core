@@ -1,7 +1,9 @@
 "use client";
 
-const MembersPage = () => {
-  return <section className="">Hello World!</section>;
-};
-
-export default MembersPage;
+export default function StudentDynamicFormPage() {
+  return (
+    <div className="">
+      <p className="text-5xl font-semibold"> Hello World!</p>
+    </div>
+  );
+}
