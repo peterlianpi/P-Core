@@ -1,11 +1,23 @@
-import { PrismaClient, Student, Course, Teacher, Room, Schedule } from "@/prisma-features-database/features-database-client-types";
-
-
+import {
+  PrismaClient,
+  Student,
+  Course,
+  Teacher,
+  Room,
+  Schedule,
+} from "@/prisma-features-database/features-database-client-types";
 
 const prisma = new PrismaClient();
+const orgId = "cmd1zpyxg0000954wiao2l4zc";
 
 const COURSE_NAMES = ["Piano", "Guitar", "Drum", "Violin"];
-const TEACHER_NAMES = ["Alice Smith", "Bob Johnson", "Charlie Brown", "Diana Prince", "Edward King"];
+const TEACHER_NAMES = [
+  "Alice Smith",
+  "Bob Johnson",
+  "Charlie Brown",
+  "Diana Prince",
+  "Edward King",
+];
 const ROOM_NAMES = ["Room 101", "Room 102", "Room 103", "Room 104", "Room 105"];
 const BOOK_PRICE_RANGE = [10000, 15000];
 const MONTHLY_FEE = 30000;
@@ -81,6 +93,7 @@ async function main() {
       const course = courses[Math.floor(Math.random() * courses.length)];
       return prisma.studentCourse.create({
         data: {
+          orgId,
           studentId: student.id,
           courseId: course.id,
         },
@@ -96,6 +109,7 @@ async function main() {
       Array.from({ length: 5 }).map((_, i: number) =>
         prisma.lessonBook.create({
           data: {
+            orgId,
             title: `${course.name} Book ${i + 1}`,
             courseId: course.id,
             price:
@@ -177,9 +191,11 @@ async function main() {
 
         const schedule = await prisma.schedule.create({
           data: {
+            orgId,
             courseId: course.id,
             teacherId: teacher.id,
             roomId: room.id,
+            dayOfWeek: 5,
             startTime,
             endTime,
           },
@@ -207,9 +223,11 @@ async function main() {
 
       const schedule = await prisma.schedule.create({
         data: {
+          orgId,
           courseId: course.id,
           teacherId: teacher.id,
           roomId: room.id,
+          dayOfWeek: 1,
           startTime,
           endTime,
         },
@@ -229,7 +247,8 @@ async function main() {
     const selectedStudents: Student[] = [];
 
     while (selectedStudents.length < numStudents) {
-      const randomStudent = students[Math.floor(Math.random() * students.length)];
+      const randomStudent =
+        students[Math.floor(Math.random() * students.length)];
       if (!selectedStudents.includes(randomStudent)) {
         selectedStudents.push(randomStudent);
       }
@@ -238,6 +257,7 @@ async function main() {
     for (const student of selectedStudents) {
       await prisma.studentSchedule.create({
         data: {
+          orgId,
           scheduleId: schedule.id,
           studentId: student.id,
           attended: false,

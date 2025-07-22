@@ -69,7 +69,6 @@ export function DynamicForm<T extends FieldValues>({
 
   const handleSubmit = async (values: T) => {
     startTransition(async () => {
-      console.log("Form submitted with values:", values);
       onSubmit({
         ...values,
         image: imageUrl ?? undefined,
@@ -77,6 +76,8 @@ export function DynamicForm<T extends FieldValues>({
         isArchived: values.status === "ARCHIVED",
         isProspect: values.status === "PROSPECT",
       });
+      console.log("Form submitted with values:", values);
+      form.reset(); // Reset form fields after successful submission
     });
   };
 

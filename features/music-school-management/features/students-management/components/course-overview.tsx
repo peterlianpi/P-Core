@@ -6,7 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import StudentCardPage from "../../../../students-management/components/student-card";
+import StudentCardPage from "./student-card";
 
 type Student = {
   id: string;
