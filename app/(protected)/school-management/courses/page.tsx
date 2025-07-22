@@ -14,17 +14,18 @@ import { useGetCourses } from "@/features/school-management/features/courses/api
 import { useData } from "@/providers/data-provider";
 import { DataTable } from "@/components/use-client-table/data-table";
 import { columns } from "./_components/columns";
+import StudentFormSkeleton from "@/features/school-management/features/students-management/components/student-form-skeleton";
 export default function CoursesPage() {
   const { orgId } = useData();
   const router = useRouter();
   const { data: courses, isLoading } = useGetCourses({ orgId });
 
   const handleAddNew = () => {
-    router.push("/music-school-management/courses/add");
+    router.push("/school-management/courses/add");
   };
 
   if (isLoading) {
-    return <p>Loading...</p>;
+    return <StudentFormSkeleton />;
   }
 
   if (!courses) {

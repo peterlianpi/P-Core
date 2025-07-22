@@ -11,6 +11,7 @@ import { useImportData } from "@/components/import-data/import-helper/import-dat
 import { useBulkCreateStudents } from "@/features/school-management/features/students-management/api/use-bulk-create-students";
 import { ImportCard } from "@/components/import-data/import-card";
 import { StudentActions } from "@/features/school-management/features/students-management/components/add-import-student";
+import StudentFormSkeleton from "@/features/school-management/features/students-management/components/student-form-skeleton";
 
 export default function StudentsPage() {
   const { orgId } = useData();
@@ -28,7 +29,7 @@ export default function StudentsPage() {
   } = useImportData({ entity: "Students", createMutation: createStudents });
 
   const handleAddNew = () => {
-    router.push("/music-school-management/students/add");
+    router.push("/school-management/students/add");
   };
 
   // all students
@@ -56,7 +57,7 @@ export default function StudentsPage() {
     : [];
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <StudentFormSkeleton />;
   }
 
   const stats = {

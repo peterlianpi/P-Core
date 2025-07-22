@@ -28,9 +28,7 @@ export const Actions = ({ id }: Props) => {
         <DropdownMenuContent align="end">
           <DropdownMenuItem
             disabled={false}
-            onClick={() =>
-              router.push(`/music-school-management/students/${id}`)
-            }
+            onClick={() => router.push(`/school-management/students/${id}`)}
           >
             <Edit className="size-4 mr-2" />
             Edit

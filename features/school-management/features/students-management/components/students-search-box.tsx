@@ -7,7 +7,7 @@ import ErrorBox from "@/components/error-box";
 import { SearchBar } from "@/components/use-server-table-with-search/search-bar";
 import { DataTable } from "@/components/use-server-table-with-search/data-table";
 import { useGetCourses } from "../../courses/api/use-get-courses";
-import { getStudentColumns } from "@/app/(protected)/music-school-management/students/_components/columns";
+import { getStudentColumns } from "@/app/(protected)/school-management/students/_components/columns";
 
 type Props = {
   students: StudentFormData[];
