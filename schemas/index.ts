@@ -95,6 +95,7 @@ export const OrganizationSchema = z.object({
   description: z.string().optional(),
   startedAt: z.date().optional(),
   logoImage: z.string().optional(),
+  type: z.string().optional(),
 });
 
 // UserOrganization Schema (Join Table)
@@ -112,6 +113,7 @@ export const OrgSchema = z.object({
   startedAt: z.date().optional(), // Date format
   logoImage: z.string().optional(),
   role: z.string().optional(),
+  type: z.string().optional(),
 });
 
 export const teamFormSchema = z.object({
@@ -120,6 +122,11 @@ export const teamFormSchema = z.object({
   description: z.string().optional(),
   logoImage: z.string().optional(),
   startedAt: z.date().optional(),
+  type: z
+    .enum(["school", "church", "business", "nonprofit"], {
+      required_error: "Team type is required",
+    })
+    .optional(),
 });
 
 // Define Feedback Schema
@@ -156,6 +163,11 @@ export const OrganizationsAPISchema = z.array(
       description: z.string().optional(),
       startedAt: z.date().optional().nullable(),
       logoImage: z.string().optional(),
+      type: z
+        .enum(["school", "church", "business", "nonprofit"], {
+          required_error: "Team type is required",
+        })
+        .optional(),
     }),
   })
 );

@@ -3,7 +3,7 @@ import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { featuresDBPrismaClient } from "@/lib/prisma-client/features-prisma-client";
 import { ensureUserInOrganization } from "@/lib/auth-helpers";
-import { courseSchema } from "@/features/music-school-management/types/schemas";
+import { courseSchema } from "@/features/school-management/types/schemas";
 
 const courses = new Hono()
 

@@ -24,6 +24,7 @@ export const SelectedOrgProvider = ({ children }: { children: ReactNode }) => {
     startedAt: new Date(), // ✅ Use `new Date()` instead of `Date()`
     logoImage: "",
     role: "",
+    type: "school",
   });
   const [selectedOrgId, setSelectedOrgId] = useState("");
 

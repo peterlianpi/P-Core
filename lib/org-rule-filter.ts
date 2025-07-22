@@ -26,7 +26,6 @@ export const ensureUserInOrganization = async (
   }
 
   const orgIdStr = c.req.query("orgId"); // Get orgId as string | string[]
-  console.log("Org Id : ", orgIdStr);
   const orgId = Array.isArray(orgIdStr) ? orgIdStr[0] : orgIdStr; // Handle array case
 
   if (!orgId?.trim()) {

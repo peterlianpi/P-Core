@@ -9,6 +9,7 @@ import { updateOrganization } from "@/actions/features/org/organization";
 import { useTransition } from "react";
 import { isError } from "@/features/org/helper/organization-type";
 import { useSelectedOrg } from "@/features/org/context/selected-org-context";
+import { isValidTeamType } from "./team-type-helper";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const formSchema = teamFormSchema.omit({
@@ -28,6 +29,7 @@ const EditTeam = () => {
         organizationId: organization.id,
         value: {
           ...values,
+          type: values.type ?? undefined,
           startedAt: values.startedAt ? new Date(values.startedAt) : undefined,
         },
       });
@@ -49,6 +51,7 @@ const EditTeam = () => {
     description: organization?.description,
     logoImage: organization?.logoImage,
     startedAt: organization?.startedAt,
+    type: isValidTeamType(organization?.type) ? organization.type : undefined,
   };
 
   return (

@@ -53,7 +53,9 @@ export function DynamicForm<T extends FieldValues>({
 }: Props<T>) {
   const [isClient, setIsClient] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const [imageUrl, setImageUrl] = useState(defaultValues?.image || null);
+  const [imageUrl, setImageUrl] = useState(
+    defaultValues?.image || defaultValues?.coverImage || null
+  );
 
   // Initialize FileReader only on the client side
   useEffect(() => {
@@ -72,11 +74,11 @@ export function DynamicForm<T extends FieldValues>({
       onSubmit({
         ...values,
         image: imageUrl ?? undefined,
+        coverImage: imageUrl ?? undefined,
         isActive: values.status === "ACTIVE",
         isArchived: values.status === "ARCHIVED",
         isProspect: values.status === "PROSPECT",
       });
-      console.log("Form submitted with values:", values);
       form.reset(); // Reset form fields after successful submission
     });
   };

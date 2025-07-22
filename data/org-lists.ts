@@ -26,8 +26,6 @@ export const getOrganizationsByUserId = async (userId: string) => {
       },
     });
 
-    console.log("Org : ", organizations); // Debugging to check the data
-
     return organizations;
   } catch (error) {
     console.error("Error fetching organizations:", error); // Handle any errors

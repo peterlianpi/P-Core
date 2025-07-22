@@ -1,4 +1,3 @@
-
 type Updated = {
   name: string;
 };
@@ -11,7 +10,6 @@ export function isError(
 ): result is { error: string } {
   return "error" in result;
 }
-
 
 // Invite data return
 export type InviteSuccessResponse = {
@@ -31,16 +29,15 @@ export type InviteSuccessResponse = {
 
 // Accept data return
 export interface InviteAcceptSuccessResponse {
-  message: string;            // e.g. "Invite accepted successfully"
-  organizationId: string;     // ID of the organization user joined
+  message: string; // e.g. "Invite accepted successfully"
+  organizationId: string; // ID of the organization user joined
 }
 
-// 
+//
 export type ChangeOrgRole = {
   success: boolean;
   updated: number;
-}
-
+};
 
 // helpers/organization-type.ts
 export type Invite = {
@@ -67,4 +64,5 @@ export type OrganizationType = {
   startedAt: Date | undefined;
   logoImage: string | undefined;
   role: string | undefined;
+  type: string | undefined;
 };

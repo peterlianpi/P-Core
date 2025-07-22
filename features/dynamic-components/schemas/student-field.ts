@@ -1,4 +1,4 @@
-import { useGetCourses } from "@/features/music-school-management/features/courses/api/use-get-courses";
+import { useGetCourses } from "@/features/school-management/features/courses/api/use-get-courses";
 import { FieldConfig } from "../types/field-config";
 import { useData } from "@/providers/data-provider";
 
