@@ -41,6 +41,7 @@ const courses = new Hono()
         id: true,
         name: true,
         level: true,
+        image: true,
         description: true,
         isActive: true,
         isArchived: true,

@@ -110,6 +110,7 @@ export const courseSchema = z.object({
   id: z.string().cuid(),
   name: z.string().min(2, { message: "Course name is required" }),
   description: z.string().optional(),
+  image: z.string().optional(),
   price: z.number().default(0).optional(),
   duration: z.number().int().optional(),
   startDate: z.union([z.string().datetime(), z.date()]).optional(), // This makes the field optional (it can be undefined)

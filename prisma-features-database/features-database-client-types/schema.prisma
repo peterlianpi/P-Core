@@ -122,6 +122,7 @@ model Course {
   id          String       @id @default(cuid())
   name        String // Course name
   description String? // Optional description
+  image       String?
   price       Float        @default(0) // Course fee
   duration    Int? // Weeks or months
   startDate   DateTime? // Course start
