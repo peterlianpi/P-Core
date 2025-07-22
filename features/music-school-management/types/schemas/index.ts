@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+// Student Bulk Form Schema
+// This schema is used for bulk operations like importing students from CSV
 export const studentFormBulkSchema = z.object({
   id: z.string().cuid(),
   number: z.number().int().optional(),
@@ -26,10 +28,12 @@ export const studentFormBulkSchema = z.object({
 export type StudentFormBulkData = z.infer<typeof studentFormBulkSchema>;
 
 // Student Schema
+// This schema is used for individual student records
+// It includes all fields and is used for both form inputs and database records
 export const StudentSchema = z.object({
   id: z.string(),
   number: z.number().optional(),
-  name: z.string(),
+  name: z.string().min(2, { message: "Name is required" }),
   birthDate: z.union([z.string().datetime(), z.date()]).optional(), // This makes the field optional (it can be undefined)
   image: z.string().optional(),
   gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
@@ -72,6 +76,12 @@ export const studentFormSchema = StudentSchema.extend({
   isArchived: z.boolean().optional(),
   isProspect: z.boolean().optional(),
   isDeleted: z.boolean().optional(),
+
+  status: z
+    .enum(["SELECT", "ACTIVE", "ARCHIVED", "PROSPECT"], {
+      required_error: "Status is required",
+    })
+    .optional(),
 });
 
 export type StudentFormData = z.infer<typeof studentFormSchema>;
@@ -94,16 +104,16 @@ export const studentImportSchema = StudentSchema.omit({
 export type StudentImportForm = z.infer<typeof studentImportSchema>;
 
 // Course Schema
+// This schema is used for course records
+// It includes all fields and is used for both form inputs and database records
 export const courseSchema = z.object({
   id: z.string().cuid(),
-  name: z.string(),
+  name: z.string().min(2, { message: "Course name is required" }),
   description: z.string().optional(),
-  price: z.number().default(0),
+  price: z.number().default(0).optional(),
   duration: z.number().int().optional(),
   startDate: z.union([z.string().datetime(), z.date()]).optional(), // This makes the field optional (it can be undefined)
-
   endDate: z.union([z.string().datetime(), z.date()]).optional(), // This makes the field optional (it can be undefined)
-
   isActive: z.boolean().default(true),
   isArchived: z.boolean().default(false),
   isDeleted: z.boolean().default(false),
@@ -113,7 +123,29 @@ export const courseSchema = z.object({
   roomId: z.string().optional(),
 });
 
-export type CourseFormData = z.infer<typeof courseSchema>;
+export const courseFormSchema = courseSchema
+  .omit({
+    id: true,
+    orgId: true,
+  })
+  .extend({
+    // Accept any type for image, can be string or File
+    image: z.any().optional(),
+    // Override startDate and endDate to accept only Date
+    startDate: z.date().optional(),
+    endDate: z.date().optional(),
+    // Override isActive, isArchived, and isDeleted to be optional
+    isActive: z.boolean().optional(),
+    isArchived: z.boolean().optional(),
+    isDeleted: z.boolean().optional(),
+    status: z.enum(["SELECT", "ACTIVE", "ARCHIVED"], {
+      required_error: "Status is required",
+    }),
+    price: z.string().optional(), // Price can be a string or number
+    duration: z.string().optional(), // Duration can be a string or number
+  });
+
+export type CourseFormData = z.infer<typeof courseFormSchema>;
 
 // Custom Course Schema for Form Inputs
 // Pick only id and name from courseSchema and add levels (string array)
@@ -123,7 +155,13 @@ export const customCourseFormSchema = courseSchema
     name: true,
   })
   .extend({
-    levels: z.array(z.string()).optional(),
+    price: z.number().default(0).optional(),
+    description: z.string().optional().nullable(),
+    isActive: z.boolean().default(true),
+    level: z
+      .enum(["BEGINNER", "INTERMEDIATE", "ADVANCED"])
+      .optional()
+      .nullable(),
   });
 
 export type CustomCourseFormData = z.infer<typeof customCourseFormSchema>;

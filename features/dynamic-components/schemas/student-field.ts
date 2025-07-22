@@ -20,10 +20,15 @@ export const useStudentFields = () => {
       type: "select",
       options: ["MALE", "FEMALE", "OTHER"],
     },
-    { name: "isActive", label: "Active", type: "switch" },
-    { name: "isArchived", label: "Archived", type: "switch" },
-    { name: "isDeleted", label: "Deleted", type: "switch" },
-    { name: "isProspect", label: "Prospect", type: "switch" },
+
+    {
+      name: "status",
+      label: "Status",
+      type: "select",
+      options: ["ACTIVE", "ARCHIVED", "PROSPECT"],
+    },
+    { name: "joinedAt", label: "Joined Date", type: "date" },
+
     {
       name: "courseIds",
       label: "Select Courses",
@@ -34,13 +39,12 @@ export const useStudentFields = () => {
           value: c.id,
         })) || [],
     },
-    { name: "address", label: "Address", type: "textarea" },
     { name: "phone", label: "Phone", type: "text" },
     { name: "rollNumber", label: "Roll Number", type: "text" },
     { name: "parentName", label: "Parent Name", type: "text" },
     { name: "parentPhone", label: "Parent Phone", type: "text" },
+    { name: "address", label: "Address", type: "textarea" },
     { name: "notes", label: "Notes", type: "textarea" },
-    { name: "joinedAt", label: "Joined Date", type: "date" },
   ];
   return studentFields;
 };

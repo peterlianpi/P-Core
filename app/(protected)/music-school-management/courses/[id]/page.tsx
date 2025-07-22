@@ -1,8 +1,8 @@
-import EditMember from "@/features/members/components/edit-member";
+import EditCourseFormPage from "@/features/music-school-management/features/courses/components/update-course";
 import React from "react";
 
-const EditMemberPage = () => {
-  return <EditMember />;
+const EditCoursePage = () => {
+  return <EditCourseFormPage />;
 };
 
-export default EditMemberPage;
+export default EditCoursePage;

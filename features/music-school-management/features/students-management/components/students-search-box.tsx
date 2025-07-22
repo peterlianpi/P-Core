@@ -66,6 +66,13 @@ export default function SearchStudentPage({ students, items }: Props) {
       isProspect: student.isProspect ?? false,
       joinedAt: student.joinedAt ? new Date(student.joinedAt) : new Date(),
       orgId: student.orgId || orgId,
+      status: student.isActive
+        ? "ACTIVE"
+        : student.isArchived
+          ? "ARCHIVED"
+          : student.isProspect
+            ? "PROSPECT"
+            : "SELECT",
     }));
 
     setMyMembers(students);

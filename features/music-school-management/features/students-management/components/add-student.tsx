@@ -16,7 +16,14 @@ export default function AddStudentFormPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setIsLoading(true);
+   if (orgId) {
+      setIsLoading(true);
+    }
+    // Simulate loading delay
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
   }, [orgId]);
 
   // Create student mutation
@@ -64,10 +71,7 @@ export default function AddStudentFormPage() {
     address: "",
     courseIds: [],
     joinedAt: new Date(),
-    isActive: true,
-    isArchived: false,
-    isDeleted: false,
-    isProspect: false,
+    status: "ACTIVE",
   };
 
   return (

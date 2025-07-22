@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { client } from "@/lib/hono";
 
-export const useGetStudentByIdAndOrgId = ({
+export const useGetCourseByIdAndOrgId = ({
   id,
   orgId,
 }: {
@@ -10,12 +10,12 @@ export const useGetStudentByIdAndOrgId = ({
 }) => {
   const query = useQuery({
     enabled: !!id, // only run the query if id, orgId are defined
-    queryKey: ["student", { id, orgId }],
+    queryKey: ["course", { id, orgId }],
     queryFn: async () => {
-      if (!id) throw new Error("User ID is required");
+      if (!id) throw new Error("Course ID is required");
 
-      // API request to fetch student data by id
-      const response = await client.api.students[":id"].$get({
+      // API request to fetch course data by id
+      const response = await client.api.courses[":id"].$get({
         query: {
           orgId,
         },

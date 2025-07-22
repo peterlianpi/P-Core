@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,60 +9,30 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Plus } from "lucide-react";
-import { CourseForm } from "@/features/music-school-management/features/courses/components/course-form";
-import { CourseTable } from "@/features/music-school-management/features/courses/components/course-table";
-import { CourseFormData } from "@/features/music-school-management/lib/types";
-import { mockCourses } from "@/features/music-school-management/lib/mock-data";
-import { Course } from "@/features/music-school-management/types/core";
-
+import { useRouter } from "next/navigation";
+import { useGetCourses } from "@/features/music-school-management/features/courses/api/use-get-courses";
+import { useData } from "@/providers/data-provider";
+import { DataTable } from "@/components/use-client-table/data-table";
+import { columns } from "./_components/columns";
 export default function CoursesPage() {
-  const [courses, setCourses] = useState<Course[]>(mockCourses);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingCourse, setEditingCourse] = useState<Course | undefined>();
-
-  const handleSave = (courseData: CourseFormData) => {
-    if (editingCourse) {
-      // Update existing course
-      setCourses((prev) =>
-        prev.map((course) =>
-          course.id === editingCourse.id
-            ? {
-                ...course,
-                ...courseData,
-                updatedAt: new Date().toISOString(),
-              }
-            : course
-        )
-      );
-    } else {
-      // Add new course
-      const newCourse: Course = {
-        id: Date.now().toString(),
-        ...courseData,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      setCourses((prev) => [...prev, newCourse]);
-    }
-    setEditingCourse(undefined);
-  };
-
-  const handleEdit = (course: Course) => {
-    setEditingCourse(course);
-    setIsFormOpen(true);
-  };
-
-  const handleDelete = (id: string) => {
-    setCourses((prev) => prev.filter((course) => course.id !== id));
-  };
+  const { orgId } = useData();
+  const router = useRouter();
+  const { data: courses, isLoading } = useGetCourses({ orgId });
 
   const handleAddNew = () => {
-    setEditingCourse(undefined);
-    setIsFormOpen(true);
+    router.push("/music-school-management/courses/add");
   };
 
+  if (isLoading) {
+    return <p>Loading...</p>;
+  }
+
+  if (!courses) {
+    return <p>No Courses yet!</p>;
+  }
+
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-6 mt-4">
       {/* Header */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
@@ -87,7 +56,7 @@ export default function CoursesPage() {
             <CardTitle className="text-sm font-medium">Total Courses</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{courses.length}</div>
+            <div className="text-2xl font-bold">{courses?.length ?? 0}</div>
             <p className="text-xs text-muted-foreground">
               {courses.filter((c) => c.isActive).length} active
             </p>
@@ -101,8 +70,7 @@ export default function CoursesPage() {
             <div className="text-2xl font-bold">
               $
               {Math.round(
-                courses.reduce((sum, c) => sum + c.monthlyFee, 0) /
-                  courses.length
+                courses.reduce((sum, c) => sum + c.price, 0) / courses.length
               )}
             </div>
             <p className="text-xs text-muted-foreground">per month</p>
@@ -114,7 +82,7 @@ export default function CoursesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {courses.reduce((sum, c) => sum + c.levels.length, 0)}
+              {/* {courses.reduce((sum, c) => sum + c?.level?.length, 0)} */}
             </div>
             <p className="text-xs text-muted-foreground">across all courses</p>
           </CardContent>
@@ -130,21 +98,9 @@ export default function CoursesPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <CourseTable
-            courses={courses}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
+          <DataTable columns={columns} data={courses} searchField="name" />
         </CardContent>
       </Card>
-
-      {/* Course Form Dialog */}
-      <CourseForm
-        open={isFormOpen}
-        onOpenChange={setIsFormOpen}
-        course={editingCourse}
-        onSave={handleSave}
-      />
     </div>
   );
 }

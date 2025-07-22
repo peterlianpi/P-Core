@@ -43,10 +43,13 @@ export default function EditStudentFormPage() {
         joinedAt: fetchedStudent.joinedAt
           ? new Date(fetchedStudent.joinedAt)
           : new Date(),
-        isActive: fetchedStudent.isActive ?? true,
-        isArchived: fetchedStudent.isArchived ?? false,
-        isDeleted: fetchedStudent.isDeleted ?? false,
-        isProspect: fetchedStudent.isProspect ?? false,
+        status: fetchedStudent.isActive
+          ? "ACTIVE"
+          : fetchedStudent.isArchived
+            ? "ARCHIVED"
+            : fetchedStudent.isProspect
+              ? "PROSPECT"
+              : "ACTIVE",
       }
     : {
         number: undefined,
@@ -64,7 +67,6 @@ export default function EditStudentFormPage() {
         courseIds: [],
         isActive: true,
         isArchived: false,
-        isDeleted: false,
         isProspect: false,
         joinedAt: new Date(),
       };

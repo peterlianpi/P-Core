@@ -1,8 +1,11 @@
-import AddMemberHomePage from "@/features/members/components/add-member-home";
-import React from "react";
+"use client";
 
-const AddNewMemberPage = () => {
-  return  <AddMemberHomePage />;
-};
+import AddCourseFormPage from "@/features/music-school-management/features/courses/components/add-course";
 
-export default AddNewMemberPage;
+export default function StudentDynamicFormPage() {
+  return (
+    <div className="">
+      <AddCourseFormPage />
+    </div>
+  );
+}

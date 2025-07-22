@@ -1,29 +1,41 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal } from "lucide-react"
-import type { Course } from "@/lib/types"
+import { useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
+import { CustomCourseFormData } from "@/features/music-school-management/types/schemas";
 
 interface CourseTableProps {
-  courses: Course[]
-  onEdit: (course: Course) => void
-  onDelete: (id: string) => void
+  courses: CustomCourseFormData[];
 }
 
-export function CourseTable({ courses, onEdit, onDelete }: CourseTableProps) {
-  const [filter, setFilter] = useState("")
+export function CourseTable({ courses }: CourseTableProps) {
+  const [filter, setFilter] = useState("");
 
   const filteredCourses = courses.filter(
     (course) =>
       course.name.toLowerCase().includes(filter.toLowerCase()) ||
       course.description?.toLowerCase().includes(filter.toLowerCase()) ||
-      course.levels.some((level) => level.toLowerCase().includes(filter.toLowerCase())),
-  )
+      course.level.some((level) =>
+        level.toLowerCase().includes(filter.toLowerCase())
+      )
+  );
 
   return (
     <div className="space-y-4">
@@ -49,10 +61,17 @@ export function CourseTable({ courses, onEdit, onDelete }: CourseTableProps) {
             <TableRow key={course.id}>
               <TableCell>
                 <div className="flex items-center gap-3">
-                  <div className="w-4 h-4 rounded-full" style={{ backgroundColor: course.color }} />
+                  <div
+                    className="w-4 h-4 rounded-full"
+                    style={{ backgroundColor: course.color }}
+                  />
                   <div>
                     <div className="font-medium">{course.name}</div>
-                    {course.description && <div className="text-sm text-muted-foreground">{course.description}</div>}
+                    {course.description && (
+                      <div className="text-sm text-muted-foreground">
+                        {course.description}
+                      </div>
+                    )}
                   </div>
                 </div>
               </TableCell>
@@ -80,8 +99,12 @@ export function CourseTable({ courses, onEdit, onDelete }: CourseTableProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onEdit(course)}>Edit</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onDelete(course.id)}>Delete</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onEdit(course)}>
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onDelete(course.id)}>
+                      Delete
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
@@ -90,5 +113,5 @@ export function CourseTable({ courses, onEdit, onDelete }: CourseTableProps) {
         </TableBody>
       </Table>
     </div>
-  )
+  );
 }

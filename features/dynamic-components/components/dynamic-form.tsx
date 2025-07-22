@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  DefaultValues,
-  FieldValues,
-  Path,
-  PathValue,
-  useForm,
-} from "react-hook-form";
+import { DefaultValues, FieldValues, Path, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
@@ -55,6 +49,7 @@ export function DynamicForm<T extends FieldValues>({
   fields,
   onSubmit,
   defaultValues,
+  submitLabel,
 }: Props<T>) {
   const [isClient, setIsClient] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -70,18 +65,6 @@ export function DynamicForm<T extends FieldValues>({
     defaultValues,
   });
 
-  useEffect(() => {
-    const subscription = form.watch((values) => {
-      if (values.isActive) {
-        form.setValue("isArchived" as Path<T>, false as PathValue<T, Path<T>>);
-        form.setValue("isDeleted" as Path<T>, false as PathValue<T, Path<T>>);
-        form.setValue("isProspect" as Path<T>, false as PathValue<T, Path<T>>);
-      }
-    });
-
-    return () => subscription.unsubscribe?.(); // Clean up on unmount
-  }, [form]);
-
   const fileRef = form.register("image" as Path<T>);
 
   const handleSubmit = async (values: T) => {
@@ -90,6 +73,9 @@ export function DynamicForm<T extends FieldValues>({
       onSubmit({
         ...values,
         image: imageUrl ?? undefined,
+        isActive: values.status === "ACTIVE",
+        isArchived: values.status === "ARCHIVED",
+        isProspect: values.status === "PROSPECT",
       });
     });
   };
@@ -116,147 +102,116 @@ export function DynamicForm<T extends FieldValues>({
               setImageUrl={setImageUrl}
               fileRef={fileRef}
             />
-
-            {fields.map((f) => (
-              <FormField
-                key={f.name}
-                control={form.control}
-                name={f.name as Path<T>}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{f.label}</FormLabel>
-                    <FormControl>
-                      {f.type === "text" ||
-                      f.type === "email" ||
-                      f.type === "number" ? (
-                        <Input
-                          type={f.type}
-                          placeholder={f.placeholder}
-                          {...field}
-                          disabled={isPending}
-                        />
-                      ) : f.type === "textarea" ? (
-                        <Textarea
-                          placeholder={f.placeholder}
-                          {...field}
-                          disabled={isPending}
-                        />
-                      ) : f.type === "select" ? (
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value || ""}
-                          disabled={isPending}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder={`Select ${f.label}`} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {f.options?.map((opt) => {
-                              const value =
-                                typeof opt === "string" ? opt : opt.value;
-                              const label =
-                                typeof opt === "string" ? opt : opt.label;
-                              return (
-                                <SelectItem key={value} value={value}>
-                                  {label}
-                                </SelectItem>
-                              );
-                            })}
-                          </SelectContent>
-                        </Select>
-                      ) : f.type === "date" ? (
-                        <DatePicker
-                          value={field.value}
-                          onChange={field.onChange}
-                          disabled={isPending}
-                        />
-                      ) : f.type === "checkbox" ? (
-                        <div className="flex items-center gap-2">
-                          <Checkbox
-                            checked={field.value ?? false}
-                            onCheckedChange={field.onChange}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* Dynamic Fields */}
+              {fields.map((f) => (
+                <FormField
+                  key={f.name}
+                  control={form.control}
+                  name={f.name as Path<T>}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{f.label}</FormLabel>
+                      <FormControl>
+                        {f.type === "text" ||
+                        f.type === "email" ||
+                        f.type === "number" ? (
+                          <Input
+                            type={f.type}
+                            placeholder={f.placeholder}
+                            {...field}
                             disabled={isPending}
                           />
-                          <Label
-                            htmlFor={field.name as string}
-                            className="cursor-pointer"
+                        ) : f.type === "textarea" ? (
+                          <Textarea
+                            placeholder={f.placeholder}
+                            {...field}
+                            disabled={isPending}
+                          />
+                        ) : f.type === "select" ? (
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value || ""}
+                            disabled={isPending}
                           >
-                            {f.label}
-                          </Label>
-                        </div>
-                      ) : f.type === "checkbox-group" ? (
-                        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-2 border p-3 rounded-md max-h-48 overflow-y-auto">
-                          {f.options?.map((option) => {
-                            const { value, label } =
-                              typeof option === "string"
-                                ? { value: option, label: option }
-                                : option;
+                            <SelectTrigger>
+                              <SelectValue placeholder={`Select ${f.label}`} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {f.options?.map((opt) => {
+                                const value =
+                                  typeof opt === "string" ? opt : opt.value;
+                                const label =
+                                  typeof opt === "string" ? opt : opt.label;
+                                return (
+                                  <SelectItem key={value} value={value}>
+                                    {label}
+                                  </SelectItem>
+                                );
+                              })}
+                            </SelectContent>
+                          </Select>
+                        ) : f.type === "date" ? (
+                          <DatePicker
+                            value={field.value}
+                            onChange={field.onChange}
+                            disabled={isPending}
+                          />
+                        ) : f.type === "checkbox" ? (
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              checked={field.value ?? false}
+                              onCheckedChange={field.onChange}
+                              disabled={isPending}
+                            />
+                            <Label
+                              htmlFor={field.name as string}
+                              className="cursor-pointer"
+                            >
+                              {f.label}
+                            </Label>
+                          </div>
+                        ) : f.type === "checkbox-group" ? (
+                          <div className="grid md:grid-cols-4 gap-2 border p-3 rounded-md max-h-48 overflow-y-auto">
+                            {f.options?.map((option) => {
+                              const { value, label } =
+                                typeof option === "string"
+                                  ? { value: option, label: option }
+                                  : option;
 
-                            const values = (field.value as string[]) || [];
-                            const checked = values.includes(value);
+                              const values = (field.value as string[]) || [];
+                              const checked = values.includes(value);
 
-                            return (
-                              <div
-                                key={value}
-                                className="flex items-center gap-2"
-                              >
-                                <Checkbox
-                                  id={`${field.name}-${value}`}
-                                  checked={checked}
-                                  onCheckedChange={(checked) => {
-                                    if (checked) {
-                                      field.onChange([...values, value]);
-                                    } else {
-                                      field.onChange(
-                                        values.filter((v) => v !== value)
-                                      );
-                                    }
-                                  }}
-                                  disabled={isPending}
-                                />
-                                <Label
-                                  htmlFor={`${field.name}-${value}`}
-                                  className="cursor-pointer"
+                              return (
+                                <div
+                                  key={value}
+                                  className="flex items-center gap-2"
                                 >
-                                  {label}
-                                </Label>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : f.type === "switch" ? (
-                        f.name === "isActive" ? (
-                          <div className="flex items-center gap-2">
-                            <Switch
-                              checked={field.value ?? false}
-                              onCheckedChange={(checked) => {
-                                field.onChange(checked);
-
-                                if (checked) {
-                                  form.setValue(
-                                    "isArchived" as Path<T>,
-                                    false as PathValue<T, Path<T>>
-                                  );
-                                  form.setValue(
-                                    "isDeleted" as Path<T>,
-                                    false as PathValue<T, Path<T>>
-                                  );
-                                  form.setValue(
-                                    "isProspect" as Path<T>,
-                                    false as PathValue<T, Path<T>>
-                                  );
-                                }
-                              }}
-                              disabled={isPending}
-                            />
-                            <Label
-                              htmlFor={field.name}
-                              className="cursor-pointer"
-                            >
-                              {f.label}
-                            </Label>
+                                  <Checkbox
+                                    id={`${field.name}-${value}`}
+                                    checked={checked}
+                                    onCheckedChange={(checked) => {
+                                      if (checked) {
+                                        field.onChange([...values, value]);
+                                      } else {
+                                        field.onChange(
+                                          values.filter((v) => v !== value)
+                                        );
+                                      }
+                                    }}
+                                    disabled={isPending}
+                                  />
+                                  <Label
+                                    htmlFor={`${field.name}-${value}`}
+                                    className="cursor-pointer"
+                                  >
+                                    {label}
+                                  </Label>
+                                </div>
+                              );
+                            })}
                           </div>
-                        ) : (
+                        ) : f.type === "switch" ? (
                           <div className="flex items-center gap-2">
                             <Switch
                               checked={field.value ?? false}
@@ -272,20 +227,20 @@ export function DynamicForm<T extends FieldValues>({
                               {f.label}
                             </Label>
                           </div>
-                        )
-                      ) : null}
-                    </FormControl>
+                        ) : null}
+                      </FormControl>
 
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            ))}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ))}
+            </div>
 
             {/* Submit Button */}
-            <div className="flex gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4  gap-4">
               <Button type="submit" className="w-full" disabled={isPending}>
-                {id ? "Update Student" : "Add Student"}
+                {id ? `Update ${submitLabel}` : `Add ${submitLabel}`}
               </Button>
               {/* {ConfirmDialog && (
                 <ConfirmDialog>

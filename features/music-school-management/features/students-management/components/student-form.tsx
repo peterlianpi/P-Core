@@ -40,7 +40,7 @@ export function StudentForm({
         fields={studentFields}
         onSubmit={handleSubmit}
         imageType="member"
-        submitLabel="Create Student"
+        submitLabel="Student"
         defaultValues={defaultValues}
       />
     </>
