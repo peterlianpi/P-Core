@@ -24,12 +24,14 @@ export async function getOrganizationsByUserId(userId: string | undefined) {
           description: true,
           startedAt: true,
           logoImage: true,
+          type: true,
         },
       },
     },
   });
 
   const result = OrganizationsAPISchema.safeParse(userOrganizations);
+
   if (!result.success) throw new Error("Invalid data");
 
   return result;
@@ -45,6 +47,7 @@ export async function createOrganization({
     description?: string;
     logoImage?: string;
     startedAt?: Date;
+    type?: string;
   };
 }) {
   try {
@@ -56,6 +59,7 @@ export async function createOrganization({
           logoImage: value.logoImage,
           startedAt: value.startedAt,
           createdBy: { connect: { id: userId } },
+          type: value.type,
         },
       });
 
@@ -92,6 +96,7 @@ export async function updateOrganization({
     description?: string;
     logoImage?: string;
     startedAt?: Date;
+    type?: string;
   };
 }) {
   try {

@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -23,6 +22,13 @@ import { useData } from "@/providers/data-provider";
 import CustomUploadImagePage from "@/features/image-upload/components/upload-image";
 import { useIsOrgOwner } from "@/hooks/use-current-team-role";
 import { useOrgData } from "@/features/org/context/org-context";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const apiSchema = teamFormSchema.omit({
   id: true,
@@ -137,14 +143,49 @@ export function TeamForm({
                   <FormLabel>Started At</FormLabel>
                   <FormControl>
                     <DatePicker
-                      value={field.value ?? undefined}
+                      value={field.value}
                       onChange={field.onChange}
                       disabled={disabled || isPending || !canEdit}
                     />
                   </FormControl>
-                  <FormDescription>
-                    The date is used to calculate the age.
-                  </FormDescription>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Team Type */}
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Team Type</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value ?? undefined}
+                    disabled={disabled || isPending || !canEdit}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select team type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem key="school" value="school">
+                        School
+                      </SelectItem>
+                      <SelectItem value="church" key="church">
+                        Church
+                      </SelectItem>
+                      <SelectItem value="business" key="business">
+                        Business
+                      </SelectItem>
+                      <SelectItem value="nonprofit" key="nonprofit">
+                        Nonprofit
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

@@ -20,6 +20,7 @@ function OrganizationListsPage() {
     description: org.organization.description,
     startedAt: org.organization.startedAt ?? undefined,
     role: org.role,
+    type: org.organization.type,
   }));
 
   return (

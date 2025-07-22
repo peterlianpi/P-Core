@@ -25,6 +25,7 @@ const EditTeam = ({
     description: string | undefined;
     startedAt: Date | null | undefined;
     role: string | undefined;
+    type: string | undefined;
   };
 }) => {
   const user = useCurrentUser();
@@ -32,8 +33,6 @@ const EditTeam = ({
   const { setIsAddTeam } = useData();
 
   const onSubmit = (values: FormValues) => {
-    console.log("Values 123:", values);
-    console.log("Date : ", typeof values.startedAt);
     // console.log("Get date : ", values.startedAt?.toISOString());
     editMutation.mutate(values, {
       onSuccess: () => {
@@ -51,6 +50,7 @@ const EditTeam = ({
     description: organization?.description,
     logoImage: organization?.logoImage,
     startedAt: organization?.startedAt ?? undefined,
+    type: organization?.type ?? undefined,
   };
 
   return (

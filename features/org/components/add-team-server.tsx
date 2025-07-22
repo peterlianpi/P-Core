@@ -49,6 +49,7 @@ const AddNewTeam = () => {
     description: "",
     logoImage: "",
     startedAt: undefined,
+    type: undefined,
   };
 
   return (

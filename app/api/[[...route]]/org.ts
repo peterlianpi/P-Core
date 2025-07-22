@@ -19,6 +19,7 @@ const org = new Hono()
           description: true,
           startedAt: true,
           logoImage: true,
+          type: true,
         },
       });
 
@@ -44,21 +45,23 @@ const org = new Hono()
         const { userId } = c.req.valid("query");
 
         // Fetch organizations linked to the user
-        const userOrganizations = await userDBPrismaClient.userOrganization.findMany({
-          where: { userId },
-          select: {
-            role: true,
-            organization: {
-              select: {
-                id: true,
-                name: true,
-                description: true,
-                startedAt: true,
-                logoImage: true,
-              },
-            }, // Include organization details
-          },
-        });
+        const userOrganizations =
+          await userDBPrismaClient.userOrganization.findMany({
+            where: { userId },
+            select: {
+              role: true,
+              organization: {
+                select: {
+                  id: true,
+                  name: true,
+                  description: true,
+                  startedAt: true,
+                  logoImage: true,
+                  type: true,
+                },
+              }, // Include organization details
+            },
+          });
 
         if (!userOrganizations.length)
           return c.json({ error: "No organizations found for the user" }, 404);
@@ -112,6 +115,7 @@ const org = new Hono()
                   id: userId, // Associate the organization with the user
                 },
               },
+              type: parsed.data.type,
             },
           });
 
@@ -145,6 +149,7 @@ const org = new Hono()
           description: true,
           startedAt: true,
           logoImage: true,
+          type: true,
           _count: {
             select: {},
           },
@@ -336,7 +341,9 @@ const org = new Hono()
             403
           );
 
-        const user = await userDBPrismaClient.user.findUnique({ where: { id: userId } });
+        const user = await userDBPrismaClient.user.findUnique({
+          where: { id: userId },
+        });
         const organization = await userDBPrismaClient.organization.findUnique({
           where: { id: orgId },
         });
@@ -355,7 +362,6 @@ const org = new Hono()
     }
   )
 
-
   .patch(
     "/:id/update-roles",
     zValidator(
@@ -367,25 +373,28 @@ const org = new Hono()
     zValidator(
       "query",
       z.object({
-        userId: z.string()
+        userId: z.string(),
       })
     ),
     zValidator(
       "json",
       z.object({
-        updates: z.record(z.string(), z.enum([
-          "OWNER",
-          "ADMIN",
-          "MEMBER",
-          "ACCOUNTANT",
-          "OFFICE_STAFF",
-          "ADMIN"
-        ])),
+        updates: z.record(
+          z.string(),
+          z.enum([
+            "OWNER",
+            "ADMIN",
+            "MEMBER",
+            "ACCOUNTANT",
+            "OFFICE_STAFF",
+            "ADMIN",
+          ])
+        ),
       })
     ),
     async (c) => {
       const orgId = c.req.param("id");
-      const { userId: adminUserId } = c.req.valid("query")
+      const { userId: adminUserId } = c.req.valid("query");
       const { updates } = c.req.valid("json");
 
       // Check permission
@@ -398,7 +407,10 @@ const org = new Hono()
         },
       });
 
-      if (!adminRecord || (adminRecord.role !== "OWNER" && adminRecord.role !== "ADMIN")) {
+      if (
+        !adminRecord ||
+        (adminRecord.role !== "OWNER" && adminRecord.role !== "ADMIN")
+      ) {
         return c.json({ error: "You are not authorized to update roles" }, 403);
       }
 
@@ -440,19 +452,27 @@ const org = new Hono()
     }
   )
 
-
   // PATCH /api/org/remove-member
   .patch(
     "/:id/remove-member",
-    zValidator("param", z.object({
-      id: z.string(),
-    })),
-    zValidator("query", z.object({
-      adminUserId: z.string(),
-    })),
-    zValidator("json", z.object({
-      userId: z.string(),
-    })),
+    zValidator(
+      "param",
+      z.object({
+        id: z.string(),
+      })
+    ),
+    zValidator(
+      "query",
+      z.object({
+        adminUserId: z.string(),
+      })
+    ),
+    zValidator(
+      "json",
+      z.object({
+        userId: z.string(),
+      })
+    ),
     async (c) => {
       try {
         const { id: orgId } = c.req.valid("param");
@@ -460,18 +480,22 @@ const org = new Hono()
         const { adminUserId } = c.req.valid("query");
 
         // 🔐 Step 1: Check if adminUserId is OWNER of org
-        const adminOrgRole = await userDBPrismaClient.userOrganization.findUnique({
-          where: {
-            userId_organizationId: {
-              userId: adminUserId,
-              organizationId: orgId,
+        const adminOrgRole =
+          await userDBPrismaClient.userOrganization.findUnique({
+            where: {
+              userId_organizationId: {
+                userId: adminUserId,
+                organizationId: orgId,
+              },
             },
-          },
-          select: { role: true },
-        });
+            select: { role: true },
+          });
 
         if (!adminOrgRole || adminOrgRole.role !== "OWNER") {
-          return c.json({ error: "Only organization OWNER can remove members." }, 403);
+          return c.json(
+            { error: "Only organization OWNER can remove members." },
+            403
+          );
         }
 
         // ✅ Step 2: Check if user is in organization
@@ -485,7 +509,10 @@ const org = new Hono()
         });
 
         if (!userOrg) {
-          return c.json({ error: "User is not part of this organization" }, 404);
+          return c.json(
+            { error: "User is not part of this organization" },
+            404
+          );
         }
 
         // ✅ Step 3: Soft-remove member
@@ -502,14 +529,15 @@ const org = new Hono()
           },
         });
 
-        return c.json({ message: "Member removed successfully", userId, organizationId: orgId });
+        return c.json({
+          message: "Member removed successfully",
+          userId,
+          organizationId: orgId,
+        });
       } catch {
         return c.json({ error: "Failed to remove member" }, 500);
       }
     }
   );
-
-
-
 
 export default org;
