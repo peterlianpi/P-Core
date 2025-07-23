@@ -32,7 +32,7 @@ import { Switch } from "@/components/ui/switch";
 
 type Props<T extends FieldValues> = {
   id?: string;
-  imageType?: "user" | "member" | "material" | "team"; // Specify the type of image being uploaded
+  imageType?: "user" | "member" | "material" | "team"|undefined; // Specify the type of image being uploaded
   title?: string;
   schema: ZodType<T>;
   fields: FieldConfig[];
