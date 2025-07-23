@@ -90,7 +90,7 @@ export default function SearchStudentPage({ students, items }: Props) {
 
   return (
     <section className="space-y-4">
-      <div className="flex items-center gap-4 px-2 border rounded-md py-4">
+      <div className="flex items-center border gap-4 px-4 bg-background rounded-md sticky top-14 z-10 py-4">
         <SearchBar onSearch={handleSearch} placeholder="Search ..." />
       </div>
       <DataTable

@@ -31,6 +31,9 @@ export async function getOrganizationsByUserId(userId: string | undefined) {
   });
 
   const result = OrganizationsAPISchema.safeParse(userOrganizations);
+  if (result.error) {
+    console.log("Error : ", result.error.message);
+  }
 
   if (!result.success) throw new Error("Invalid data");
 

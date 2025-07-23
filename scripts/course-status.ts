@@ -4,7 +4,7 @@ import {
 } from "@/prisma-features-database/features-database-client-types";
 
 const prisma = new PrismaClient();
-const orgId = "cmd1zpyxg0000954wiao2l4zc";
+const orgId = "cmcysksck0000jr04x1y1w2ep";
 
 const possibleStatuses = [
   CourseStatus.ENROLLED,

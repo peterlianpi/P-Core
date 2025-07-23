@@ -445,6 +445,12 @@ const app = new Hono()
           totalItems: await featuresDBPrismaClient.student.count({
             where: { orgId: organizationId },
           }),
+          active: await featuresDBPrismaClient.student.count({
+            where: { orgId: organizationId, isActive: true },
+          }),
+          archived: await featuresDBPrismaClient.student.count({
+            where: { orgId: organizationId, isArchived: true },
+          }),
         });
       } catch (err) {
         console.error(err);

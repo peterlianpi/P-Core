@@ -7,10 +7,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ScheduleTabs } from "@/features/school-management/features/schedule/components/schedule-tabs";
 
 export default function SchedulePage() {
   return (
-    <div className="flex flex-col gap-6 p-4 md:p-6">
+    <div className="flex flex-col gap-6 p-2 md:p-4">
       <Card className="rounded-lg">
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0 pb-2">
           <div className="flex flex-col">
@@ -20,7 +21,9 @@ export default function SchedulePage() {
             </CardDescription>
           </div>
         </CardHeader>
-        <CardContent className="pt-4"></CardContent>
+        <CardContent className="pt-4">
+          {/* <ScheduleTabs /> */}
+        </CardContent>
       </Card>
     </div>
   );

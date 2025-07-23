@@ -203,7 +203,7 @@ export function DataTable<TData, TValue>({
 export const TableLoading = () => {
   return (
     <section className="space-y-4">
-      <div className="flex items-center gap-4 bg-secondary px-4 rounded-md sticky top-14 z-10 py-4">
+      <div className="flex items-center gap-4 bg-background px-4 rounded-md sticky top-14 z-10 py-4">
         <div className="flex gap-4 flex-grow">
           <Input
             placeholder="Search name..."

@@ -1,11 +1,11 @@
 "use client";
 
-import AddCourseFormPage from "@/features/school-management/features/courses/components/add-course";
+import AddLessonBookFormPage from "@/features/school-management/features/lesson-books/components/add-lesson-book";
 
-export default function StudentDynamicFormPage() {
+export default function AddLessonBookPage() {
   return (
     <div className="">
-      <AddCourseFormPage />
+      <AddLessonBookFormPage />
     </div>
   );
 }

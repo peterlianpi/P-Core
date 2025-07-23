@@ -87,7 +87,7 @@ export function DynamicForm<T extends FieldValues>({
     <Card>
       <CardHeader className="font-semibold text-lg">
         {title || "Dynamic Form"}
-      </CardHeader>{" "}
+      </CardHeader>
       <CardContent>
         <Form {...form}>
           <form
@@ -97,14 +97,17 @@ export function DynamicForm<T extends FieldValues>({
             className="space-y-6 max-w-2xl"
           >
             {/* Image Section */}
-            <CustomUploadImagePage
-              type={imageType}
-              canEdit={true}
-              isClient={isClient}
-              imageUrl={imageUrl}
-              setImageUrl={setImageUrl}
-              fileRef={fileRef}
-            />
+            {imageType && (
+              <CustomUploadImagePage
+                type={imageType}
+                canEdit={true}
+                isClient={isClient}
+                imageUrl={imageUrl}
+                setImageUrl={setImageUrl}
+                fileRef={fileRef}
+              />
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Dynamic Fields */}
               {fields.map((f) => (

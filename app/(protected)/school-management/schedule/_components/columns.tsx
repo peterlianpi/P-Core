@@ -5,10 +5,10 @@ import { ArrowUpDown, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Actions } from "./actions";
 import { CenteredCell } from "@/helpers/format-table";
-import { CustomLessonBookData } from "@/features/school-management/types/schemas";
+import { CustomCourseFormData } from "@/features/school-management/types/schemas";
 
 // Define your columns for the DataTable
-export const columns: ColumnDef<CustomLessonBookData>[] = [
+export const columns: ColumnDef<CustomCourseFormData>[] = [
   // {
   //   accessorKey: "image", // maps to `image` in member data
   //   header: "Profile",
@@ -25,7 +25,7 @@ export const columns: ColumnDef<CustomLessonBookData>[] = [
   //   },
   // },
   {
-    accessorKey: "title", // maps to `name` in member data
+    accessorKey: "name", // maps to `name` in member data
 
     header: ({ column }) => {
       return (
@@ -43,7 +43,7 @@ export const columns: ColumnDef<CustomLessonBookData>[] = [
   },
 
   {
-    accessorKey: "price", // maps to `price` in member data
+    accessorKey: "price", // maps to `phone` in member data
 
     header: ({ column }) => {
       return (
@@ -53,16 +53,20 @@ export const columns: ColumnDef<CustomLessonBookData>[] = [
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
             Price
+            <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         </CenteredCell>
       );
-    }, // Hide price on small screens
+    }, // Hide phone on small screens
     cell: ({ row }) => {
       return <CenteredCell>{row.getValue("price")}</CenteredCell>; // Use the reusable component
     },
+    meta: {
+      hidden: false,
+    },
   },
   {
-    accessorKey: "description", // maps to `gender` in member data
+    accessorKey: "level", // maps to `gender` in member data
 
     header: ({ column }) => {
       return (
@@ -71,12 +75,12 @@ export const columns: ColumnDef<CustomLessonBookData>[] = [
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            Description
+            Level
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         </CenteredCell>
       );
-    }, // Hide price on small screens
+    }, // Hide phone on small screens
     cell: ({ row }) => {
       return <CenteredCell>{row.getValue("level")}</CenteredCell>; // Use the reusable component
     },
@@ -97,7 +101,7 @@ export const columns: ColumnDef<CustomLessonBookData>[] = [
           </Button>
         </CenteredCell>
       );
-    }, // Hide price on small screens
+    }, // Hide phone on small screens
     cell: ({ row }) =>
       row.getValue("isActive") ? (
         <CenteredCell>
@@ -108,13 +112,10 @@ export const columns: ColumnDef<CustomLessonBookData>[] = [
           <XCircle className="h-4 w-4 text-red-500" />
         </CenteredCell>
       ),
-    meta: {
-      hidden: true,
-    },
   },
 
   {
-    accessorKey: "course", // maps to `vengName` in member data
+    accessorKey: "description", // maps to `vengName` in member data
     header: ({ column }) => {
       return (
         <CenteredCell>
@@ -122,14 +123,11 @@ export const columns: ColumnDef<CustomLessonBookData>[] = [
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            Related Course
+            Description
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         </CenteredCell>
       );
-    },
-    cell: ({ row }) => {
-      return <CenteredCell>{row.getValue("course.name")}</CenteredCell>; // Use the reusable component
     },
 
     meta: {
@@ -145,7 +143,7 @@ export const columns: ColumnDef<CustomLessonBookData>[] = [
       const id = row.original.id; // Access the member's ID
       return (
         <CenteredCell>
-          <Actions id={(id ?? "").toString()} />
+          <Actions id={id.toString()} />
         </CenteredCell>
       );
     },

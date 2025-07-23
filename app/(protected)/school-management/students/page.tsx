@@ -61,9 +61,9 @@ export default function StudentsPage() {
   }
 
   const stats = {
-    total: students?.data.length ?? 0,
-    active: students?.data.filter((s) => s.isActive).length ?? 0,
-    inactive: students?.data.filter((s) => s.isArchived).length ?? 0,
+    total: students?.totalItems ?? 0,
+    active: students?.active ?? 0,
+    inactive: students?.archived ?? 0,
     graduated: students?.data.filter((s) => s.isProspect).length ?? 0,
   };
 

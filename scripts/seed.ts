@@ -8,7 +8,7 @@ import {
 } from "@/prisma-features-database/features-database-client-types";
 
 const prisma = new PrismaClient();
-const orgId = "cmd1zpyxg0000954wiao2l4zc";
+const orgId = "cmcysksck0000jr04x1y1w2ep";
 
 const COURSE_NAMES = ["Piano", "Guitar", "Drum", "Violin"];
 const TEACHER_NAMES = [
@@ -21,7 +21,7 @@ const TEACHER_NAMES = [
 const ROOM_NAMES = ["Room 101", "Room 102", "Room 103", "Room 104", "Room 105"];
 const BOOK_PRICE_RANGE = [10000, 15000];
 const MONTHLY_FEE = 30000;
-const ORG_ID = "cmd1zpyxg0000954wiao2l4zc";
+const ORG_ID = orgId;
 const JAN_TO_JUNE = [1, 2, 3, 4, 5, 6];
 
 const randomDate = (month: number, year = 2025): Date => {

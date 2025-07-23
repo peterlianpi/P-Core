@@ -14,6 +14,7 @@ import courses from "./courses";
 import lessonBooks from "./lessonBooks";
 import purchases from "./purchases";
 import courseStatusLogs from "./courseStatusLogs";
+import schedules from "./schedules";
 
 // Set runtime to edge for serverless deployment.
 // This ensures the app is optimized for edge environments like Vercel.
@@ -38,7 +39,8 @@ const routes = app
   .route("/courses", courses)
   .route("/lessonBooks", lessonBooks)
   .route("/purchases", purchases)
-  .route("/courseStatusLogs", courseStatusLogs); // This handles requests to /api/*
+  .route("/courseStatusLogs", courseStatusLogs)
+  .route("/schedules", schedules); // This handles requests to /api/*
 
 // Define HTTP methods for each route handler.
 // The handle function from Hono processes requests based on their methods (GET, POST, PATCH, DELETE).

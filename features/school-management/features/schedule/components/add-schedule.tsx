@@ -1,14 +1,14 @@
 "use client";
 
+import { ScheduleFormData } from "@/features/school-management/types/schemas";
 import { toast } from "sonner";
 import { useData } from "@/providers/data-provider";
-import { useCreateLessonBook } from "../api/use-create-lesson-book";
 import { useEffect, useState } from "react";
+import { useCreateSchedule } from "../api/use-create-schedule";
 import StudentFormSkeleton from "../../students-management/components/student-form-skeleton";
-import { LessonBookForm } from "./lesson-book-form";
-import { LessonBookFormData } from "@/features/school-management/types/schemas";
+import { ScheduleForm } from "./schedule-form";
 
-export default function AddLessonBookFormPage() {
+export default function AddScheduleFormPage() {
   // Fetching orgId from data provider
   // This is necessary to ensure the course is created under the correct organization
   // This will be used in the mutation to create a new course
@@ -29,22 +29,21 @@ export default function AddLessonBookFormPage() {
 
   // Create course mutation
   // This will handle the creation of a new course
-  const createLessonBookMutation = useCreateLessonBook({ orgId });
+  const createScheduleMutation = useCreateSchedule({ orgId });
 
-  // Lesson book data fetching
+  // Schedule data fetching
   // This will fetch the available courses for the student to enroll in
 
   // Handle form submission
   // This function will be called when the form is submitted
-  const handleSave = (values: LessonBookFormData) => {
-    createLessonBookMutation.mutate(
+  const handleSave = (values: ScheduleFormData) => {
+    createScheduleMutation.mutate(
       {
         ...values,
-        price: values.price ? parseFloat(values.price.toString()) : 0,
       },
       {
         onSuccess: () => {
-          toast.success(`Lesson book ${values.title} added successfully!`);
+          toast.success(`Schedule ${values.name} added successfully!`);
         },
         onError: (error: Error) => {
           toast.error(error.message || "Failed to add course!");
@@ -63,25 +62,16 @@ export default function AddLessonBookFormPage() {
 
   // Default values for the form
   // These values will be used to initialize the form fields
-  const defaultValues: LessonBookFormData = {
-    title: "",
-    courseId: "",
-    author: "",
-    price: "0",
-    description: "",
+  const defaultValues: ScheduleFormData = {
     isActive: true,
     isArchived: false,
-    isDeleted: false,
-    coverImage: undefined,
-    publicationDate: undefined,
-    image: undefined,
     status: "ACTIVE",
   };
 
   return (
     <div className="mt-4">
-      <LessonBookForm
-        title="Add Lesson book"
+      <ScheduleForm
+        title="Add New Schedule"
         onSubmit={handleSave}
         defaultValues={defaultValues}
       />

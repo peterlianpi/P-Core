@@ -29,13 +29,6 @@ const ProtectedLayout = async ({ children }: ProtectedLayoutProps) => {
 
   const organizations = rawOrganizations.data;
 
-  if (!organizations.length) {
-    return (
-      <div className="flex justify-center items-center p-4">
-        No organization to show, create now
-      </div>
-    );
-  }
   return (
     <OrgDataProvider organizations={organizations} users={users ?? []}>
       <SelectedOrgProvider>
