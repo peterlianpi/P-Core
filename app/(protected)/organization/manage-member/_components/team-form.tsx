@@ -92,6 +92,7 @@ export function TeamForm({
         >
           {/* Image Section */}
           <CustomUploadImagePage
+            type="team"
             isClient={isClient}
             imageUrl={imageUrl}
             setImageUrl={setImageUrl}
