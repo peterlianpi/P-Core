@@ -97,6 +97,7 @@ export function DynamicForm<T extends FieldValues>({
             className="space-y-6 max-w-2xl"
           >
             {/* Image Section */}
+{imageType &&
             <CustomUploadImagePage
               type={imageType}
               canEdit={true}
@@ -104,7 +105,7 @@ export function DynamicForm<T extends FieldValues>({
               imageUrl={imageUrl}
               setImageUrl={setImageUrl}
               fileRef={fileRef}
-            />
+            />}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Dynamic Fields */}
               {fields.map((f) => (
