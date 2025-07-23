@@ -40,6 +40,7 @@ export default function AddScheduleFormPage() {
     createScheduleMutation.mutate(
       {
         ...values,
+teacherId:values.teacherId??"",
       },
       {
         onSuccess: () => {
