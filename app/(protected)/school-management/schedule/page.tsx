@@ -22,7 +22,7 @@ export default function SchedulePage() {
           </div>
         </CardHeader>
         <CardContent className="pt-4">
-          {/* <ScheduleTabs /> */}
+          <ScheduleTabs /> 
         </CardContent>
       </Card>
     </div>
