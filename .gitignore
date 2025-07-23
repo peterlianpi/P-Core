@@ -50,3 +50,4 @@ app/api/\[\[...route]]/analytics copy.ts
 prisma/generated/*
 prisma/migrations/*
 actions/auth/track-user-activities copy.ts
+AGENT.md
