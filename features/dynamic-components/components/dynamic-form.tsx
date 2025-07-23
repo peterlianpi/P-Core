@@ -71,30 +71,19 @@ export function DynamicForm<T extends FieldValues>({
 
   
 
-const handleSubmit = async (values: T) => {
-  startTransition(async () => {
-    const payload: any = {
-      ...values,
-      image: imageUrl ?? undefined,
-      isActive: values.status === "ACTIVE",
-      isArchived: values.status === "ARCHIVED",
-      isProspect: values.status === "PROSPECT",
-    };
-
-    // ✅ Only include coverImage if the current model supports it
-    if ("coverImage" in (defaultValues || {})) {
-      payload.coverImage = imageUrl ?? undefined;
-    }
-
-    // ✅ You can add more checks for optional fields here if needed
-    // if ("avatar" in (defaultValues || {})) {
-    //   payload.avatar = imageUrl ?? undefined;
-    // }
-
-    onSubmit(payload);
-    form.reset(); // Reset form fields after successful submission
-  });
-};
+const handleSubmit = async (values: T) => {  
+    startTransition(async () => {  
+      onSubmit({  
+        ...values,  
+        image: imageUrl ?? undefined,  
+        coverImage: imageUrl ?? undefined,  
+        isActive: values.status === "ACTIVE",  
+        isArchived: values.status === "ARCHIVED",  
+        isProspect: values.status === "PROSPECT",  
+      });  
+      form.reset(); // Reset form fields after successful submission  
+    });  
+  };  
 
   return (
     <Card>
