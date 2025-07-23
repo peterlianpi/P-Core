@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ScheduleTabs } from "@/features/school-management/features/schedule/components/schedule-tabs";
+
 
 export default function SchedulePage() {
   return (
@@ -22,7 +22,7 @@ export default function SchedulePage() {
           </div>
         </CardHeader>
         <CardContent className="pt-4">
-          <ScheduleTabs /> 
+          <p>Schedule Page</p>
         </CardContent>
       </Card>
     </div>
