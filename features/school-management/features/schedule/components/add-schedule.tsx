@@ -64,7 +64,13 @@ teacherId:values.teacherId??"",
   // Default values for the form
   // These values will be used to initialize the form fields
   const defaultValues: ScheduleFormData = {
-    isActive: true,
+        courseId: "",
+    roomId:  "",
+    dayOfWeek:  0,
+    startTime:  new Date(),
+    endTime:  new Date(),
+    teacherId:  "",
+isActive: true,
     isArchived: false,
     status: "ACTIVE",
   };
