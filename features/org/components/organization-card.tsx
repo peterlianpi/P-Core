@@ -14,7 +14,7 @@ function OrganizationCard({ organization }: { organization: Organization }) {
   return (
     <div
       key={organization.id}
-      className="flex flex-col w-40 h-64 p-3 rounded-lg border shadow-lg border-green-400"
+      className="flex flex-col w-40 truncate h-64 p-3 rounded-lg border shadow-lg border-green-400"
     >
       <img
         src={
@@ -24,9 +24,11 @@ function OrganizationCard({ organization }: { organization: Organization }) {
         className="w-full h-full object-contain rounded-md"
       />
       <div className="mt-2">
-        <div className="text-sm font-semibold">{organization.name}</div>
-        <div className="text-sm">Role : {organization.role}</div>
-        <div className="text-sm">
+        <div className="text-sm font-semibold truncate">
+          {organization.name}
+        </div>
+        <div className="text-sm truncate">Role : {organization.role}</div>
+        <div className="text-sm truncate">
           Since :{organization.startedAt?.getDate() ?? "-"}/
           {organization.startedAt?.getMonth() ?? "-"}/
           {organization.startedAt?.getFullYear() ?? "-"}
