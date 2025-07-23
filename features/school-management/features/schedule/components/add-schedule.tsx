@@ -44,7 +44,7 @@ teacherId:values.teacherId??"",
       },
       {
         onSuccess: () => {
-          toast.success(`Schedule ${values.name} added successfully!`);
+          toast.success(`Schedule added successfully!`);
         },
         onError: (error: Error) => {
           toast.error(error.message || "Failed to add course!");
