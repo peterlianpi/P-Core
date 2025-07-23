@@ -4,6 +4,7 @@ import { zValidator } from "@hono/zod-validator";
 //import { createId } from "@paralleldrive/cuid2";
 import { v2 as cloudinary } from "cloudinary";
 import { ensureUserInOrganization } from "@/lib/auth-helpers";
+import { orgSecurityMiddleware, addOrgFilter } from "@/lib/org-security";
 import { featuresDBPrismaClient } from "@/lib/prisma-client/features-prisma-client";
 import { Prisma } from "@/prisma-features-database/features-database-client-types";
 import {
@@ -54,6 +55,11 @@ async function createEnrollments(
 }
 
 const app = new Hono()
+  
+  // SECURITY ENHANCEMENT: Apply organization security middleware to all routes
+  // This ensures users can only access student data from organizations they belong to
+  // Middleware validates orgId parameter and sets validated user context
+  .use('*', orgSecurityMiddleware)
 
   // Endpoint to bulk create students
   .post(

@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Hono } from "hono";
 import { handle } from "hono/vercel";
+import { cors } from "hono/cors";
+import { secureHeaders } from "hono/secure-headers";
 
 import upload from "./upload";
 import uploadImage from "./upload-image";
@@ -23,6 +25,66 @@ import schedules from "./schedules";
 // Initialize the Hono app with the base path "/api" for all routes.
 // This sets a common prefix for all API endpoints, keeping the structure clean.
 const app = new Hono().basePath("/api");
+
+// SECURITY ENHANCEMENT: Add global security middleware
+// This provides multiple layers of security for all API endpoints
+
+// 1. Security Headers - Protect against common web vulnerabilities
+app.use('*', secureHeaders({
+  // Prevent pages from being embedded in frames (clickjacking protection)
+  xFrameOptions: 'DENY',
+  // Prevent MIME type sniffing attacks
+  xContentTypeOptions: 'nosniff',
+  // Enable XSS filtering in browsers
+  xXssProtection: '1; mode=block',
+  // Only load resources over HTTPS (in production)
+  strictTransportSecurity: 'max-age=31536000; includeSubDomains',
+  // Control which features can be used (privacy protection)
+  permissionsPolicy: 'camera=(), microphone=(), geolocation=(), payment=()',
+}));
+
+// 2. CORS Configuration - Control cross-origin requests
+app.use('*', cors({
+  origin: (origin) => {
+    // Allow same-origin requests
+    if (!origin) return true;
+    
+    // Allow localhost for development
+    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      return true;
+    }
+    
+    // Allow your production domains
+    const allowedOrigins = [
+      'https://your-domain.com',
+      'https://www.your-domain.com'
+    ];
+    
+    return allowedOrigins.includes(origin);
+  },
+  allowHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  credentials: true, // Allow cookies for authentication
+}));
+
+// 3. Request Logging - Security audit trail
+app.use('*', async (c, next) => {
+  const start = Date.now();
+  const method = c.req.method;
+  const url = c.req.url;
+  const userAgent = c.req.header('user-agent') || 'unknown';
+  
+  // Log request for security monitoring
+  console.log(`[${new Date().toISOString()}] ${method} ${url} - ${userAgent}`);
+  
+  await next();
+  
+  const end = Date.now();
+  const status = c.res.status;
+  
+  // Log response with timing for performance monitoring
+  console.log(`[${new Date().toISOString()}] ${method} ${url} - ${status} (${end - start}ms)`);
+});
 
 // Define routes for each API endpoint and associate them with respective handlers
 // Each route points to the appropriate module handler for that resource.

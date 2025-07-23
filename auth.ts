@@ -75,9 +75,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
 
     // session callback: This function runs every time the session data is accessed
+    // PERFORMANCE OPTIMIZATION: Use cached data from JWT token instead of DB queries
+    // This reduces database load from ~2 queries per request to 0 queries per request
     async session({ token, session }) {
       try {
-        // Update session user details from the token
+        // Update session user details from the cached token data
+        // All user data is now cached in JWT token during login/refresh
         if (token.sub && session.user) {
           session.user.id = token.sub; // Set user ID from the token
           session.user.role = token.role as UserRole; // Set user role from the token
@@ -86,20 +89,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           session.user.email = token.email as string;
           session.user.isOAuth = token.isOAuth as boolean;
           session.user.defaultOrgId = token.defaultOrgId as string;
+          // Use cached image from token instead of fresh DB query
+          session.user.image = token.image as string | null;
         }
 
-        // Fetch the latest user data (like profile image) from the database to update the session
-        if (session.user?.id) {
-          const updatedUser = await userDBPrismaClient.user.findUnique({
-            where: { id: session.user.id },
-          });
-
-          if (updatedUser) {
-            session.user.image = updatedUser.image || null; // Update image in session if available
-          }
-        }
-
-        return session; // Return the updated session object
+        return session; // Return the updated session object with cached data
       } catch (error) {
         console.error("Error during session callback:", error); // Log errors during session handling
         return session; // Return the session even in case of an error
@@ -107,24 +101,37 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
 
     // jwt callback: This function is called whenever a JWT token is created or updated
-    async jwt({ token }) {
+    // PERFORMANCE OPTIMIZATION: Cache user data in JWT to avoid repeated DB queries
+    // This callback runs less frequently (token refresh) vs session callback (every request)
+    async jwt({ token, trigger }) {
       if (!token.sub) return token; // If no user ID in token, return the token as-is
 
       try {
-        // Fetch user data using the user ID from the token
-        const existingUser = await getUserById(token.sub);
+        // Only fetch fresh data during initial login or explicit refresh
+        // This prevents unnecessary DB queries on every token access
+        const shouldRefreshUserData = 
+          !token.name || // Initial login - no cached data
+          trigger === "update" || // Explicit refresh requested
+          // Refresh if token is older than 15 minutes (900 seconds)
+          (token.iat && Date.now() / 1000 - (token.iat as number) > 900);
 
-        if (existingUser) {
-          // Fetch user account details to check OAuth status
-          const existingAccount = await getAccountByUserId(existingUser.id);
+        if (shouldRefreshUserData) {
+          // Fetch user data using the user ID from the token
+          const existingUser = await getUserById(token.sub);
 
-          // Set additional fields in the token
-          token.isOAuth = !!existingAccount; // Set whether the user signed in via OAuth
-          token.name = existingUser.name;
-          token.email = existingUser.email;
-          token.role = existingUser.role; // Set user role
-          token.isTwoFactorEnabled = existingUser.isTwoFactorEnabled; // Set 2FA status
-          token.defaultOrgId = existingUser.defaultOrgId; // Set default organization ID
+          if (existingUser) {
+            // Fetch user account details to check OAuth status
+            const existingAccount = await getAccountByUserId(existingUser.id);
+
+            // Cache all user data in JWT token for session callback
+            token.isOAuth = !!existingAccount; // Set whether the user signed in via OAuth
+            token.name = existingUser.name;
+            token.email = existingUser.email;
+            token.role = existingUser.role; // Set user role
+            token.isTwoFactorEnabled = existingUser.isTwoFactorEnabled; // Set 2FA status
+            token.defaultOrgId = existingUser.defaultOrgId; // Set default organization ID
+            token.image = existingUser.image; // Cache user image to avoid DB queries in session
+          }
         }
       } catch (error) {
         console.error("Error during JWT callback:", error); // Log errors during JWT processing
@@ -138,7 +145,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(userDBPrismaClient),
 
   // Session configuration: Use JWT (JSON Web Tokens) for session management
-  session: { strategy: "jwt" },
+  // PERFORMANCE OPTIMIZATION: Reduce token refresh frequency to minimize DB queries
+  session: { 
+    strategy: "jwt",
+    maxAge: 3600, // 1 hour - shorter sessions for security
+    updateAge: 900, // 15 minutes - refresh token every 15 minutes instead of default 24 hours
+  },
 
   // Additional configuration options loaded from the external authConfig file
   ...authConfig,

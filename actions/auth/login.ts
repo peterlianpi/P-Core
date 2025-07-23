@@ -11,6 +11,7 @@ import {
 import {
   generateTwoFactorToken,
   generateVerificationToken,
+  verifyToken,
 } from "@/lib/tokens";
 import { DEFAULT_LOGIN_REDIRECT } from "@/routes";
 import { LoginSchema } from "@/schemas";
@@ -57,7 +58,9 @@ export const login = async (
         return { error: "Invalid code!" };
       }
 
-      if (twoFactorToken.token !== code) {
+      // SECURITY: Use hash verification instead of plain text comparison
+      // This protects against database compromise attacks
+      if (!verifyToken(code, twoFactorToken.token)) {
         return { error: "Invalid code!" };
       }
 
