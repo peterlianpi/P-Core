@@ -1,10 +1,10 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { Bell, X, Filter, MoreVertical, AlertCircle, Info, CheckCircle, Clock } from "lucide-react"
+import { Bell, MoreVertical, AlertCircle, Info, CheckCircle, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -137,7 +137,7 @@ export function NotificationCenter({
 
       setUnreadCount(mockNotifications.filter(n => !n.isRead).length)
       setHasMore(pageNum < 3) // Mock pagination
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to load notifications")
     } finally {
       setLoading(false)
@@ -154,7 +154,7 @@ export function NotificationCenter({
       )
       setUnreadCount(prev => Math.max(0, prev - 1))
       toast.success("Notification marked as read")
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to update notification")
     }
   }
@@ -165,7 +165,7 @@ export function NotificationCenter({
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
       setUnreadCount(0)
       toast.success("All notifications marked as read")
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to mark all as read")
     }
   }
@@ -175,7 +175,7 @@ export function NotificationCenter({
       // Mock API call
       setNotifications(prev => prev.filter(n => n.id !== notificationId))
       toast.success("Notification archived")
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to archive notification")
     }
   }
