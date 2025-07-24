@@ -66,54 +66,216 @@ export async function sendTelegramLog({
   title,
   message,
   type = "INFO",
+  metadata,
 }: {
-  userId?: string; // ✅ Now optional
+  userId?: string;
   orgId?: string;
-  role?: UserRole; // ✅ Now optional
+  role?: UserRole;
   title: string;
   message: string;
   type?: LogType;
+  metadata?: Record<string, any>;
 }) {
-  const settings = await getTelegramSettings(userId, role, orgId);
+  const timestamp = new Date().toISOString();
+  const logId = `LOG_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  // Enhanced logging context
+  const logContext = {
+    logId,
+    timestamp,
+    userId: userId || "SYSTEM",
+    orgId: orgId || null,
+    role: role || "SYSTEM",
+    type,
+    environment: process.env.NODE_ENV || "unknown",
+    ...metadata,
+  };
 
-  // Save to database log (with error handling)
+  console.log(`📋 [${type}] Telegram Log Request:`, {
+    title,
+    context: logContext,
+    hasOrgId: !!orgId,
+    hasUserId: !!userId,
+  });
+
   try {
-    const logData: any = {
-      name: title,
-      message,
-      updatedBy: userId ?? "SYSTEM",
-      type,
-      date: new Date(),
-    };
-
-    // Only include orgId if it exists to avoid required organization relation error
-    if (orgId) {
-      logData.orgId = orgId;
-    }
-
-    await prisma.updateLog.create({
-      data: logData,
-    });
-  } catch (error) {
-    console.warn("Could not save update log:", error);
-  }
-
-  // Send to Telegram
-  for (const setting of settings) {
-    const TELEGRAM_API_URL = `https://api.telegram.org/bot${setting.botToken}/sendMessage`;
-
-    try {
-      await fetch(TELEGRAM_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: setting.chatId,
-          text: `*${title}*\n\n${message}`,
-          parse_mode: "Markdown",
-        }),
+    const settings = await getTelegramSettings(userId, role, orgId);
+    
+    if (settings.length === 0) {
+      console.warn(`⚠️ No Telegram settings found for logging:`, {
+        userId,
+        role,
+        orgId,
+        fallbackAttempted: !!(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID)
       });
-    } catch (error) {
-      console.error("❌ Telegram send failed:", error);
     }
+
+    // Enhanced database logging with better error handling
+    try {
+      const logData: any = {
+        name: title.substring(0, 100), // Ensure title fits DB constraints
+        message: message.substring(0, 1000), // Prevent overly long messages
+        updatedBy: userId || "SYSTEM",
+        type,
+        date: new Date(),
+      };
+
+      // Enhanced org ID validation
+      if (orgId) {
+        // Verify organization exists before logging
+        const orgExists = await prisma.organization.findUnique({
+          where: { id: orgId },
+          select: { id: true }
+        });
+        
+        if (orgExists) {
+          logData.orgId = orgId;
+        } else {
+          console.warn(`⚠️ Organization ${orgId} not found, logging without orgId`);
+        }
+      }
+
+      const savedLog = await prisma.updateLog.create({
+        data: logData,
+      });
+
+      console.log(`✅ Database log saved:`, {
+        logId: savedLog.id,
+        title: savedLog.name,
+        orgId: savedLog.orgId,
+        type: savedLog.type,
+      });
+
+    } catch (dbError: any) {
+      console.error(`❌ Database logging failed:`, {
+        error: dbError.message,
+        code: dbError.code,
+        userId,
+        orgId,
+        title: title.substring(0, 50),
+      });
+      
+      // Don't fail the entire function if DB logging fails
+      // Telegram notification is still valuable even without DB storage
+    }
+
+    // Enhanced Telegram messaging with retry logic
+    const telegramResults = await Promise.allSettled(
+      settings.map(async (setting, index) => {
+        const TELEGRAM_API_URL = `https://api.telegram.org/bot${setting.botToken}/sendMessage`;
+        
+        const formattedMessage = formatTelegramMessage(title, message, logContext);
+        
+        try {
+          const response = await fetch(TELEGRAM_API_URL, {
+            method: "POST",
+            headers: { 
+              "Content-Type": "application/json",
+              "User-Agent": "P-Core-Logger/1.0"
+            },
+            body: JSON.stringify({
+              chat_id: setting.chatId,
+              text: formattedMessage,
+              parse_mode: "Markdown",
+              disable_notification: type === "INFO", // Don't notify for INFO logs
+            }),
+            signal: AbortSignal.timeout(10000), // 10 second timeout
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+          }
+
+          const result = await response.json();
+          console.log(`✅ Telegram message sent successfully:`, {
+            settingIndex: index,
+            chatId: setting.chatId,
+            messageId: result.message_id,
+            logId,
+          });
+
+          return { success: true, settingIndex: index, messageId: result.message_id };
+
+        } catch (telegramError: any) {
+          console.error(`❌ Telegram send failed for setting ${index}:`, {
+            error: telegramError.message,
+            chatId: setting.chatId,
+            logId,
+            isTimeout: telegramError.name === 'TimeoutError',
+            isNetworkError: telegramError.name === 'TypeError',
+          });
+          
+          return { success: false, settingIndex: index, error: telegramError.message };
+        }
+      })
+    );
+
+    // Log summary of Telegram delivery results
+    const successful = telegramResults.filter(result => 
+      result.status === 'fulfilled' && result.value.success
+    ).length;
+    
+    const failed = telegramResults.length - successful;
+    
+    console.log(`📊 Telegram delivery summary:`, {
+      logId,
+      total: settings.length,
+      successful,
+      failed,
+      title: title.substring(0, 50),
+    });
+
+    if (failed > 0) {
+      console.warn(`⚠️ Some Telegram deliveries failed:`, {
+        failures: telegramResults
+          .filter(result => result.status === 'rejected' || 
+                 (result.status === 'fulfilled' && !result.value.success))
+          .map(result => result.status === 'fulfilled' ? result.value : result.reason)
+      });
+    }
+
+  } catch (globalError: any) {
+    console.error(`💥 Critical error in sendTelegramLog:`, {
+      error: globalError.message,
+      stack: globalError.stack,
+      logId,
+      title: title.substring(0, 50),
+      hasUserId: !!userId,
+      hasOrgId: !!orgId,
+    });
+    
+    // Even if everything fails, we shouldn't throw to prevent breaking calling code
+    // This is a logging function and should be resilient
+  }
+}
+
+// Helper function to format Telegram messages consistently
+function formatTelegramMessage(title: string, message: string, context: any): string {
+  const emoji = getTypeEmoji(context.type);
+  const timestamp = new Date().toLocaleString();
+  
+  let formattedMessage = `${emoji} *${title}*\n\n${message}`;
+  
+  // Add context information for non-INFO logs
+  if (context.type !== "INFO") {
+    formattedMessage += `\n\n_Context:_`;
+    if (context.orgId) formattedMessage += `\n• Org: \`${context.orgId}\``;
+    if (context.userId && context.userId !== "SYSTEM") formattedMessage += `\n• User: \`${context.userId}\``;
+    formattedMessage += `\n• Time: ${timestamp}`;
+    formattedMessage += `\n• Env: ${context.environment}`;
+  }
+  
+  formattedMessage += `\n\n_P-Core System Log_`;
+  
+  return formattedMessage;
+}
+
+function getTypeEmoji(type: string): string {
+  switch (type) {
+    case "ERROR": return "🚨";
+    case "WARNING": return "⚠️";
+    case "INFO": return "ℹ️";
+    default: return "📝";
   }
 }

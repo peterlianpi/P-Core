@@ -5,17 +5,17 @@ import { notifySuperAdmins } from "@/lib/notification/notify-superadmin";
 type UserEvent = { value: string };
 
 export const trackRegister = async ({ value }: UserEvent) => {
-  await {
-    title: "\n*👤 P-Core User Registration Notification*",
-    message: `A new user has been registered in the system.\n\n*User:* ${value ?? "Unknown"}\n*Date:* ${loginDate}\n\n__This registration event is for monitoring purposes only._\n\n_P-Core Activity Log_`,
+  await notifySuperAdmins({
+    title: "P-Core User Registration",
+    message: `A new user has been registered in the system.\n\n*User:* ${value ?? "Unknown"}\n*Date:* ${loginDate}\n\n_This registration event is for monitoring purposes only._`,
     type: "INFO",
-  };
+  });
 };
 
 export const trackLogout = async ({ value }: UserEvent) => {
   await notifySuperAdmins({
-    title: "\n*👤 P-Core Logout Notification*",
-    message: `A user has successfully signed out from the system.\n\n*User:* ${value}\n*Date:* ${loginDate}\n\n_This logout event is for monitoring purposes only._\n\n_P-Core Activity Log_`,
+    title: "P-Core User Logout",
+    message: `User has successfully signed out from the system.\n\n*User:* ${value}\n*Date:* ${loginDate}`,
     type: "INFO",
   });
 };
