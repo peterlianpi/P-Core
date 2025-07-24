@@ -69,6 +69,7 @@ model User {
   organizations        UserOrganization[] // Many-to-many with organizations
   createdOrganizations Organization[]     @relation("OrganizationCreator")
   createdVersions      VersionInfo[]      @relation("VersionCreator")
+  telegramSettings     TelegramSetting[]
 
   @@map("users")
   @@schema("auth")
@@ -130,9 +131,10 @@ model Organization {
   createdById String @map("created_by_id")
   createdBy   User   @relation("OrganizationCreator", fields: [createdById], references: [id])
 
-  users      UserOrganization[] // Many-to-many with users
-  updateLogs UpdateLog[]
-  versions   VersionInfo[]      // Organization-specific versions
+  users            UserOrganization[] // Many-to-many with users
+  updateLogs       UpdateLog[]
+  versions         VersionInfo[]      // Organization-specific versions
+  telegramSettings TelegramSetting[]
 
   @@map("organizations")
   @@schema("auth")
@@ -164,14 +166,37 @@ model UpdateLog {
   message   String   @db.Text
   type      LogType  @default(INFO)
   updatedBy String   @map("updated_by")
-  orgId     String   @map("org_id")
+  orgId     String?  @map("org_id")
+  date      DateTime @default(now())
   createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
-  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  organization Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
   @@index([orgId])
   @@map("update_logs")
+  @@schema("auth")
+}
+
+model TelegramSetting {
+  id       String   @id @default(cuid())
+  userId   String   @map("user_id")
+  orgId    String?  @map("org_id")
+  chatId   String   @map("chat_id")
+  botToken String   @map("bot_token")
+  scope    TelegramScope @default(USER)
+  isActive Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, scope])
+  @@index([userId])
+  @@index([orgId])
+  @@map("telegram_settings")
   @@schema("auth")
 }
 
@@ -440,6 +465,14 @@ enum LogType {
   WARNING
   ERROR
   SUCCESS
+
+  @@schema("auth")
+}
+
+enum TelegramScope {
+  USER
+  ORG
+  SUPERADMIN
 
   @@schema("auth")
 }
