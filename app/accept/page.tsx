@@ -2,11 +2,11 @@
 "use client";
 
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { useAcceptMember } from "@/features/org/api/use-accept-member";
+import { useAcceptMember } from "@/features/organization-management/api/use-accept-member";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { useInvite } from "@/features/org/hooks/use-invite";
-import { InviteDetails } from "@/features/org/components/invite-details";
+import { useInvite } from "@/features/organization-management/hooks/use-invite";
+import { InviteDetails } from "@/features/organization-management/components/invite-details";
 
 const AcceptInvitePage = () => {
   const router = useRouter();

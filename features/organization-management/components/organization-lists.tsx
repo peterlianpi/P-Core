@@ -4,8 +4,8 @@ import React from "react";
 import OrganizationCard from "./organization-card";
 import EditTeamPage from "../../../app/(protected)/organization/_components/edit-team";
 import { useData } from "@/providers/data-provider"; // for isEditTeam
-import { useOrgData } from "@/features/org/context/org-context";
-import { useSelectedOrg } from "@/features/org/context/selected-org-context";
+import { useOrgData } from "../context/org-context";
+import { useSelectedOrg } from "../context/selected-org-context";
 
 function OrganizationListsPage() {
   const { isEditTeam, setIsEditTeam } = useData();

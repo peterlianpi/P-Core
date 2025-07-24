@@ -27,7 +27,7 @@ import { ZodType } from "zod";
 import React, { useEffect, useState, useTransition } from "react";
 import { FieldConfig } from "../types/field-config";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import CustomUploadImagePage from "@/features/image-upload/components/upload-image";
+import CustomUploadImagePage from "@/features/system/image-upload/components/upload-image";
 import { Switch } from "@/components/ui/switch";
 
 type Props<T extends FieldValues> = {

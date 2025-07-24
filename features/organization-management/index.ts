@@ -5,7 +5,7 @@
 export * from "./api/use-accept-member";
 export * from "./api/use-change-role";
 export * from "./api/use-create-org";
-export * from "./api/use-delete-org";
+// export * from "./api/use-delete-org";
 export * from "./api/use-edit-org";
 export * from "./api/use-get-invite-details-by-token";
 export * from "./api/use-get-invites-by-org-id";
@@ -35,7 +35,7 @@ export * from "./components/organization-invite-list";
 export * from "./components/organization-lists";
 export * from "./components/organization-user-invite-form";
 export * from "./components/organization-user-management";
-export * from "./components/team-dialog";
+// export * from "./components/team-dialog"; // Currently commented out
 export * from "./components/team-form";
 
 // Context
@@ -50,4 +50,4 @@ export * from "./components/team-type-helper";
 export * from "./hooks/use-invite";
 export * from "./hooks/use-new-team-dialog";
 export * from "./hooks/use-open-team-dialog";
-export * from "./hooks/use-team-dialog";
+// export * from "./hooks/use-team-dialog"; // Duplicate of use-open-team-dialog

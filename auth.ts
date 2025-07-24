@@ -1,11 +1,12 @@
 import NextAuth from "next-auth";
 import authConfig from "./auth.config";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { getUserById } from "./data/user";
+import { getUserById, getUserByEmail } from "./data/user";
 import { getTwoFactorConfirmationByUserId } from "./data/two-factor-confirmation";
 import { getAccountByUserId } from "./data/account";
 import { UserRole } from "@prisma/client";
 import { prisma } from "./lib/db/client";
+import bcrypt from "bcryptjs";
 
 // Exporting NextAuth handlers to use for authentication in the application
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -20,7 +21,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async linkAccount({ user }) {
       try {
         // Update the `emailVerified` field when the account is linked
-        await userDBPrismaClient.user.update({
+        await prisma.user.update({
           where: { id: user.id },
           data: { emailVerified: new Date() }, // Mark the email as verified
         });
@@ -37,10 +38,53 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // Allow OAuth sign-in without email verification (i.e., for non-credentials login)
       if (account?.provider !== "credentials") return true;
 
-      // Check if user ID is defined (it should always be, but good to validate)
+      // Handle credentials authentication (moved from auth.config.ts for edge compatibility)
+      if (account?.provider === "credentials" && user.email && user.password) {
+        try {
+          const existingUser = await getUserByEmail(user.email);
+          if (!existingUser || !existingUser.password) {
+            console.error("User not found or password is missing");
+            return false;
+          }
+
+          // Use bcryptjs for password comparison
+          const passwordMatch = await bcrypt.compare(user.password as string, existingUser.password);
+          if (!passwordMatch) {
+            console.error("Password mismatch");
+            return false;
+          }
+
+          // Check email verification
+          if (!existingUser.emailVerified) return false;
+
+          // Check 2FA if enabled
+          if (existingUser.isTwoFactorEnabled) {
+            const twoFactorConfirmation = await getTwoFactorConfirmationByUserId(existingUser.id);
+            if (!twoFactorConfirmation) return false;
+
+            // Remove the two-factor confirmation for the next sign-in attempt
+            await prisma.twoFactorConfirmation.delete({
+              where: { id: twoFactorConfirmation.id },
+            });
+          }
+
+          // Update user object with database user data
+          user.id = existingUser.id;
+          user.name = existingUser.name;
+          user.email = existingUser.email;
+          user.role = existingUser.role;
+
+          return true;
+        } catch (error) {
+          console.error("Error during credentials sign-in:", error);
+          return false;
+        }
+      }
+
+      // For existing user ID validation
       if (!user.id) {
         console.error("User ID is undefined.");
-        return false; // Prevent sign-in if the user ID is missing
+        return false;
       }
 
       try {
@@ -60,17 +104,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           if (!twoFactorConfirmation) return false;
 
           // Remove the two-factor confirmation for the next sign-in attempt
-          await userDBPrismaClient.twoFactorConfirmation.delete({
+          await prisma.twoFactorConfirmation.delete({
             where: {
               id: twoFactorConfirmation.id,
             },
           });
         }
 
-        return true; // Allow sign-in if all checks pass
+        return true;
       } catch (error) {
-        console.error("Error during sign-in:", error); // Log errors during the sign-in process
-        return false; // Prevent sign-in on failure
+        console.error("Error during sign-in:", error);
+        return false;
       }
     },
 

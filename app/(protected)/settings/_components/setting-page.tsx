@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import ImageUpload from "@/features/image-upload/components/upload-image-show";
+import ImageUpload from "@/features/system/image-upload/components/upload-image-show";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import type { UserRole } from "@/lib/types/database";
 import { useData } from "@/providers/data-provider";

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { useGetInviteDetailsByToken } from "@/features/org/api/use-get-invite-details-by-token";
+import { useGetInviteDetailsByToken } from "../api/use-get-invite-details-by-token";
 
 export const useInvite = () => {
     const searchParams = useSearchParams();

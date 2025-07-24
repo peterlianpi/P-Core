@@ -1,11 +1,11 @@
 "use server";
 
 
-import { userDBPrismaClient } from "@/lib/db/client";
+import { prisma } from "@/lib/db/client";
 import { Versions } from "@/schemas";
 
 export async function getVersionById(id: string) {
-  const version = await userDBPrismaClient.versionInfo.findUnique({
+  const version = await prisma.versionInfo.findUnique({
     where: { id },
   });
   const result = Versions.safeParse(version);
@@ -18,7 +18,7 @@ export async function getVersionById(id: string) {
 }
 
 export async function getAllVersions() {
-  const versions = await userDBPrismaClient.versionInfo.findMany({
+  const versions = await prisma.versionInfo.findMany({
     orderBy: { createdAt: "desc" },
   });
 

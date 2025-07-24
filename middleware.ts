@@ -1,6 +1,6 @@
-// PERFORMANCE FIX: Import auth directly instead of creating new NextAuth instance
-// This prevents duplicate Prisma connections and reduces cold start time
-import { auth } from "./auth";
+// EDGE RUNTIME FIX: Use edge-compatible auth configuration
+// This prevents Prisma client from being bundled in middleware
+import { auth } from "./auth.edge";
 import {
   apiAuthPrefix,
   authRoutes,

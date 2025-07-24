@@ -1,7 +1,7 @@
 "use server";
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "./app-sidebar";
+import { AppSidebarEnhanced } from "@/components/app-sidebar-enhanced";
 import HeaderPage from "./header";
 import { getAllVersions } from "@/actions/features/versions/get-version";
 import AddTeamPage from "./add-team";
@@ -19,7 +19,7 @@ export async function AdminPanelLayoutPage({ children }: ProtectedLayoutProps) {
 
   return (
     <SidebarProvider>
-      <AppSidebar organizations={organizations.data} />
+      <AppSidebarEnhanced organizations={organizations.data} />
       <SidebarInset>
         <header className="flex w-full sticky top-0 opacity-95 z-10 bg-secondary mb-2 h-[53px] shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-[53px]">
           <HeaderPage versions={versions.data} />

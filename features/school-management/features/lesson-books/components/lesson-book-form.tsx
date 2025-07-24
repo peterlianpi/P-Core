@@ -4,8 +4,8 @@ import {
   LessonBookFormData,
   lessonBookFormSchema,
 } from "@/features/school-management/types/schemas";
-import { DynamicForm } from "@/features/dynamic-components/components/dynamic-form";
-import { useLessonBookFields } from "@/features/dynamic-components/schemas/lessonBook-field";
+import { DynamicForm } from "@/features/system/dynamic-components/components/dynamic-form";
+import { useLessonBookFields } from "@/features/system/dynamic-components/schemas/lessonBook-field";
 
 interface LessonBookFormProps {
   title: string;

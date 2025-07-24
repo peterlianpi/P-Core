@@ -1,6 +1,6 @@
 "use server";
 
-import { userDBPrismaClient } from "@/lib/db/client";
+import { prisma } from "@/lib/db/client";
 import { UserRole } from "@prisma/client";
 
 export const getTelegramSetting = async ({
@@ -10,7 +10,7 @@ export const getTelegramSetting = async ({
   userId: string;
   role: UserRole;
 }) => {
-  const result = await userDBPrismaClient.telegramSetting.findUnique({
+  const result = await prisma.telegramSetting.findUnique({
     where: { userId_role: { userId: userId, role: role } },
   });
 
@@ -21,7 +21,7 @@ export const getTelegramSetting = async ({
 };
 
 export const getTelegramSettings = async ({ userId }: { userId: string }) => {
-  const result = await userDBPrismaClient.telegramSetting.findMany({
+  const result = await prisma.telegramSetting.findMany({
     where: { userId: userId },
   });
 

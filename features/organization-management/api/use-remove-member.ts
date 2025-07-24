@@ -5,7 +5,7 @@ import {
 } from "hono";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { client } from "@/lib/hono";
-import { RemoveMemberResponse } from "@/features/org/helper/organization-type";
+import { RemoveMemberResponse } from "../helper/organization-type";
 
 
 // type ResponseType = InferResponseType<(typeof client.api.org)["remove-member"]["$patch"]>;

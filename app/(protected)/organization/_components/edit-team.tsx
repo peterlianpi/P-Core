@@ -1,5 +1,5 @@
 "use client";
-import EditTeam from "@/features/org/components/edit-team-server";
+import EditTeam from "@/features/organization-management/components/edit-team-server";
 import { useData } from "@/providers/data-provider";
 import React from "react";
 

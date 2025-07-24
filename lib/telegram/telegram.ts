@@ -7,26 +7,56 @@ async function getTelegramSettings(
   role?: UserRole,
   orgId?: string
 ) {
-  if (role === "SUPERADMIN") {
-    return await userDBPrismaClient.telegramSetting.findMany({
-      where: { scope: "SUPERADMIN" },
-    });
-  }
+  try {
+    let settings = [];
 
-  if (role === "ADMIN") {
-    return await userDBPrismaClient.telegramSetting.findMany({
-      where: {
-        OR: [
-          { scope: "ORG", orgId },
-          { scope: "USER", userId },
-        ],
-      },
-    });
-  }
+    if (role === "SUPERADMIN") {
+      settings = await prisma.telegramSetting.findMany({
+        where: { scope: "SUPERADMIN" },
+      });
+    } else if (role === "ADMIN") {
+      settings = await prisma.telegramSetting.findMany({
+        where: {
+          OR: [
+            { scope: "ORG", orgId },
+            { scope: "USER", userId },
+          ],
+        },
+      });
+    } else {
+      settings = await prisma.telegramSetting.findMany({
+        where: { scope: "USER", userId },
+      });
+    }
 
-  return await userDBPrismaClient.telegramSetting.findMany({
-    where: { scope: "USER", userId },
-  });
+    // If no database settings found, use environment variables as fallback
+    if (settings.length === 0 && process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
+      return [{
+        botToken: process.env.TELEGRAM_BOT_TOKEN,
+        chatId: process.env.TELEGRAM_CHAT_ID,
+        scope: role || "USER",
+        userId: userId,
+        orgId: orgId,
+      }];
+    }
+
+    return settings;
+  } catch (error) {
+    console.warn("Telegram settings not configured in database, checking environment variables:", error);
+    
+    // Fallback to environment variables if database is not available
+    if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
+      return [{
+        botToken: process.env.TELEGRAM_BOT_TOKEN,
+        chatId: process.env.TELEGRAM_CHAT_ID,
+        scope: role || "USER",
+        userId: userId,
+        orgId: orgId,
+      }];
+    }
+    
+    return []; // Return empty array if no telegram configuration available
+  }
 }
 
 export async function sendTelegramLog({
@@ -46,17 +76,21 @@ export async function sendTelegramLog({
 }) {
   const settings = await getTelegramSettings(userId, role, orgId);
 
-  // Save to database log
-  await userDBPrismaClient.updateLog.create({
-    data: {
-      name: title,
-      message,
-      updatedBy: userId ?? "SYSTEM", // or null if allowed,
-      orgId,
-      type,
-      date: new Date(),
-    },
-  });
+  // Save to database log (with error handling)
+  try {
+    await prisma.updateLog.create({
+      data: {
+        name: title,
+        message,
+        updatedBy: userId ?? "SYSTEM",
+        orgId,
+        type,
+        date: new Date(),
+      },
+    });
+  } catch (error) {
+    console.warn("Could not save update log:", error);
+  }
 
   // Send to Telegram
   for (const setting of settings) {

@@ -43,7 +43,7 @@ import {
 
 import { useCurrentUser } from "@/hooks/use-current-user";
 import type { UserRole } from "@/lib/types/database";
-import { getNavByRole } from "../../features/site/config";
+import { getNavByRole } from "@/features/system/site/config";
 import { useData } from "@/providers/data-provider";
 import { usePerformanceToggle } from "@/components/performance/performance-monitor";
 
@@ -54,6 +54,7 @@ type Organizations = {
     description?: string;
     startedAt?: Date | null;
     logoImage?: string;
+    type?: string;
   };
   role?: string;
 };

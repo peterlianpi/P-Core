@@ -18,7 +18,7 @@ export const getAllUsers = async () => {
         id: true,
         email: true,
         image: true,
-        UserOrganization: {
+        organizations: {
           select: {
             organizationId: true,
             role: true,

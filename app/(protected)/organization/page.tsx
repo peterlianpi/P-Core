@@ -1,6 +1,6 @@
 // app/organization/page.tsx
 
-import OrganizationListsPage from "@/features/org/components/organization-lists";
+import OrganizationListsPage from "@/features/organization-management/components/organization-lists";
 
 const OrganizationPage = async () => {
   return (
