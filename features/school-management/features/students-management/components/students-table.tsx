@@ -33,7 +33,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Skeleton } from "@/components/ui/skeleton"
-import { schoolApi } from "../../lib/api-client"
+import { schoolApi } from "../../../lib/api-client"
 import type { StudentWithCourses, PaginatedResponse } from "@/lib/types/database"
 
 export function StudentsTable() {

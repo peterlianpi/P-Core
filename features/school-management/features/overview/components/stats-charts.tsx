@@ -35,7 +35,7 @@ export function StatsCharts() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const { schoolApi } = await import("../../lib/api-client")
+        const { schoolApi } = await import("../../../lib/api-client")
         const data = await schoolApi.getDashboardStats()
         setDashboardData(data)
       } catch (error) {

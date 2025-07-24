@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { OrganizationUserRole } from "@prisma/client";
+import type { OrganizationRole } from "@/lib/types/database";
 import MemberCardPage from "./member-card";
 import MemberRemoveList from "./member-remove-list";
 import MemberRoleEditor from "./member-role-editor";

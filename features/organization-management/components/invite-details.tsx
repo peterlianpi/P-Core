@@ -2,7 +2,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { OrganizationUserRole } from "@prisma/client";
+import type { OrganizationRole } from "@/lib/types/database";
 import { useRouter } from "next/navigation";
 
 type Props = {

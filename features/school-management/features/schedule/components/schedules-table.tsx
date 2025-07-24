@@ -23,7 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Skeleton } from "@/components/ui/skeleton"
-import { schoolApi } from "../../lib/api-client"
+import { schoolApi } from "../../../lib/api-client"
 import type { ScheduleWithCourse, PaginatedResponse, DayOfWeek } from "@/lib/types/database"
 
 const DAYS_OF_WEEK: DayOfWeek[] = [

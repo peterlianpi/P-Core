@@ -11,7 +11,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { OrganizationUserRole } from "@prisma/client";
+import type { OrganizationRole } from "@/lib/types/database";
 import { useInviteMember } from "../api/use-invite-member";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { toast } from "sonner";
