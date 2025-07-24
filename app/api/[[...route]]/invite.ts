@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
-import { db, PrismaClient } from "@/lib/db/client";
 import { sendInviteEmail } from "@/lib/mail/send-invite";
 import crypto from "crypto";
+import { db } from "@/lib/db/client";
 
 const acceptSchema = z.object({
   token: z.string(),
@@ -50,7 +50,7 @@ const app = new Hono()
         actionType = "invite",
       } = c.req.valid("json");
 
-      const organization = await prisma.organization.findUnique({
+      const organization = await db.organization.findUnique({
         where: { id: organizationId },
       });
 
@@ -58,7 +58,7 @@ const app = new Hono()
         return c.json({ error: "Organization not found" }, 404);
       }
 
-      const existingInvite = await prisma.organizationInvite.findFirst({
+      const existingInvite = await db.organizationInvite.findFirst({
         where: { email, organizationId },
       });
 
@@ -68,7 +68,7 @@ const app = new Hono()
       if (existingInvite) {
         if (actionType === "resend") {
           // update existing invite
-          await prisma.organizationInvite.update({
+          await db.organizationInvite.update({
             where: { id: existingInvite.id },
             data: {
               role: role ?? existingInvite.role,
@@ -87,13 +87,13 @@ const app = new Hono()
         }
 
         // Expired, delete and create new
-        await prisma.organizationInvite.delete({
+        await db.organizationInvite.delete({
           where: { id: existingInvite.id },
         });
       }
 
       // Create new invite
-      await prisma.organizationInvite.create({
+      await db.organizationInvite.create({
         data: {
           invitedBy: userId,
           email,
@@ -125,7 +125,7 @@ const app = new Hono()
       const { token } = c.req.valid("json");
 
       // 1. Find invite by token
-      const invite = await prisma.organizationInvite.findUnique({
+      const invite = await db.organizationInvite.findUnique({
         where: { token },
       });
 
@@ -142,7 +142,7 @@ const app = new Hono()
       }
 
       // 2. Get the user
-      const user = await prisma.user.findUnique({
+      const user = await db.user.findUnique({
         where: { id: userId },
       });
 
@@ -159,7 +159,7 @@ const app = new Hono()
       }
 
       // ✅ Step 4 - Check for existing membership
-      const existing = await prisma.userOrganization.findFirst({
+      const existing = await db.userOrganization.findFirst({
         where: {
           userId: user.id,
           organizationId: invite.organizationId,
@@ -174,7 +174,7 @@ const app = new Hono()
       }
 
       // ✅ Step 5 - Create if not exists
-      await prisma.userOrganization.create({
+      await db.userOrganization.create({
         data: {
           userId: user.id,
           organizationId: invite.organizationId,
@@ -183,7 +183,7 @@ const app = new Hono()
       });
 
       // 6. Mark invite as accepted
-      await prisma.organizationInvite.update({
+      await db.organizationInvite.update({
         where: { id: invite.id },
         data: { accepted: true },
       });
@@ -207,7 +207,7 @@ const app = new Hono()
     async (c) => {
       const { token } = c.req.valid("query");
 
-      const invite = await prisma.organizationInvite.findUnique({
+      const invite = await db.organizationInvite.findUnique({
         where: { token },
         include: {
           organization: true,
@@ -244,7 +244,7 @@ const app = new Hono()
         return c.json({ error: "Organization ID is required" }, 400);
       }
 
-      const rawInvites = await prisma.organizationInvite.findMany({
+      const rawInvites = await db.organizationInvite.findMany({
         where: { organizationId: orgId },
         include: {
           organization: true,
@@ -267,7 +267,7 @@ const app = new Hono()
   .delete("/", zValidator("json", RevokeRequestSchema), async (c) => {
     const { email, organizationId } = c.req.valid("json");
 
-    const existingInvite = await prisma.organizationInvite.findFirst({
+    const existingInvite = await db.organizationInvite.findFirst({
       where: {
         email,
         organizationId,
@@ -278,7 +278,7 @@ const app = new Hono()
       return c.json({ error: "Invite not found" }, 404);
     }
 
-    await prisma.organizationInvite.delete({
+    await db.organizationInvite.delete({
       where: { id: existingInvite.id },
     });
 
