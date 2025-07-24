@@ -109,8 +109,8 @@ export default function NotFound() {
                 Oops! Page Not Found
               </h1>
               <p className="text-muted-foreground text-lg max-w-md mx-auto animate-fade-in-delayed">
-                The page you're looking for seems to have wandered off into the digital wilderness. 
-                Let's get you back on track! 🚀
+                The page you&apos;re looking for seems to have wandered off into the digital wilderness. 
+                Let&apos;s get you back on track! 🚀
               </p>
             </div>
           </CardHeader>
@@ -211,7 +211,7 @@ export default function NotFound() {
             {/* Contact Info */}
             <div className="text-center pt-4 border-t animate-fade-in-final">
               <p className="text-sm text-muted-foreground">
-                Still can't find what you're looking for?{" "}
+                Still can&apos;t find what you&apos;re looking for?{" "}
                 <Button
                   asChild
                   variant="link"

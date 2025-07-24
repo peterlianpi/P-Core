@@ -24,11 +24,7 @@ import { motion } from "framer-motion";
 import { 
   Users, 
   GraduationCap, 
-  BookOpen, 
-  DollarSign,
   TrendingUp,
-  Calendar,
-  Award,
   Activity,
   BarChart3,
   PieChart,
@@ -38,10 +34,10 @@ import {
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { DataLoadingState, CardSkeleton } from "@/components/ui/modern-loading";
+import { CardSkeleton } from "@/components/ui/modern-loading";
 import { ErrorBoundaryWrapper } from "@/components/error/error-boundary";
 
 import { useSession } from "next-auth/react";
@@ -122,7 +118,7 @@ const DashboardPage = () => {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
             <p className="text-muted-foreground">
-              Welcome back, {session?.user?.name}! Here's what's happening in your organization.
+              Welcome back, {session?.user?.name}! Here&apos;s what&apos;s happening in your organization.
             </p>
           </div>
           

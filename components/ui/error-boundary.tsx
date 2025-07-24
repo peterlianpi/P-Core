@@ -64,7 +64,7 @@ class ErrorBoundary extends Component<Props, State> {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-center text-sm text-muted-foreground">
-                <p>We're sorry, but something unexpected happened.</p>
+                <p>We&apos;re sorry, but something unexpected happened.</p>
                 <p>Please try one of the options below.</p>
               </div>
 
