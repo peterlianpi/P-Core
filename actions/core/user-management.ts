@@ -1,9 +1,9 @@
 "use server"
 
-import { prisma } from "@/lib/db/client"
+import { userDBPrismaClient as prisma } from "@/lib/prisma-client/user-prisma-client"
 import { z } from "zod"
 import { auth } from "@/auth"
-import { UserRole } from "@prisma/client"
+import { UserRole } from "../../prisma-user-database/user-database-client-types"
 import bcrypt from "bcryptjs"
 
 // User validation schemas for P-Core
@@ -11,7 +11,7 @@ export const CreateUserSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  role: z.nativeEnum(UserRole).default(UserRole.MEMBER),
+  role: z.nativeEnum(UserRole).default(UserRole.USER),
   image: z.string().url().optional(),
   isTwoFactorEnabled: z.boolean().default(false),
 })
@@ -122,7 +122,7 @@ export async function getUserById(values: z.infer<typeof GetUserSchema>) {
         isTwoFactorEnabled: true,
         createdAt: true,
         updatedAt: true,
-        organizations: {
+        UserOrganization: {
           select: {
             id: true,
             organizationId: true,
@@ -134,7 +134,7 @@ export async function getUserById(values: z.infer<typeof GetUserSchema>) {
                 name: true,
                 description: true,
                 type: true,
-                status: true,
+                isActive: true,
               }
             }
           }
@@ -196,7 +196,7 @@ export async function getUsers(page: number = 1, limit: number = 10, search?: st
           updatedAt: true,
           _count: {
             select: {
-              organizations: true,
+              UserOrganization: true,
             }
           }
         },
@@ -319,7 +319,7 @@ export async function deleteUser(values: z.infer<typeof GetUserSchema>) {
     const existingUser = await prisma.user.findUnique({
       where: { id },
       include: {
-        organizations: true,
+        UserOrganization: true,
       }
     })
 
@@ -328,7 +328,7 @@ export async function deleteUser(values: z.infer<typeof GetUserSchema>) {
     }
 
     // Check if user has organization memberships
-    if (existingUser.organizations.length > 0) {
+    if (existingUser.UserOrganization.length > 0) {
       return { 
         error: "Cannot delete user with active organization memberships. Remove from organizations first." 
       }
@@ -361,20 +361,18 @@ export async function getUserStatistics() {
     const [
       totalUsers,
       adminUsers,
-      memberUsers,
-      accountantUsers,
-      officeStaffUsers,
-      ownerUsers,
+      regularUsers,
+      managerUsers,
+      superadminUsers,
       verifiedUsers,
       twoFactorUsers,
       recentUsers,
     ] = await Promise.all([
       prisma.user.count(),
       prisma.user.count({ where: { role: UserRole.ADMIN } }),
-      prisma.user.count({ where: { role: UserRole.MEMBER } }),
-      prisma.user.count({ where: { role: UserRole.ACCOUNTANT } }),
-      prisma.user.count({ where: { role: UserRole.OFFICE_STAFF } }),
-      prisma.user.count({ where: { role: UserRole.OWNER } }),
+      prisma.user.count({ where: { role: UserRole.USER } }),
+      prisma.user.count({ where: { role: UserRole.MANAGER } }),
+      prisma.user.count({ where: { role: UserRole.SUPERADMIN } }),
       prisma.user.count({ where: { emailVerified: { not: null } } }),
       prisma.user.count({ where: { isTwoFactorEnabled: true } }),
       prisma.user.count({
@@ -390,10 +388,9 @@ export async function getUserStatistics() {
       total: totalUsers,
       byRole: {
         admin: adminUsers,
-        member: memberUsers,
-        accountant: accountantUsers,
-        officeStaff: officeStaffUsers,
-        owner: ownerUsers,
+        user: regularUsers,
+        manager: managerUsers,
+        superadmin: superadminUsers,
       },
       verified: verifiedUsers,
       twoFactorEnabled: twoFactorUsers,

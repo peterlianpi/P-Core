@@ -137,7 +137,7 @@ export function NotificationCenter({
 
       setUnreadCount(mockNotifications.filter(n => !n.isRead).length)
       setHasMore(pageNum < 3) // Mock pagination
-    } catch (_error) {
+    } catch {
       toast.error("Failed to load notifications")
     } finally {
       setLoading(false)
@@ -154,7 +154,7 @@ export function NotificationCenter({
       )
       setUnreadCount(prev => Math.max(0, prev - 1))
       toast.success("Notification marked as read")
-    } catch (_error) {
+    } catch {
       toast.error("Failed to update notification")
     }
   }
@@ -165,7 +165,7 @@ export function NotificationCenter({
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
       setUnreadCount(0)
       toast.success("All notifications marked as read")
-    } catch (_error) {
+    } catch {
       toast.error("Failed to mark all as read")
     }
   }
@@ -175,7 +175,7 @@ export function NotificationCenter({
       // Mock API call
       setNotifications(prev => prev.filter(n => n.id !== notificationId))
       toast.success("Notification archived")
-    } catch (_error) {
+    } catch {
       toast.error("Failed to archive notification")
     }
   }

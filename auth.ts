@@ -135,7 +135,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
 
   // Adapter to integrate with Prisma ORM for managing authentication data
-  adapter: PrismaAdapter(userDBPrismaClient),
+  adapter: PrismaAdapter(userDBPrismaClient as any),
 
   // Session configuration: Use JWT (JSON Web Tokens) for session management
   session: { strategy: "jwt" },

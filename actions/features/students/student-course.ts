@@ -3,7 +3,7 @@
 import { featuresDb } from "@/lib/db"
 import { z } from "zod"
 import { auth } from "@/auth"
-import { CourseStatus } from "@prisma/client"
+import { CourseStatus } from "../../../prisma-features-database/features-database-client-types"
 
 // StudentCourse validation schemas
 export const CreateStudentCourseSchema = z.object({
@@ -11,8 +11,6 @@ export const CreateStudentCourseSchema = z.object({
   courseId: z.string().min(1, "Course ID is required"),
   status: z.nativeEnum(CourseStatus).default(CourseStatus.ENROLLED),
   enrolledAt: z.date().default(new Date()),
-  startedAt: z.date().optional(),
-  completedAt: z.date().optional(),
   notes: z.string().optional(),
   orgId: z.string().min(1, "Organization ID is required"),
 })
@@ -20,8 +18,6 @@ export const CreateStudentCourseSchema = z.object({
 export const UpdateStudentCourseSchema = z.object({
   id: z.string(),
   status: z.nativeEnum(CourseStatus).optional(),
-  startedAt: z.date().optional(),
-  completedAt: z.date().optional(),
   notes: z.string().optional(),
 })
 
@@ -49,7 +45,7 @@ export async function enrollStudentInCourse(values: z.infer<typeof CreateStudent
       return { error: "Invalid fields", details: validatedFields.error.flatten() }
     }
 
-    const { studentId, courseId, status, enrolledAt, startedAt, completedAt, notes, orgId } = validatedFields.data
+    const { studentId, courseId, status, enrolledAt, notes, orgId } = validatedFields.data
 
     // Check if student exists
     const student = await featuresDb.student.findUnique({
@@ -88,8 +84,6 @@ export async function enrollStudentInCourse(values: z.infer<typeof CreateStudent
         courseId,
         status,
         enrolledAt,
-        startedAt: status === CourseStatus.ENROLLED ? startedAt : undefined,
-        completedAt: status === CourseStatus.FINISHED ? completedAt : undefined,
         notes,
         orgId,
       },
@@ -118,7 +112,7 @@ export async function enrollStudentInCourse(values: z.infer<typeof CreateStudent
         studentCourseId: studentCourse.id,
         status,
         changedAt: new Date(),
-        notes: `Enrolled in course: ${course.name}`,
+        note: `Enrolled in course: ${course.name}`,
         orgId,
       },
     })
@@ -143,7 +137,7 @@ export async function updateStudentCourseStatus(values: z.infer<typeof UpdateStu
       return { error: "Invalid fields", details: validatedFields.error.flatten() }
     }
 
-    const { id, status, startedAt, completedAt, notes } = validatedFields.data
+    const { id, status, notes } = validatedFields.data
 
     // Check if enrollment exists
     const existingEnrollment = await featuresDb.studentCourse.findUnique({
@@ -162,19 +156,8 @@ export async function updateStudentCourseStatus(values: z.infer<typeof UpdateStu
     
     if (status !== undefined) {
       updateData.status = status
-      
-      // Auto-set timestamps based on status
-      if (status === CourseStatus.ENROLLED && !existingEnrollment.startedAt) {
-        updateData.startedAt = startedAt || new Date()
-      }
-      
-      if (status === CourseStatus.FINISHED && !existingEnrollment.completedAt) {
-        updateData.completedAt = completedAt || new Date()
-      }
     }
     
-    if (startedAt !== undefined) updateData.startedAt = startedAt
-    if (completedAt !== undefined) updateData.completedAt = completedAt
     if (notes !== undefined) updateData.notes = notes
 
     const updatedEnrollment = await featuresDb.studentCourse.update({
@@ -206,7 +189,7 @@ export async function updateStudentCourseStatus(values: z.infer<typeof UpdateStu
           studentCourseId: id,
           status,
           changedAt: new Date(),
-          notes: notes || `Status changed from ${existingEnrollment.status} to ${status}`,
+          note: notes || `Status changed from ${existingEnrollment.status} to ${status}`,
           orgId: existingEnrollment.orgId,
         },
       })
@@ -259,18 +242,6 @@ export async function getStudentCourse(values: z.infer<typeof GetStudentCourseSc
         statusLogs: {
           orderBy: { changedAt: "desc" },
           take: 10,
-        },
-        lessonProgresses: {
-          include: {
-            lessonBook: {
-              select: {
-                id: true,
-                title: true,
-                level: true,
-              },
-            },
-          },
-          orderBy: { createdAt: "desc" },
         },
       },
     })
@@ -401,7 +372,7 @@ export async function unenrollStudentFromCourse(values: z.infer<typeof GetStuden
         studentCourseId: id,
         status: CourseStatus.CANCELLED,
         changedAt: new Date(),
-        notes: `Student unenrolled from course: ${existingEnrollment.course.name}`,
+        note: `Student unenrolled from course: ${existingEnrollment.course.name}`,
         orgId: existingEnrollment.orgId,
       },
     })

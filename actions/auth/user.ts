@@ -1,6 +1,6 @@
 "use server"
 
-import { db } from "@/lib/db"
+import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client"
 import { z } from "zod"
 import { auth } from "@/auth"
 import { UserRole } from "@prisma/client"
@@ -51,7 +51,7 @@ export async function createUser(values: z.infer<typeof CreateUserSchema>) {
     const { name, email, password, role, image, emailVerified, isTwoFactorEnabled } = validatedFields.data
 
     // Check if user already exists
-    const existingUser = await db.user.findUnique({
+    const existingUser = await userDBPrismaClient.user.findUnique({
       where: { email }
     })
 
@@ -63,7 +63,7 @@ export async function createUser(values: z.infer<typeof CreateUserSchema>) {
     const bcrypt = await import("bcryptjs")
     const hashedPassword = await bcrypt.hash(password, 12)
 
-    const user = await db.user.create({
+    const user = await userDBPrismaClient.user.create({
       data: {
         name,
         email,
@@ -97,7 +97,7 @@ export async function getUserById(values: z.infer<typeof GetUserSchema>) {
 
     const { id } = validatedFields.data
 
-    const user = await db.user.findUnique({
+    const user = await userDBPrismaClient.user.findUnique({
       where: { id },
       select: {
         id: true,
@@ -148,7 +148,7 @@ export async function getUsers(page: number = 1, limit: number = 10, search?: st
       : {}
 
     const [users, total] = await Promise.all([
-      db.user.findMany({
+      userDBPrismaClient.user.findMany({
         where,
         select: {
           id: true,
@@ -165,7 +165,7 @@ export async function getUsers(page: number = 1, limit: number = 10, search?: st
         take: limit,
         orderBy: { createdAt: "desc" },
       }),
-      db.user.count({ where }),
+      userDBPrismaClient.user.count({ where }),
     ])
 
     return {
@@ -209,7 +209,7 @@ export async function updateUser(values: z.infer<typeof UpdateUserSchema>) {
     }
 
     // Check if user exists
-    const existingUser = await db.user.findUnique({
+    const existingUser = await userDBPrismaClient.user.findUnique({
       where: { id },
     })
 
@@ -219,7 +219,7 @@ export async function updateUser(values: z.infer<typeof UpdateUserSchema>) {
 
     // If updating email, check if it's already taken
     if (updateData.email && updateData.email !== existingUser.email) {
-      const emailExists = await db.user.findUnique({
+      const emailExists = await userDBPrismaClient.user.findUnique({
         where: { email: updateData.email },
       })
 
@@ -228,7 +228,7 @@ export async function updateUser(values: z.infer<typeof UpdateUserSchema>) {
       }
     }
 
-    const updatedUser = await db.user.update({
+    const updatedUser = await userDBPrismaClient.user.update({
       where: { id },
       data: updateData,
       select: {
@@ -276,7 +276,7 @@ export async function deleteUser(values: z.infer<typeof GetUserSchema>) {
     }
 
     // Check if user exists
-    const existingUser = await db.user.findUnique({
+    const existingUser = await userDBPrismaClient.user.findUnique({
       where: { id },
     })
 
@@ -284,7 +284,7 @@ export async function deleteUser(values: z.infer<typeof GetUserSchema>) {
       return { error: "User not found" }
     }
 
-    await db.user.delete({
+    await userDBPrismaClient.user.delete({
       where: { id },
     })
 
