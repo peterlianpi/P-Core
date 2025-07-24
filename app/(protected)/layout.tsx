@@ -4,7 +4,7 @@ import { getAllUsers } from "@/data/users";
 import { OrgDataProvider } from "@/features/org/context/org-context";
 import { SelectedOrgProvider } from "@/features/org/context/selected-org-context";
 import { currentUser } from "@/lib/auth";
-import { OrganizationUserRole } from "@/prisma-user-database/user-database-client-types";
+import type { OrganizationRole } from "@/lib/types/database";
 
 interface ProtectedLayoutProps {
   children: React.ReactNode;

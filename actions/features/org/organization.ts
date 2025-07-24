@@ -1,7 +1,7 @@
 "use server";
 
 import { trackOrganizationCreatedBy } from "@/actions/auth/track-system-activities";
-import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
+import { prisma } from "@/lib/db/client";
 import { OrganizationsAPISchema } from "@/schemas";
 import { revalidatePath } from "next/cache";
 
@@ -13,7 +13,7 @@ export async function handleError(error: unknown, fallbackMessage: string) {
 }
 
 export async function getOrganizationsByUserId(userId: string | undefined) {
-  const userOrganizations = await userDBPrismaClient.userOrganization.findMany({
+  const userOrganizations = await prisma.userOrganization.findMany({
     where: { userId },
     select: {
       role: true,
@@ -54,7 +54,7 @@ export async function createOrganization({
   };
 }) {
   try {
-    const result = await userDBPrismaClient.$transaction(async (prisma) => {
+    const result = await prisma.$transaction(async (prisma) => {
       const organization = await prisma.organization.create({
         data: {
           name: value.name,
@@ -103,7 +103,7 @@ export async function updateOrganization({
   };
 }) {
   try {
-    const updated = await userDBPrismaClient.organization.update({
+    const updated = await prisma.organization.update({
       where: { id: organizationId },
       data: { ...value },
     });
@@ -120,11 +120,11 @@ export async function deleteOrganization(organizationId: string) {
 
   try {
     // Delete related userOrganization links (optional)
-    await userDBPrismaClient.userOrganization.deleteMany({
+    await prisma.userOrganization.deleteMany({
       where: { organizationId },
     });
 
-    const deleted = await userDBPrismaClient.organization.delete({
+    const deleted = await prisma.organization.delete({
       where: { id: organizationId },
     });
     revalidatePath("/organization"); // Optional: revalidate page

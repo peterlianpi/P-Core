@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
-import { featuresDBPrismaClient } from "@/lib/prisma-client/features-prisma-client";
+import { prisma } from "@/lib/db/client";
 import { ensureUserInOrganization } from "@/lib/auth-helpers";
 import { courseSchema } from "@/features/school-management/types/schemas";
 
@@ -19,7 +19,7 @@ const courses = new Hono()
 
       const values = c.req.valid("json");
 
-      const created = await featuresDBPrismaClient.course.create({
+      const created = await prisma.course.create({
         data: {
           ...values,
           orgId: organizationId,
@@ -35,7 +35,7 @@ const courses = new Hono()
     const authResult = await ensureUserInOrganization(c);
     if ("json" in authResult) return authResult; // Return error if unauthorized
     const { organizationId } = authResult;
-    const all = await featuresDBPrismaClient.course.findMany({
+    const all = await prisma.course.findMany({
       where: { orgId: organizationId },
       select: {
         id: true,
@@ -67,7 +67,7 @@ const courses = new Hono()
       const values = c.req.valid("json");
 
       try {
-        const existingCourse = await featuresDBPrismaClient.course.findUnique({
+        const existingCourse = await prisma.course.findUnique({
           where: { id, orgId: organizationId },
         });
 
@@ -75,7 +75,7 @@ const courses = new Hono()
           return c.json({ error: "Course not found" }, 404);
         }
 
-        const updated = await featuresDBPrismaClient.course.updateMany({
+        const updated = await prisma.course.updateMany({
           where: {
             id,
             orgId: organizationId,
@@ -111,7 +111,7 @@ const courses = new Hono()
 
       if (!id) return c.json({ error: "Course ID is required" }, 400);
 
-      const course = await featuresDBPrismaClient.course.findFirst({
+      const course = await prisma.course.findFirst({
         where: {
           id,
           orgId: organizationId,

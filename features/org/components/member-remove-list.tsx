@@ -4,7 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { useIsOrgOwner } from "@/hooks/use-current-team-role";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { OrganizationUserRole } from "@/prisma-user-database/user-database-client-types";
+import { OrganizationUserRole } from "@prisma/client";
 import { useConfirmDialog } from "@/providers/confirm-dialog-provider";
 import { useRemoveOrgMember } from "../api/use-remove-member";
 import { toast } from "sonner";

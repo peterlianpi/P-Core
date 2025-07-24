@@ -1,4 +1,4 @@
-import { UserRole } from "@/prisma-user-database/user-database-client-types";
+import { UserRole } from "@prisma/client";
 import * as z from "zod";
 
 /**
@@ -13,7 +13,6 @@ export const SettingsSchema = z
     role: z.enum([
       UserRole.SUPERADMIN,
       UserRole.ADMIN,
-      UserRole.MANAGER,
       UserRole.USER,
     ]), // Must be one of the defined user roles
     telegramChatId: z.optional(z.string()), // Optional Telegram chat ID

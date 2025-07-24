@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
-import { featuresDBPrismaClient } from "@/lib/prisma-client/features-prisma-client";
+import { prisma } from "@/lib/db/client";
 import { ensureUserInOrganization } from "@/lib/auth-helpers";
 import { scheduleSchema } from "@/features/school-management/types/schemas";
 
@@ -19,7 +19,7 @@ const schedules = new Hono()
 
       const values = c.req.valid("json");
 
-      const created = await featuresDBPrismaClient.schedule.create({
+      const created = await prisma.schedule.create({
         data: {
           ...values,
           orgId: organizationId,
@@ -35,7 +35,7 @@ const schedules = new Hono()
     const authResult = await ensureUserInOrganization(c);
     if ("json" in authResult) return authResult; // Return error if unauthorized
     const { organizationId } = authResult;
-    const all = await featuresDBPrismaClient.schedule.findMany({
+    const all = await prisma.schedule.findMany({
       where: { orgId: organizationId },
     });
     return c.json(all);
@@ -57,7 +57,7 @@ const schedules = new Hono()
       const values = c.req.valid("json");
 
       try {
-        const existingCourse = await featuresDBPrismaClient.schedule.findUnique(
+        const existingCourse = await prisma.schedule.findUnique(
           {
             where: { id, orgId: organizationId },
           }
@@ -67,7 +67,7 @@ const schedules = new Hono()
           return c.json({ error: "Course not found" }, 404);
         }
 
-        const updated = await featuresDBPrismaClient.schedule.updateMany({
+        const updated = await prisma.schedule.updateMany({
           where: {
             id,
             orgId: organizationId,
@@ -103,7 +103,7 @@ const schedules = new Hono()
 
       if (!id) return c.json({ error: "Course ID is required" }, 400);
 
-      const schedule = await featuresDBPrismaClient.schedule.findFirst({
+      const schedule = await prisma.schedule.findFirst({
         where: {
           id,
           orgId: organizationId,

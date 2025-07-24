@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
-import { featuresDBPrismaClient } from "@/lib/prisma-client/features-prisma-client";
+import { prisma } from "@/lib/db/client";
 
 const purchaseSchema = z.object({
   studentId: z.string(),
@@ -28,7 +28,7 @@ const purchases = new Hono()
     ),
     async (c) => {
       const q = c.req.valid("query");
-      const recs = await featuresDBPrismaClient.purchase.findMany({
+      const recs = await prisma.purchase.findMany({
         where: { ...q, paidAt: undefined },
         orderBy: { paidAt: "desc" },
       });
@@ -38,7 +38,7 @@ const purchases = new Hono()
 
   // GET one
   .get("/:id", async (c) => {
-    const rec = await featuresDBPrismaClient.purchase.findUnique({
+    const rec = await prisma.purchase.findUnique({
       where: { id: c.req.param("id") },
     });
     return rec ? c.json(rec) : c.notFound();
@@ -57,7 +57,7 @@ const purchases = new Hono()
     async (c) => {
       const { orgId } = c.req.valid("query");
       const data = c.req.valid("json");
-      const rec = await featuresDBPrismaClient.purchase.create({
+      const rec = await prisma.purchase.create({
         data: {
           ...data,
           orgId,
@@ -71,7 +71,7 @@ const purchases = new Hono()
   // UPDATE purchase
   .patch("/:id", zValidator("json", purchaseSchema.partial()), async (c) => {
     const data = c.req.valid("json");
-    const rec = await featuresDBPrismaClient.purchase.update({
+    const rec = await prisma.purchase.update({
       where: { id: c.req.param("id") },
       data: {
         ...data,
@@ -83,7 +83,7 @@ const purchases = new Hono()
 
   // DELETE purchase
   .delete("/:id", async (c) => {
-    await featuresDBPrismaClient.purchase.delete({
+    await prisma.purchase.delete({
       where: { id: c.req.param("id") },
     });
     return c.json({ success: true });

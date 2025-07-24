@@ -4,7 +4,7 @@ import { zValidator } from "@hono/zod-validator";
 import { feedbackSchema, feedbackUpdateSchema } from "@/schemas";
 import { authenticate } from "@/lib/api-auth";
 import { cors } from "hono/cors";
-import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
+import { prisma } from "@/lib/db/client";
 
 cors({
   origin: (origin) => {

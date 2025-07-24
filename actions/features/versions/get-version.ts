@@ -1,7 +1,7 @@
 "use server";
 
 
-import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
+import { userDBPrismaClient } from "@/lib/db/client";
 import { Versions } from "@/schemas";
 
 export async function getVersionById(id: string) {

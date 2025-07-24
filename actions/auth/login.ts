@@ -18,7 +18,7 @@ import { LoginSchema } from "@/schemas";
 import { AuthError } from "next-auth";
 import * as z from "zod";
 import { trackLogin } from "./track-system-activities";
-import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
+import { prisma } from "@/lib/db/client";
 
 export const login = async (
   values: z.infer<typeof LoginSchema>,
@@ -70,7 +70,7 @@ export const login = async (
         return { error: "Code expired!" };
       }
 
-      await userDBPrismaClient.twoFactorToken.delete({
+      await prisma.twoFactorToken.delete({
         where: { id: twoFactorToken.id },
       });
 
@@ -79,12 +79,12 @@ export const login = async (
       );
 
       if (existingConfirmation) {
-        await userDBPrismaClient.twoFactorConfirmation.delete({
+        await prisma.twoFactorConfirmation.delete({
           where: { id: existingConfirmation.id },
         });
       }
 
-      await userDBPrismaClient.twoFactorConfirmation.create({
+      await prisma.twoFactorConfirmation.create({
         data: {
           userId: existingUser.id,
         },

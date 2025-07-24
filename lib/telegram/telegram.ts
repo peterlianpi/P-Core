@@ -1,5 +1,5 @@
-import { LogType, UserRole } from "@/prisma-user-database/user-database-client-types";
-import { userDBPrismaClient } from "../prisma-client/user-prisma-client";
+import { LogType, UserRole } from "@prisma/client";
+import { prisma } from "../db/client";
 
 
 async function getTelegramSettings(

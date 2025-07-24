@@ -1,4 +1,4 @@
-import { PrismaClient } from "@/prisma-features-database/features-database-client-types";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 const orgId = "cmd1zpyxg0000954wiao2l4zc";

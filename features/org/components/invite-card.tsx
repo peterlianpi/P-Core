@@ -2,12 +2,12 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { OrganizationUserRole } from "@/prisma-user-database/user-database-client-types";
+import type { OrganizationRole } from "@/lib/types/database";
 import { capitalizeFormat } from "../../../helpers/custom-function";
 
 type Invite = {
   email: string;
-  role: OrganizationUserRole | null;
+  role: OrganizationRole | null;
   accepted: boolean;
 };
 

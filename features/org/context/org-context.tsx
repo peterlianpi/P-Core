@@ -3,7 +3,7 @@
 
 import { createContext, useContext } from "react";
 import type { ReactNode } from "react";
-import type { OrganizationUserRole } from "@/prisma-user-database/user-database-client-types";
+import type { OrganizationRole } from "@/lib/types/database";
 
 type Org = {
   organization: {
@@ -24,7 +24,7 @@ type User = {
   image: string | null;
   organization: {
     id: string;
-    role: OrganizationUserRole;
+    role: OrganizationRole;
     status: string;
   }[];
 };

@@ -6,7 +6,7 @@ import { useGetInvitesByOrgId } from "../api/use-get-invites-by-org-id";
 import { useResendInviteMember } from "../api/use-resend-invite-member";
 // import { useRevokeInvite } from "../api/use-revoke-invite"; // Optional
 
-import { OrganizationUserRole } from "@/prisma-user-database/user-database-client-types";
+import { OrganizationUserRole } from "@prisma/client";
 import InviteCard from "./invite-card";
 import { useRevokeInvite } from "../api/use-revoke-invite";
 import { useConfirmDialog } from "@/providers/confirm-dialog-provider";

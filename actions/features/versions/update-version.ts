@@ -1,6 +1,6 @@
 "use server";
 
-import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
+import { prisma } from "@/lib/db/client";
 import { z } from "zod";
 
 // Define schema for the version data
@@ -17,7 +17,7 @@ export const updateVersion = async (
   values: z.infer<typeof versionSchema>
 ) => {
   try {
-    const data = await userDBPrismaClient.versionInfo.update({
+    const data = await prisma.versionInfo.update({
       where: { id },
       data: values,
     });

@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCurrentMemberRole } from "@/hooks/use-current-team-role";
-import { OrganizationUserRole } from "@/prisma-user-database/user-database-client-types";
+import type { OrganizationRole } from "@/lib/types/database";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { toast } from "sonner";
 import { useUpdateOrgRoles } from "../api/use-change-role";
@@ -23,7 +23,7 @@ type Member = {
   image: string | null;
   organization: {
     id: string;
-    role: OrganizationUserRole;
+    role: OrganizationRole;
     status: string;
   }[];
 };

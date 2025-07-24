@@ -3,7 +3,7 @@ import { loginDate } from "@/helpers/date-format";
 import { currentUser } from "@/lib/auth";
 import { logUserActivity } from "@/lib/logging/log-user-activity";
 import { notifySuperAdmins } from "@/lib/notification/notify-superadmin";
-import { UserRole } from "@/prisma-user-database/user-database-client-types";
+import { UserRole } from "@prisma/client";
 
 type UserEvent = { value: string };
 

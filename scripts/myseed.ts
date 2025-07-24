@@ -608,4 +608,5 @@ async function main() {
     ],
   });
 
-  console.log('✅ Database seeding')
+  console.log('✅ Database seeding completed!')
+}

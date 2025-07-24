@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import { getVerificationTokenByEmail } from "@/data/verification-token";
 import { getPasswordResetTokenByEmail } from "@/data/password-reset-token";
 import { getTwoFactorTokenByEmail } from "@/data/two-factor-token";
-import { userDBPrismaClient } from "./prisma-client/user-prisma-client";
+import { prisma } from "./db/client";
 
 /**
  * SECURITY ENHANCEMENT: Hash tokens before storing in database
@@ -44,7 +44,7 @@ export const generateTwoFactorToken = async (email: string) => {
 
   // If an existing token is found, delete it
   if (existingToken) {
-    await userDBPrismaClient.twoFactorToken.delete({
+    await prisma.twoFactorToken.delete({
       where: {
         id: existingToken.id,
       },
@@ -52,7 +52,7 @@ export const generateTwoFactorToken = async (email: string) => {
   }
 
   // Create new 2FA token with hashed value in database
-  const dbToken = await userDBPrismaClient.twoFactorToken.create({
+  const dbToken = await prisma.twoFactorToken.create({
     data: {
       email,
       token: hashedToken, // Store hashed token in database
@@ -90,7 +90,7 @@ export const generatePasswordResetToken = async (email: string) => {
 
   // If an existing token is found, delete it
   if (existingToken) {
-    await userDBPrismaClient.passwordResetToken.delete({
+    await prisma.passwordResetToken.delete({
       where: {
         id: existingToken.id,
       },
@@ -98,7 +98,7 @@ export const generatePasswordResetToken = async (email: string) => {
   }
 
   // Create new password reset token with hashed value in database
-  const dbToken = await userDBPrismaClient.passwordResetToken.create({
+  const dbToken = await prisma.passwordResetToken.create({
     data: {
       email,
       token: hashedToken, // Store hashed token in database
@@ -134,7 +134,7 @@ export const generateVerificationToken = async (email: string) => {
 
   // If an existing token is found, delete it
   if (existingToken) {
-    await userDBPrismaClient.verificationToken.delete({
+    await prisma.verificationToken.delete({
       where: {
         id: existingToken.id,
       },
@@ -142,7 +142,7 @@ export const generateVerificationToken = async (email: string) => {
   }
 
   // Create new verification token with hashed value in database
-  const dbToken = await userDBPrismaClient.verificationToken.create({
+  const dbToken = await prisma.verificationToken.create({
     data: {
       email,
       token: hashedToken, // Store hashed token in database

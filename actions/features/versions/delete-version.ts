@@ -1,10 +1,10 @@
 'use server';
 
-import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
+import { prisma } from "@/lib/db/client";
 
 export const deleteVersion = async ({ id }: { id: string }) => {
   try {
-    await userDBPrismaClient.versionInfo.delete({
+    await prisma.versionInfo.delete({
       where: { id },
     });
     return { success: "Version deleted successfully" };

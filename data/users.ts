@@ -1,4 +1,4 @@
-import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
+import { prisma } from "@/lib/db/client";
 
 
 /**
@@ -12,7 +12,7 @@ import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
 export const getAllUsers = async () => {
   try {
     // Query the database to fetch all users.
-    const users = await userDBPrismaClient.user.findMany({
+    const users = await prisma.user.findMany({
       select: {
         name: true,
         id: true,

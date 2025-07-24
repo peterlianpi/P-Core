@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { OrganizationUserRole } from "@/prisma-user-database/user-database-client-types";
+import type { OrganizationRole } from "@/lib/types/database";
 
 type InviteDialogProps = {
   open: boolean;
@@ -21,7 +21,7 @@ type InviteDialogProps = {
         organizationName: string;
         email: string;
         expiresAt: string;
-        role: OrganizationUserRole | null;
+        role: OrganizationRole | null;
       }
     | undefined;
 };

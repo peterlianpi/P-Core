@@ -16,7 +16,7 @@
  * - Maintains type safety throughout the system
  */
 
-import { UserRole } from "@/prisma-user-database/user-database-client-types";
+import { UserRole } from "@prisma/client";
 import * as z from "zod";
 
 // ============================================================================

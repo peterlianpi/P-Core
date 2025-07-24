@@ -1,7 +1,7 @@
 "use server";
 
-import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
-import { UserRole } from "@/prisma-user-database/user-database-client-types";
+import { userDBPrismaClient } from "@/lib/db/client";
+import { UserRole } from "@prisma/client";
 
 export const getTelegramSetting = async ({
   userId,

@@ -16,7 +16,7 @@ import {
   trackTwoFactorDisabled,
   trackTwoFactorEnabled,
 } from "../auth/track-system-activities";
-import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
+import { userDBPrismaClient } from "@/lib/db/client";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_NAME,

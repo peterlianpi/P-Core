@@ -1,4 +1,4 @@
-import { OrganizationUserRole } from "@/prisma-user-database/user-database-client-types";
+import { OrganizationUserRole } from "@prisma/client";
 import { useSession } from "next-auth/react";
 
 // Define the structure of a member and their organization roles

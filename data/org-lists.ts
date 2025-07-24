@@ -1,6 +1,6 @@
 // Ensure you have the correct import
 
-import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
+import { prisma } from "@/lib/db/client";
 
 /**
  * Retrieve all organizations where the given user is a member.
@@ -13,7 +13,7 @@ export const getOrganizationsByUserId = async (userId: string) => {
     if (!userId) return [];
 
     // Fetch organizations where the user is associated via UserOrganization
-    const organizations = await userDBPrismaClient.organization.findMany({
+    const organizations = await prisma.organization.findMany({
       where: {
         UserOrganization: {
           some: {

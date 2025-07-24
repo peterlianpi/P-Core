@@ -1,6 +1,6 @@
 import { lessonBookSchema } from "@/features/school-management/types/schemas";
 import { ensureUserInOrganization } from "@/lib/auth-helpers";
-import { featuresDBPrismaClient } from "@/lib/prisma-client/features-prisma-client";
+import { prisma } from "@/lib/db/client";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import z from "zod";
@@ -19,7 +19,7 @@ const lessonBooks = new Hono()
 
       const values = c.req.valid("json");
 
-      const created = await featuresDBPrismaClient.lessonBook.create({
+      const created = await prisma.lessonBook.create({
         data: {
           ...values,
           orgId: organizationId,
@@ -35,7 +35,7 @@ const lessonBooks = new Hono()
     const authResult = await ensureUserInOrganization(c);
     if ("json" in authResult) return authResult; // Return error if unauthorized
     const { organizationId } = authResult;
-    const all = await featuresDBPrismaClient.lessonBook.findMany({
+    const all = await prisma.lessonBook.findMany({
       where: { orgId: organizationId },
       select: {
         id: true,
@@ -72,7 +72,7 @@ const lessonBooks = new Hono()
 
       try {
         const existingLessonBook =
-          await featuresDBPrismaClient.lessonBook.findUnique({
+          await prisma.lessonBook.findUnique({
             where: { id, orgId: organizationId },
           });
 
@@ -80,7 +80,7 @@ const lessonBooks = new Hono()
           return c.json({ error: "LessonBook not found" }, 404);
         }
 
-        const updated = await featuresDBPrismaClient.lessonBook.updateMany({
+        const updated = await prisma.lessonBook.updateMany({
           where: {
             id,
             orgId: organizationId,
@@ -116,7 +116,7 @@ const lessonBooks = new Hono()
 
       if (!id) return c.json({ error: "LessonBook ID is required" }, 400);
 
-      const lessonBook = await featuresDBPrismaClient.lessonBook.findFirst({
+      const lessonBook = await prisma.lessonBook.findFirst({
         where: {
           id,
           orgId: organizationId,

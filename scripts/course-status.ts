@@ -1,7 +1,7 @@
 import {
   CourseStatus,
   PrismaClient,
-} from "@/prisma-features-database/features-database-client-types";
+} from "@prisma/client";
 
 const prisma = new PrismaClient();
 const orgId = "cmcysksck0000jr04x1y1w2ep";

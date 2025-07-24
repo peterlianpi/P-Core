@@ -1,4 +1,4 @@
-import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
+import { prisma } from "@/lib/db/client";
 
 
 /**
@@ -14,7 +14,7 @@ import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
 export const getAccountByUserId = async (userId: string) => {
   try {
     // Query the database to find the first account associated with the provided userId.
-    const account = await userDBPrismaClient.account.findFirst({
+    const account = await prisma.account.findFirst({
       where: { userId },
     });
 
