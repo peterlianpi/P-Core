@@ -17,11 +17,10 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  ResponsiveContainer,
 } from "recharts";
-import { CalendarIcon, Download } from "lucide-react";
+import { Download } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DateRangePicker } from "../../components/filters/date-range-picker";
+import { DateRangePicker } from "../../../components/filters/date-range-picker";
 
 // Sample data
 const enrollmentData = [
@@ -97,7 +96,7 @@ interface StatsChartsProps {
 export const StatsCharts: React.FC<StatsChartsProps> = ({
   className,
 }) => {
-  const [dateRange, setDateRange] = useState({
+  const [dateRange, setDateRange] = useState<{from: Date; to: Date} | undefined>({
     from: new Date(2024, 0, 1),
     to: new Date(),
   });
@@ -143,7 +142,7 @@ export const StatsCharts: React.FC<StatsChartsProps> = ({
             key={key}
             variant={selectedChart === key ? "default" : "outline"}
             size="sm"
-            onClick={() => setSelectedChart(key as any)}
+            onClick={() => setSelectedChart(key as "enrollment" | "revenue" | "performance" | "attendance")}
           >
             {label}
           </Button>

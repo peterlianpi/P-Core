@@ -78,15 +78,21 @@ export async function sendTelegramLog({
 
   // Save to database log (with error handling)
   try {
+    const logData: any = {
+      name: title,
+      message,
+      updatedBy: userId ?? "SYSTEM",
+      type,
+      date: new Date(),
+    };
+
+    // Only include orgId if it exists to avoid required organization relation error
+    if (orgId) {
+      logData.orgId = orgId;
+    }
+
     await prisma.updateLog.create({
-      data: {
-        name: title,
-        message,
-        updatedBy: userId ?? "SYSTEM",
-        orgId,
-        type,
-        date: new Date(),
-      },
+      data: logData,
     });
   } catch (error) {
     console.warn("Could not save update log:", error);

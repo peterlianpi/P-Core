@@ -68,6 +68,7 @@ model User {
   sessions             Session[]
   organizations        UserOrganization[] // Many-to-many with organizations
   createdOrganizations Organization[]     @relation("OrganizationCreator")
+  createdVersions      VersionInfo[]      @relation("VersionCreator")
 
   @@map("users")
   @@schema("auth")
@@ -131,6 +132,7 @@ model Organization {
 
   users      UserOrganization[] // Many-to-many with users
   updateLogs UpdateLog[]
+  versions   VersionInfo[]      // Organization-specific versions
 
   @@map("organizations")
   @@schema("auth")
@@ -359,6 +361,35 @@ model Purchase {
   @@index([studentId])
   @@index([status, orgId])
   @@map("purchases")
+  @@schema("domain")
+}
+
+// Version Information Model (System Management)
+model VersionInfo {
+  id          String   @id @default(cuid())
+  version     String   @unique
+  name        String
+  description String?  @db.Text
+  releaseDate DateTime @map("release_date")
+  isActive    Boolean  @default(false) @map("is_active")
+  changelog   String?  @db.Text
+  
+  // Timestamps
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  // Created by (SUPERADMIN only)
+  createdBy   String   @map("created_by")
+  createdByUser User   @relation("VersionCreator", fields: [createdBy], references: [id])
+
+  // Multi-tenancy field (optional for system-wide versions)
+  orgId       String?  @map("org_id")
+  organization Organization? @relation(fields: [orgId], references: [id])
+
+  @@index([isActive])
+  @@index([releaseDate])
+  @@index([orgId])
+  @@map("version_info")
   @@schema("domain")
 }
 
