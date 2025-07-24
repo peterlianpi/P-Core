@@ -53,7 +53,7 @@ const AcceptInvitePage = () => {
 
   return (
     <InviteDetails
-      invite={invite}
+      invite={invite as any}
       isLoggedIn={!!currentUser}
       onAccept={handleAccept}
       onCancel={handleCancel}

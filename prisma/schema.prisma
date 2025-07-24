@@ -1,0 +1,463 @@
+// P-Core Unified Database Schema
+// This consolidates the previous dual-database setup into a single PostgreSQL database
+// using schemas for logical separation while maintaining ACID transaction support.
+
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../node_modules/.prisma/client"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["auth", "domain"]
+}
+
+// ============================================================================
+// AUTH SCHEMA - Authentication, Authorization & Organization Management
+// ============================================================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+  @@schema("auth")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+  @@schema("auth")
+}
+
+model User {
+  id                    String                 @id @default(cuid())
+  name                  String?
+  email                 String                 @unique
+  emailVerified         DateTime?              @map("email_verified")
+  image                 String?
+  password              String?
+  role                  UserRole               @default(USER)
+  isTwoFactorEnabled    Boolean                @default(false) @map("is_two_factor_enabled")
+  twoFactorConfirmation TwoFactorConfirmation?
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @updatedAt @map("updated_at")
+
+  // Relations
+  accounts             Account[]
+  sessions             Session[]
+  organizations        UserOrganization[] // Many-to-many with organizations
+  createdOrganizations Organization[]     @relation("OrganizationCreator")
+
+  @@map("users")
+  @@schema("auth")
+}
+
+model VerificationToken {
+  id      String   @id @default(cuid())
+  email   String
+  token   String   @unique
+  expires DateTime
+
+  @@unique([email, token])
+  @@map("verification_tokens")
+  @@schema("auth")
+}
+
+model PasswordResetToken {
+  id      String   @id @default(cuid())
+  email   String
+  token   String   @unique
+  expires DateTime
+
+  @@unique([email, token])
+  @@map("password_reset_tokens")
+  @@schema("auth")
+}
+
+model TwoFactorToken {
+  id      String   @id @default(cuid())
+  email   String
+  token   String   @unique
+  expires DateTime
+
+  @@unique([email, token])
+  @@map("two_factor_tokens")
+  @@schema("auth")
+}
+
+model TwoFactorConfirmation {
+  id     String @id @default(cuid())
+  userId String @unique @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("two_factor_confirmations")
+  @@schema("auth")
+}
+
+model Organization {
+  id          String           @id @default(cuid())
+  name        String
+  description String?
+  logoImage   String?          @map("logo_image")
+  type        OrganizationType @default(SCHOOL)
+  startedAt   DateTime?        @map("started_at")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  // Relations
+  createdById String @map("created_by_id")
+  createdBy   User   @relation("OrganizationCreator", fields: [createdById], references: [id])
+
+  users      UserOrganization[] // Many-to-many with users
+  updateLogs UpdateLog[]
+
+  @@map("organizations")
+  @@schema("auth")
+}
+
+model UserOrganization {
+  id             String                 @id @default(cuid())
+  userId         String                 @map("user_id")
+  organizationId String                 @map("organization_id")
+  role           OrganizationRole       @default(MEMBER)
+  status         UserOrganizationStatus @default(ACTIVE)
+  joinedAt       DateTime               @default(now()) @map("joined_at")
+  removedAt      DateTime?              @map("removed_at")
+
+  // Relations
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+  @@index([userId])
+  @@map("user_organizations")
+  @@schema("auth")
+}
+
+model UpdateLog {
+  id        String   @id @default(cuid())
+  name      String
+  message   String   @db.Text
+  type      LogType  @default(INFO)
+  updatedBy String   @map("updated_by")
+  orgId     String   @map("org_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("update_logs")
+  @@schema("auth")
+}
+
+// ============================================================================
+// DOMAIN SCHEMA - Business Logic & Application Data
+// ============================================================================
+// NOTE: All domain tables include orgId for multi-tenancy and RLS policies
+
+model Student {
+  id          String    @id @default(cuid())
+  number      String?   @unique
+  rollNumber  String?   @map("roll_number")
+  name        String
+  email       String?
+  phone       String?
+  gender      Gender?
+  birthDate   DateTime? @map("birth_date")
+  address     String?   @db.Text
+  parentName  String?   @map("parent_name")
+  parentPhone String?   @map("parent_phone")
+  image       String?
+  notes       String?   @db.Text
+  isActive    Boolean   @default(true) @map("is_active")
+  isArchived  Boolean   @default(false) @map("is_archived")
+  isDeleted   Boolean   @default(false) @map("is_deleted")
+  isProspect  Boolean   @default(false) @map("is_prospect")
+  joinedAt    DateTime  @default(now()) @map("joined_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId String @map("org_id")
+
+  // Relations
+  courses   StudentCourse[]
+  purchases Purchase[]
+
+  @@unique([email, orgId])
+  @@unique([phone, orgId])
+  @@unique([rollNumber, orgId])
+  @@index([orgId])
+  @@index([isActive, orgId])
+  @@index([isArchived, orgId])
+  @@map("students")
+  @@schema("domain")
+}
+
+model Course {
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.Text
+  price       Decimal  @db.Decimal(10, 2) // Changed from Float to Decimal for money
+  duration    Int? // Duration in minutes
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId String @map("org_id")
+
+  // Relations
+  students    StudentCourse[]
+  lessonBooks LessonBook[]
+  schedules   Schedule[]
+  purchases   Purchase[]
+
+  @@unique([name, orgId])
+  @@index([orgId])
+  @@index([isActive, orgId])
+  @@map("courses")
+  @@schema("domain")
+}
+
+model StudentCourse {
+  id          String              @id @default(cuid())
+  studentId   String              @map("student_id")
+  courseId    String              @map("course_id")
+  status      StudentCourseStatus @default(ENROLLED)
+  enrolledAt  DateTime            @default(now()) @map("enrolled_at")
+  completedAt DateTime?           @map("completed_at")
+  grade       String?
+  notes       String?             @db.Text
+
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId String @map("org_id")
+
+  // Relations
+  student    Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course     Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  statusLogs CourseStatusLog[]
+
+  @@unique([studentId, courseId, orgId])
+  @@index([orgId])
+  @@index([studentId])
+  @@index([courseId])
+  @@map("student_courses")
+  @@schema("domain")
+}
+
+model CourseStatusLog {
+  id              String              @id @default(cuid())
+  studentCourseId String              @map("student_course_id")
+  status          StudentCourseStatus
+  changedAt       DateTime            @default(now()) @map("changed_at")
+  note            String?             @db.Text
+
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId String @map("org_id")
+
+  // Relations
+  studentCourse StudentCourse @relation(fields: [studentCourseId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([studentCourseId])
+  @@map("course_status_logs")
+  @@schema("domain")
+}
+
+model LessonBook {
+  id        String   @id @default(cuid())
+  title     String
+  author    String?
+  isbn      String?
+  price     Decimal  @db.Decimal(10, 2) // Changed from Float to Decimal for money
+  courseId  String   @map("course_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId String @map("org_id")
+
+  // Relations
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([courseId])
+  @@map("lesson_books")
+  @@schema("domain")
+}
+
+model Schedule {
+  id        String    @id @default(cuid())
+  title     String
+  courseId  String    @map("course_id")
+  startTime DateTime  @map("start_time")
+  endTime   DateTime  @map("end_time")
+  dayOfWeek DayOfWeek @map("day_of_week")
+  room      String?
+  notes     String?   @db.Text
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId String @map("org_id")
+
+  // Relations
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([courseId])
+  @@index([dayOfWeek, orgId])
+  @@map("schedules")
+  @@schema("domain")
+}
+
+model Purchase {
+  id        String         @id @default(cuid())
+  studentId String         @map("student_id")
+  courseId  String?        @map("course_id")
+  amount    Decimal        @db.Decimal(10, 2) // Changed from Float to Decimal for money
+  status    PurchaseStatus @default(PENDING)
+  method    PaymentMethod?
+  reference String? // Payment reference/transaction ID
+  notes     String?        @db.Text
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId String @map("org_id")
+
+  // Relations
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course  Course? @relation(fields: [courseId], references: [id])
+
+  @@index([orgId])
+  @@index([studentId])
+  @@index([status, orgId])
+  @@map("purchases")
+  @@schema("domain")
+}
+
+// ============================================================================
+// ENUMS - Shared across schemas
+// ============================================================================
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPERADMIN
+
+  @@schema("auth")
+}
+
+enum OrganizationType {
+  SCHOOL
+  TRAINING_CENTER
+  UNIVERSITY
+  CORPORATE
+  CHURCH
+  OTHER
+
+  @@schema("auth")
+}
+
+enum OrganizationRole {
+  OWNER
+  ADMIN
+  MANAGER
+  MEMBER
+  ACCOUNTANT
+  OFFICE_STAFF
+
+  @@schema("auth")
+}
+
+enum UserOrganizationStatus {
+  ACTIVE
+  INACTIVE
+  REMOVED
+
+  @@schema("auth")
+}
+
+enum LogType {
+  INFO
+  WARNING
+  ERROR
+  SUCCESS
+
+  @@schema("auth")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+
+  @@schema("domain")
+}
+
+enum StudentCourseStatus {
+  ENROLLED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  SUSPENDED
+
+  @@schema("domain")
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+
+  @@schema("domain")
+}
+
+enum PurchaseStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+  REFUNDED
+
+  @@schema("domain")
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  BANK_TRANSFER
+  MOBILE_PAYMENT
+  OTHER
+
+  @@schema("domain")
+}

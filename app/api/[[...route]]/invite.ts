@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { userDBPrismaClient } from '@/lib/prisma-client/user-prisma-client';
+import { db } from '@/lib/db/client';
 import { sendInviteEmail } from '@/lib/mail/send-invite';
 import crypto from 'crypto';
 

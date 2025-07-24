@@ -64,6 +64,7 @@ export function getNavByRole(
   if (isSchool) {
     const isOwnerOrAdmin = role === "OWNER" || role === "ADMIN";
     const isTeacher = role === "TEACHER";
+    const isEditor = role === "EDITOR";
 
     const schoolItems = [
       {
@@ -72,17 +73,19 @@ export function getNavByRole(
         icon: GraduationCap,
         isActive: pathname.startsWith("/school-management"),
         items: [
-          ...(isOwnerOrAdmin || isTeacher
+          ...(isOwnerOrAdmin || isTeacher || isEditor
             ? [
+                { title: "Overview", url: "/school-management/overview" },
+                { title: "Students", url: "/school-management/students" },
                 { title: "Courses", url: "/school-management/courses" },
+                { title: "Enrollments", url: "/school-management/enrollments" },
+                { title: "Grades", url: "/school-management/grades" },
+                { title: "Attendance", url: "/school-management/attendance" },
                 {
                   title: "Lesson Books",
                   url: "/school-management/lesson-books",
                 },
               ]
-            : []),
-          ...(isOwnerOrAdmin || isTeacher
-            ? [{ title: "Students", url: "/school-management/students" }]
             : []),
           ...(isOwnerOrAdmin
             ? [
@@ -92,6 +95,7 @@ export function getNavByRole(
                   title: "Transactions",
                   url: "/school-management/transactions",
                 },
+                { title: "Reports", url: "/school-management/reports" },
               ]
             : []),
         ],

@@ -1,743 +1,421 @@
-import { Hono } from "hono";
-import { z } from "zod";
-import { zValidator } from "@hono/zod-validator";
-//import { createId } from "@paralleldrive/cuid2";
-import { v2 as cloudinary } from "cloudinary";
-import { ensureUserInOrganization } from "@/lib/auth-helpers";
-import { orgSecurityMiddleware, addOrgFilter } from "@/lib/org-security";
-import { featuresDBPrismaClient } from "@/lib/prisma-client/features-prisma-client";
-import { Prisma } from "@/prisma-features-database/features-database-client-types";
-import {
-  studentImportSchema,
-  StudentSchema,
-} from "@/features/school-management/types/schemas";
+import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
+import { z } from 'zod';
+import { db } from '@/lib/db/client';
+import { currentUser } from '@/lib/auth';
+import { handleApiError, ApiError } from '@/lib/utils/api-errors';
+import { Prisma } from '@prisma/client';
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+const app = new Hono();
+
+// Validation schemas
+const createStudentSchema = z.object({
+  studentId: z.string().min(1, 'Student ID is required'),
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  email: z.string().email('Invalid email format').optional(),
+  phone: z.string().optional(),
+  dateOfBirth: z.string().transform((str) => new Date(str)).optional(),
+  address: z.string().optional(),
+  emergencyContact: z.string().optional(),
+  emergencyPhone: z.string().optional(),
+  enrollmentDate: z.string().transform((str) => new Date(str)),
+  status: z.enum(['ACTIVE', 'INACTIVE', 'GRADUATED', 'TRANSFERRED']).default('ACTIVE'),
+  gradeLevel: z.string().optional(),
+  section: z.string().optional(),
+  guardianName: z.string().optional(),
+  guardianPhone: z.string().optional(),
+  guardianEmail: z.string().email().optional(),
+  medicalInfo: z.string().optional(),
+  notes: z.string().optional(),
 });
 
-async function createEnrollments(
-  studentId: string,
-  courseIds: string[],
-  orgId: string
-) {
-  const now = new Date();
+const updateStudentSchema = createStudentSchema.partial().omit({ studentId: true });
 
-  return Promise.all(
-    courseIds.map(async (courseId) => {
-      // 1. Create the studentCourse enrollment
-      const studentCourse = await featuresDBPrismaClient.studentCourse.create({
-        data: {
-          studentId,
-          courseId,
-          orgId,
-          status: "ENROLLED",
-          enrolledAt: now,
-        },
-      });
+const querySchema = z.object({
+  page: z.string().transform(Number).default('1'),
+  limit: z.string().transform(Number).default('10'),
+  search: z.string().optional(),
+  status: z.enum(['ACTIVE', 'INACTIVE', 'GRADUATED', 'TRANSFERRED']).optional(),
+  gradeLevel: z.string().optional(),
+  section: z.string().optional(),
+});
 
-      // 2. Create the initial status log
-      await featuresDBPrismaClient.courseStatusLog.create({
-        data: {
-          studentCourseId: studentCourse.id,
-          status: "ENROLLED",
-          changedAt: now,
-          orgId,
-          note: "Initial enrollment",
-        },
-      });
-
-      return studentCourse;
-    })
-  );
-}
-
-const app = new Hono()
-  
-  // SECURITY ENHANCEMENT: Apply organization security middleware to all routes
-  // This ensures users can only access student data from organizations they belong to
-  // Middleware validates orgId parameter and sets validated user context
-  .use('*', orgSecurityMiddleware)
-
-  // Endpoint to bulk create students
-  .post(
-    "/bulk-create",
-    zValidator(
-      "json",
-      z.array(studentImportSchema.omit({ id: true })) // Expecting an array of student data
-    ),
-    zValidator(
-      "query",
-      z.object({
-        orgId: z.string().optional(),
-      })
-    ),
-    async (c) => {
-      const students = c.req.valid("json");
-      const authResult = await ensureUserInOrganization(c);
-      if ("json" in authResult) return authResult; // Return error if unauthorized
-      const { organizationId } = authResult;
-
-      try {
-        const results = [];
-
-        // 1. Get all course names from the incoming students
-        const allCourseNames = Array.from(
-          new Set(students.flatMap((s) => s.courseNames ?? []))
-        );
-
-        // 2. Fetch matching courses from DB
-        const allCourses = await featuresDBPrismaClient.course.findMany({
-          where: {
-            name: { in: allCourseNames },
-            orgId: organizationId,
-          },
-        });
-
-        const courseNameToId = new Map<string, string>();
-        allCourses.forEach((course) => {
-          courseNameToId.set(course.name, course.id);
-        });
-
-        for (const student of students) {
-          // Convert courseNames to courseIds
-
-          const courseIds: string[] =
-            student.courseNames
-              ?.map((name) => courseNameToId.get(name))
-              .filter((id): id is string => typeof id === "string") ?? [];
-
-          const existingStudent =
-            await featuresDBPrismaClient.student.findFirst({
-              where: {
-                name: student.name,
-                phone: student.phone,
-                birthDate: student.birthDate,
-                orgId: organizationId,
-              },
-              include: { courses: { select: { courseId: true } } },
-            });
-
-          if (existingStudent) {
-            // Check which courses are already enrolled
-            const existingCourseIds = new Set(
-              existingStudent.courses.map((c) => c.courseId)
-            );
-            const newCourseIds =
-              courseIds?.filter((id) => !existingCourseIds.has(id)) || [];
-
-            if (newCourseIds.length > 0) {
-              await createEnrollments(
-                existingStudent.id,
-                newCourseIds,
-                organizationId
-              );
-              results.push({
-                message: `Updated ${student.name} with new courses.`,
-                student: existingStudent,
-              });
-            } else {
-              results.push({
-                message: `Student ${student.name} already enrolled in all listed courses.`,
-                student: existingStudent,
-              });
-            }
-          } else {
-            // Create student first
-            const newStudent = await featuresDBPrismaClient.student.create({
-              data: {
-                ...student,
-                orgId: organizationId,
-              },
-            });
-
-            // Create enrollments if courseIds provided
-            if (courseIds && courseIds.length > 0) {
-              await createEnrollments(newStudent.id, courseIds, organizationId);
-            }
-
-            results.push({
-              message: `Created student ${student.name}.`,
-              student: newStudent,
-            });
-          }
-        }
-
-        return c.json(
-          { message: "Bulk operation complete.", details: results },
-          201
-        );
-      } catch (error) {
-        console.error("Bulk create error:", error);
-        return c.json({ error: "Failed to bulk create students" }, 500);
-      }
-    }
-  )
-
-  // POST: Create new student
-  .post(
-    "/",
-    zValidator(
-      "json",
-      StudentSchema.extend({ courseIds: z.array(z.string()).optional() }).omit({
-        id: true,
-        orgId: true,
-      })
-    ),
-    zValidator(
-      "query",
-      z.object({
-        orgId: z.string().optional(),
-      })
-    ),
-    async (c) => {
-      const { courseIds, ...values } = c.req.valid("json");
-      const authResult = await ensureUserInOrganization(c);
-      if ("json" in authResult) return authResult; // Return error if unauthorized
-      const { organizationId } = authResult;
-
-      try {
-        const existingEmail = await featuresDBPrismaClient.student.findFirst({
-          where: {
-            email: values.email,
-            orgId: organizationId,
-          },
-        });
-
-        if (existingEmail) {
-          return c.json({ error: "Email already exists" }, 409);
-        }
-
-        // Create student without courses relation
-        const student = await featuresDBPrismaClient.student.create({
-          data: {
-            ...values,
-            orgId: organizationId,
-          },
-        });
-
-        // Create enrollments if courseIds provided
-        if (courseIds && courseIds.length > 0) {
-          await createEnrollments(student.id, courseIds, organizationId);
-        }
-
-        // Fetch student with courses to return
-        const studentWithCourses =
-          await featuresDBPrismaClient.student.findUnique({
-            where: { id: student.id },
-            include: { courses: { include: { course: true } } },
-          });
-
-        return c.json(studentWithCourses, 201);
-      } catch (error) {
-        console.error("Create student error:", error);
-        return c.json({ error: "Failed to create student" }, 500);
-      }
-    }
-  )
-
-  // PATCH: Update existing student by ID
-  .patch(
-    "/:id",
-    zValidator(
-      "param",
-      z.object({
-        id: z.string(),
-      })
-    ),
-    zValidator(
-      "json",
-      StudentSchema.extend({ courseIds: z.array(z.string()).optional() }).omit({
-        id: true,
-        orgId: true,
-      })
-    ),
-    zValidator(
-      "query",
-      z.object({
-        orgId: z.string().optional(),
-      })
-    ),
-    async (c) => {
-      const { id } = c.req.valid("param");
-      if (!id) {
-        return c.json({ error: "Invalid or missing ID" }, 400);
+// GET /students - List students with pagination and filtering
+app.get(
+  '/',
+  zValidator('query', querySchema),
+  async (c) => {
+    try {
+      const user = await currentUser();
+      if (!user) {
+        throw new ApiError('Unauthorized', 401);
       }
 
-      const authResult = await ensureUserInOrganization(c);
-      if ("json" in authResult) return authResult;
-      const { organizationId } = authResult;
+      const { page, limit, search, status, gradeLevel, section } = c.req.valid('query');
+      const skip = (page - 1) * limit;
 
-      const { courseIds, ...restValues } = c.req.valid("json");
+      // Build where clause
+      const where: Prisma.StudentWhereInput = {
+        organizationId: user.organizationId,
+      };
 
-      try {
-        // Validate student exists
-        const existingStudent = await featuresDBPrismaClient.student.findUnique(
-          {
-            where: { id, orgId: organizationId },
-          }
-        );
-
-        if (!existingStudent) {
-          return c.json({ error: "Student not found" }, 404);
-        }
-
-        // Step 1: Update student base data
-        await featuresDBPrismaClient.student.update({
-          where: { id, orgId: organizationId },
-          data: {
-            ...restValues,
-          },
-        });
-
-        // Step 2: Fetch current enrollments
-        const existingCourses =
-          await featuresDBPrismaClient.studentCourse.findMany({
-            where: { studentId: id },
-            select: { id: true, courseId: true },
-          });
-
-        const existingCourseMap = new Map(
-          existingCourses.map((sc) => [sc.courseId, sc.id])
-        );
-
-        const incomingCourseIds = new Set(courseIds ?? []);
-        const existingCourseIds = new Set(existingCourseMap.keys());
-
-        // Step 3: Compare for changes
-        const toAdd = [...incomingCourseIds].filter(
-          (cid) => !existingCourseIds.has(cid)
-        );
-        const toRemove = [...existingCourseIds].filter(
-          (cid) => !incomingCourseIds.has(cid)
-        );
-
-        // Step 4: Add new enrollments with logs
-        await Promise.all(
-          toAdd.map(async (courseId) => {
-            const enrollment =
-              await featuresDBPrismaClient.studentCourse.create({
-                data: {
-                  studentId: id,
-                  courseId,
-                  status: "ENROLLED",
-                  enrolledAt: new Date(),
-                  orgId: organizationId,
-                },
-              });
-
-            await featuresDBPrismaClient.courseStatusLog.create({
-              data: {
-                studentCourseId: enrollment.id,
-                status: "ENROLLED",
-                changedAt: new Date(),
-                orgId: organizationId,
-                note: "Enrolled via student update",
-              },
-            });
-          })
-        );
-
-        // Step 5: Remove dropped enrollments with logs
-        await Promise.all(
-          toRemove.map(async (courseId) => {
-            const studentCourseId = existingCourseMap.get(courseId);
-            if (!studentCourseId) return;
-
-            await featuresDBPrismaClient.courseStatusLog.create({
-              data: {
-                studentCourseId,
-                status: "CANCELLED",
-                changedAt: new Date(),
-                orgId: organizationId,
-                note: "Enrollment removed via update",
-              },
-            });
-
-            await featuresDBPrismaClient.studentCourse.delete({
-              where: { id: studentCourseId },
-            });
-          })
-        );
-
-        // Step 6: Return updated student with course info
-        const studentWithCourses =
-          await featuresDBPrismaClient.student.findUnique({
-            where: { id },
-            include: {
-              courses: {
-                include: { course: true },
-              },
-            },
-          });
-
-        return c.json(studentWithCourses);
-      } catch {
-        return c.json({ error: "Failed to update student" }, 500);
+      if (search) {
+        where.OR = [
+          { firstName: { contains: search, mode: 'insensitive' } },
+          { lastName: { contains: search, mode: 'insensitive' } },
+          { studentId: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+        ];
       }
-    }
-  )
 
-  // GET: Retrieve all students
-  .get(
-    "/",
-    zValidator(
-      "query",
-      z.object({
-        take: z.string().optional(),
-        skip: z.string().optional(),
-        orgId: z.string().optional(),
-      })
-    ),
-    async (c) => {
-      try {
-        const { take, skip } = c.req.valid("query");
+      if (status) where.status = status;
+      if (gradeLevel) where.gradeLevel = gradeLevel;
+      if (section) where.section = section;
 
-        // Convert to number (handling undefined values with a fallback)
-        const takeNumber = take ? Number(take) : 10; // Default to 0 if take is undefined
-        const skipNumber = skip ? Number(skip) : 0; // Default to 0 if skip is undefined
-        const authResult = await ensureUserInOrganization(c);
-        if ("json" in authResult) return authResult; // Return error if unauthorized
-        const { organizationId } = authResult;
-
-        const students = await featuresDBPrismaClient.student.findMany({
-          where: { orgId: organizationId },
-          take: takeNumber,
-          skip: skipNumber,
-          orderBy: { id: "asc" }, // Change "asc" to "desc" for descending order
-          select: {
-            id: true,
-            name: true,
-            number: true,
-            rollNumber: true,
-            phone: true,
-            gender: true,
-            image: true,
-            email: true,
-            orgId: true,
-            birthDate: true,
-            address: true,
-            parentName: true,
-            parentPhone: true,
-            joinedAt: true,
-            isActive: true,
-            isArchived: true,
-            isDeleted: true,
-            isProspect: true,
-
-            courses: {
-              include: {
-                course: true,
-              },
-            },
-          },
-        });
-
-        // const allStudents = students
-        //     .map((student) => {
-        //         const validation = StudentSchema.safeParse(student);
-        //         if (!validation.success) {
-        //             console.error("Validation failed for student:", validation.error);
-        //             return null; // Skip invalid students
-        //         }
-        //         return (validation.data);
-        //     })
-        //     .filter((student) => student !== null);
-
-        return c.json({
-          data: students,
-          totalItems: await featuresDBPrismaClient.student.count({
-            where: { orgId: organizationId },
-          }),
-          active: await featuresDBPrismaClient.student.count({
-            where: { orgId: organizationId, isActive: true },
-          }),
-          archived: await featuresDBPrismaClient.student.count({
-            where: { orgId: organizationId, isArchived: true },
-          }),
-        });
-      } catch (err) {
-        console.error(err);
-        return c.json({ error: "Error fetching students" }, 500);
-      }
-    }
-  )
-
-  // GET: Retrieve all students by search
-  .get(
-    "/search",
-    zValidator(
-      "query",
-      z.object({
-        take: z.string().optional(),
-        skip: z.string().optional(),
-        searchQuery: z.string().optional(),
-        orgId: z.string().optional(),
-      })
-    ),
-    async (c) => {
-      try {
-        const { take, skip, searchQuery } = c.req.valid("query");
-
-        // Convert to number (handling undefined values with a fallback)
-        const takeNumber = take ? Number(take) : 10; // Default to 0 if take is undefined
-        const skipNumber = skip ? Number(skip) : 0; // Default to 0 if skip is undefined
-
-        const authResult = await ensureUserInOrganization(c);
-        if ("json" in authResult) return authResult; // Return error if unauthorized
-        const { organizationId } = authResult;
-
-        // Build search query filter if searchQuery is provided
-        const searchFilter =
-          searchQuery && searchQuery.trim().length > 0
-            ? {
-                OR: [
-                  {
-                    name: {
-                      contains: searchQuery,
-                      mode: Prisma.QueryMode.insensitive,
-                    },
-                  },
-                  {
-                    parentName: {
-                      contains: searchQuery,
-                      mode: Prisma.QueryMode.insensitive,
-                    },
-                  },
-                  {
-                    email: {
-                      contains: searchQuery,
-                      mode: Prisma.QueryMode.insensitive,
-                    },
-                  },
-                  {
-                    phone: {
-                      contains: searchQuery,
-                      mode: Prisma.QueryMode.insensitive,
-                    },
-                  },
-                  {
-                    courses: {
-                      some: {
-                        course: {
-                          is: {
-                            name: {
-                              contains: searchQuery,
-                              mode: Prisma.QueryMode.insensitive,
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                ],
-              }
-            : {};
-
-        const students = await featuresDBPrismaClient.student.findMany({
-          where: { orgId: organizationId, ...searchFilter },
-          take: takeNumber,
-          skip: skipNumber,
-          orderBy: { id: "asc" }, // Change "asc" to "desc" for descending order
-          select: {
-            id: true,
-            name: true,
-            number: true,
-            rollNumber: true,
-            phone: true,
-            gender: true,
-            image: true,
-            notes: true,
-            email: true,
-            orgId: true,
-            birthDate: true,
-            address: true,
-            parentName: true,
-            parentPhone: true,
-            joinedAt: true,
-            isActive: true,
-            isArchived: true,
-            isDeleted: true,
-            isProspect: true,
-            courses: {
-              include: {
-                course: true,
-              },
-            },
-          },
-        });
-
-        // const allStudents = students
-        //     .map((student) => {
-        //         const validation = StudentSchema.safeParse(student);
-        //         if (!validation.success) {
-        //             console.error("Validation failed for student:", validation.error);
-        //             return null; // Skip invalid students
-        //         }
-        //         return (validation.data);
-        //     })
-        //     .filter((student) => student !== null);
-
-        return c.json({
-          data: students,
-          totalItems: await featuresDBPrismaClient.student.count({
-            where: { orgId: organizationId, ...searchFilter },
-          }),
-        });
-      } catch (err) {
-        console.error(err);
-        return c.json({ error: "Error fetching students" }, 500);
-      }
-    }
-  )
-
-  // GET: Retrieve a specific student by ID (No changes needed)
-  .get(
-    "/:id",
-    zValidator("param", z.object({ id: z.string().optional() })), // Validate id as a string
-    zValidator("query", z.object({ orgId: z.string().optional() })),
-    async (c) => {
-      const { id } = c.req.valid("param"); // Extract id from params
-      const authResult = await ensureUserInOrganization(c);
-      if ("json" in authResult) return authResult; // Return error if unauthorized
-      const { organizationId } = authResult;
-
-      try {
-        const student = await featuresDBPrismaClient.student.findUnique({
-          where: { id: id, orgId: organizationId },
-          select: {
-            id: true,
-            number: true,
-            name: true,
-            phone: true,
-            gender: true,
-            image: true,
-            email: true,
-            orgId: true,
-            birthDate: true,
-            address: true,
-            parentName: true,
-            parentPhone: true,
-            rollNumber: true,
-            notes: true,
-            isProspect: true,
-            joinedAt: true,
-            isActive: true,
-            isArchived: true,
-            isDeleted: true,
-            courses: {
+      const [students, total] = await Promise.all([
+        db.student.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: [
+            { lastName: 'asc' },
+            { firstName: 'asc' },
+          ],
+          include: {
+            enrollments: {
               include: {
                 course: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
+                  select: { id: true, name: true, code: true },
                 },
               },
             },
+            _count: {
+              select: {
+                enrollments: true,
+              },
+            },
           },
-        });
+        }),
+        db.student.count({ where }),
+      ]);
 
-        if (!student) {
-          return c.json({ error: "Student not found" }, 404);
-        }
-
-        // const validation = StudentSchema.safeParse(student);
-        // if (!validation.success) {
-        //     console.error("Validation failed for student:", validation.error);
-        //     return c.json({ error: "Invalid student data" }, 400);
-        // }
-
-        return c.json(student);
-      } catch (err) {
-        console.error("Error fetching student:", err);
-        return c.json({ error: "Error fetching student" }, 500);
-      }
-    }
-  )
-
-  // GET: Retrieve stat
-  .get(
-    "/stats",
-    zValidator(
-      "query",
-      z.object({
-        orgId: z.string().optional(),
-      })
-    ),
-    async (c) => {
-      const authResult = await ensureUserInOrganization(c);
-      if ("json" in authResult) return authResult; // Return error if unauthorized
-      const { organizationId } = authResult;
-
-      try {
-        const stats = await featuresDBPrismaClient.student.groupBy({
-          by: ["isActive", "isArchived", "isProspect"],
-          _count: true,
-          where: { orgId: organizationId },
-        });
-
-        return c.json(stats);
-      } catch (err) {
-        console.error("Error fetching student stats:", err);
-        return c.json({ error: "Error fetching student stats" }, 500);
-      }
-    }
-  )
-
-  // Endpoint to delete a student by ID
-  .delete(
-    "/:id",
-
-    zValidator(
-      "param",
-      z.object({
-        id: z.string().optional(),
-      })
-    ),
-    zValidator(
-      "query",
-      z.object({
-        orgId: z.string().optional(),
-      })
-    ),
-    async (c) => {
-      // const auth = getAuth(c);
-      const { id } = c.req.valid("param");
-      const authResult = await ensureUserInOrganization(c);
-      if ("json" in authResult) return authResult; // Return error if unauthorized
-      const { organizationId } = authResult;
-
-      if (!id || isNaN(Number(id))) {
-        return c.json({ error: "Invalid or missing ID" }, 400);
-      }
-
-      // Validate ID and authentication
-      if (!id) {
-        return c.json({ error: "Missing id" }, 400);
-      }
-
-      // if (!auth?.userId) {
-      //   return c.json({ error: "Unauthorized" }, 401);
-      // }
-
-      // Identify students to delete
-
-      // Delete students
-      const data = await featuresDBPrismaClient.student.delete({
-        where: {
-          id: id,
-          orgId: organizationId,
+      return c.json({
+        data: students,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit),
         },
       });
-      // Handle case where data is not found
-      if (!data) {
-        return c.json({ error: "Not found" }, 404);
-      }
-      return c.json(data);
+    } catch (error) {
+      return handleApiError(c, error);
     }
-  );
+  }
+);
 
-export default app;
+// GET /students/:id - Get student by ID
+app.get('/:id', async (c) => {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      throw new ApiError('Unauthorized', 401);
+    }
+
+    const id = c.req.param('id');
+    const student = await db.student.findFirst({
+      where: {
+        id,
+        organizationId: user.organizationId,
+      },
+      include: {
+        enrollments: {
+          include: {
+            course: {
+              select: { id: true, name: true, code: true, credits: true },
+            },
+          },
+        },
+        grades: {
+          include: {
+            course: {
+              select: { id: true, name: true, code: true },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+        attendance: {
+          include: {
+            course: {
+              select: { id: true, name: true, code: true },
+            },
+          },
+          orderBy: { date: 'desc' },
+          take: 10,
+        },
+      },
+    });
+
+    if (!student) {
+      throw new ApiError('Student not found', 404);
+    }
+
+    return c.json({ data: student });
+  } catch (error) {
+    return handleApiError(c, error);
+  }
+});
+
+// POST /students - Create new student
+app.post(
+  '/',
+  zValidator('json', createStudentSchema),
+  async (c) => {
+    try {
+      const user = await currentUser();
+      if (!user) {
+        throw new ApiError('Unauthorized', 401);
+      }
+
+      if (!['SUPER_ADMIN', 'ADMIN', 'EDITOR'].includes(user.role)) {
+        throw new ApiError('Insufficient permissions', 403);
+      }
+
+      const data = c.req.valid('json');
+
+      // Check if student ID already exists
+      const existingStudent = await db.student.findFirst({
+        where: {
+          studentId: data.studentId,
+          organizationId: user.organizationId,
+        },
+      });
+
+      if (existingStudent) {
+        throw new ApiError('Student ID already exists', 400);
+      }
+
+      const student = await db.student.create({
+        data: {
+          ...data,
+          organizationId: user.organizationId,
+        },
+        include: {
+          _count: {
+            select: {
+              enrollments: true,
+            },
+          },
+        },
+      });
+
+      return c.json({ data: student }, 201);
+    } catch (error) {
+      return handleApiError(c, error);
+    }
+  }
+);
+
+// PUT /students/:id - Update student
+app.put(
+  '/:id',
+  zValidator('json', updateStudentSchema),
+  async (c) => {
+    try {
+      const user = await currentUser();
+      if (!user) {
+        throw new ApiError('Unauthorized', 401);
+      }
+
+      if (!['SUPER_ADMIN', 'ADMIN', 'EDITOR'].includes(user.role)) {
+        throw new ApiError('Insufficient permissions', 403);
+      }
+
+      const id = c.req.param('id');
+      const data = c.req.valid('json');
+
+      // Check if student exists
+      const existingStudent = await db.student.findFirst({
+        where: {
+          id,
+          organizationId: user.organizationId,
+        },
+      });
+
+      if (!existingStudent) {
+        throw new ApiError('Student not found', 404);
+      }
+
+      const student = await db.student.update({
+        where: { id },
+        data,
+        include: {
+          _count: {
+            select: {
+              enrollments: true,
+            },
+          },
+        },
+      });
+
+      return c.json({ data: student });
+    } catch (error) {
+      return handleApiError(c, error);
+    }
+  }
+);
+
+// DELETE /students/:id - Delete student
+app.delete('/:id', async (c) => {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      throw new ApiError('Unauthorized', 401);
+    }
+
+    if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
+      throw new ApiError('Insufficient permissions', 403);
+    }
+
+    const id = c.req.param('id');
+
+    // Check if student exists
+    const existingStudent = await db.student.findFirst({
+      where: {
+        id,
+        organizationId: user.organizationId,
+      },
+    });
+
+    if (!existingStudent) {
+      throw new ApiError('Student not found', 404);
+    }
+
+    // Check if student has enrollments or grades
+    const hasData = await db.student.findFirst({
+      where: { id },
+      include: {
+        _count: {
+          select: {
+            enrollments: true,
+            grades: true,
+            attendance: true,
+          },
+        },
+      },
+    });
+
+    if (hasData && (hasData._count.enrollments > 0 || hasData._count.grades > 0 || hasData._count.attendance > 0)) {
+      // Soft delete by marking as inactive
+      await db.student.update({
+        where: { id },
+        data: { status: 'INACTIVE' },
+      });
+      
+      return c.json({ 
+        message: 'Student has associated data and has been marked as inactive instead of deleted' 
+      });
+    }
+
+    // Hard delete if no associated data
+    await db.student.delete({
+      where: { id },
+    });
+
+    return c.json({ message: 'Student deleted successfully' });
+  } catch (error) {
+    return handleApiError(c, error);
+  }
+});
+
+// GET /students/:id/enrollments - Get student enrollments
+app.get('/:id/enrollments', async (c) => {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      throw new ApiError('Unauthorized', 401);
+    }
+
+    const id = c.req.param('id');
+
+    // Check if student exists and belongs to organization
+    const student = await db.student.findFirst({
+      where: {
+        id,
+        organizationId: user.organizationId,
+      },
+    });
+
+    if (!student) {
+      throw new ApiError('Student not found', 404);
+    }
+
+    const enrollments = await db.enrollment.findMany({
+      where: { studentId: id },
+      include: {
+        course: {
+          select: {
+            id: true,
+            name: true,
+            code: true,
+            credits: true,
+            description: true,
+          },
+        },
+      },
+      orderBy: { enrolledAt: 'desc' },
+    });
+
+    return c.json({ data: enrollments });
+  } catch (error) {
+    return handleApiError(c, error);
+  }
+});
+
+// GET /students/:id/grades - Get student grades
+app.get('/:id/grades', async (c) => {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      throw new ApiError('Unauthorized', 401);
+    }
+
+    const id = c.req.param('id');
+
+    // Check if student exists and belongs to organization
+    const student = await db.student.findFirst({
+      where: {
+        id,
+        organizationId: user.organizationId,
+      },
+    });
+
+    if (!student) {
+      throw new ApiError('Student not found', 404);
+    }
+
+    const grades = await db.grade.findMany({
+      where: { studentId: id },
+      include: {
+        course: {
+          select: {
+            id: true,
+            name: true,
+            code: true,
+          },
+        },
+      },
+      orderBy: [
+        { createdAt: 'desc' },
+        { course: { name: 'asc' } },
+      ],
+    });
+
+    return c.json({ data: grades });
+  } catch (error) {
+    return handleApiError(c, error);
+  }
+});
+
+export { app as studentsRouter };

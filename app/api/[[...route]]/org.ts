@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { OrgSchema, teamFormSchema } from "@/schemas";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
-import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
+import { db } from "@/lib/db/client";
 
 const org = new Hono()
 
@@ -12,7 +12,7 @@ const org = new Hono()
   .get("/org", async (c) => {
     try {
       // Fetch organizations linked to the user
-      const organization = await userDBPrismaClient.organization.findMany({
+      const organization = await db.organization.findMany({
         select: {
           id: true,
           name: true,
@@ -46,7 +46,7 @@ const org = new Hono()
 
         // Fetch organizations linked to the user
         const userOrganizations =
-          await userDBPrismaClient.userOrganization.findMany({
+          await db.userOrganization.findMany({
             where: { userId },
             select: {
               role: true,
@@ -102,7 +102,7 @@ const org = new Hono()
         if (!parsed.success) return c.json({ error: "Invalid input" }, 400);
 
         // Start a transaction to create both the organization and the UserOrganization relation
-        const result = await userDBPrismaClient.$transaction(async (prisma) => {
+        const result = await db.$transaction(async (prisma) => {
           // Create the organization
           const organization = await prisma.organization.create({
             data: {
@@ -142,7 +142,7 @@ const org = new Hono()
   // ✅ Get All Organizations with Counts Only
   .get("/org-details", async (c) => {
     try {
-      const organizations = await userDBPrismaClient.organization.findMany({
+      const organizations = await db.organization.findMany({
         select: {
           id: true,
           name: true,
