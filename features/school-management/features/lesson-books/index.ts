@@ -1,9 +1,18 @@
 // Lesson Books Feature - School Management
-// Placeholder for lesson book components
+// Export lesson book components and functionality
 
-// Export placeholder component to avoid empty module warnings
+export * from "./components/lesson-books-dashboard";
+export * from "./components/lesson-book-form";
+export * from "./api/use-lesson-books";
+
+// Feature configuration
 export const LessonBooksFeature = {
   name: 'lesson-books',
-  enabled: false,
-  // Add actual components here when implemented
+  enabled: true,
+  version: '1.0.0',
+  routes: [
+    { path: '/school-management/lesson-books', name: 'Lesson Books' },
+    { path: '/school-management/lesson-books/new', name: 'Add Lesson Book' },
+  ],
+  permissions: ['VIEW_LESSON_BOOKS', 'MANAGE_LESSON_BOOKS'],
 };

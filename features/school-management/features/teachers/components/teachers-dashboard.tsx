@@ -10,23 +10,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   Users, 
   BookOpen, 
-  Calendar,
   Star,
   Phone,
   Mail,
-  MapPin,
   Search,
   Plus,
   Edit,
-  Trash2,
   Eye,
   Clock,
-  Award,
-  TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { DateRangePicker } from "../../../components/filters/date-range-picker";
 
 // Sample teacher data with enhanced fields
 const generateTeachersData = () => [
@@ -379,8 +373,8 @@ export const TeachersDashboard: React.FC<TeachersDashboardProps> = ({
                     </Badge>
                   </div>
                 </div>
-              </CardContent>
-
+              </CardHeader>
+              
               <CardContent className="space-y-4">
                 {/* Contact Info */}
                 <div className="space-y-2">
@@ -450,7 +444,6 @@ export const TeachersDashboard: React.FC<TeachersDashboardProps> = ({
           ))}
         </div>
       ) : (
-        {/* Table View - Implementation would go here */}
         <Card>
           <CardContent className="p-0">
             <div className="overflow-x-auto">

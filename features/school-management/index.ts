@@ -9,14 +9,18 @@ export * from "./features/schedule";
 export * from "./features/lesson-books";
 export * from "./features/overview";
 export * from "./features/transactions";
+export * from "./features/teachers";
 
 // API Client
 export * from "./lib/api-client";
 
+// Components
+export * from "./components";
+
 // Default export for dynamic imports
 const SchoolManagementFeature = {
   name: "School Management",
-  version: "1.0.0",
+  version: "2.0.0",
   category: "domain" as const,
   features: [
     "students",
@@ -25,7 +29,8 @@ const SchoolManagementFeature = {
     "schedule", 
     "lesson-books",
     "overview",
-    "transactions"
+    "transactions",
+    "teachers"
   ]
 };
 

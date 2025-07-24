@@ -1,9 +1,20 @@
 // Transactions Feature - School Management
-// Placeholder for transaction components
+// Complete financial management system
 
-// Export placeholder component to avoid empty module warnings
+export * from "./components/transactions-dashboard";
+export * from "./api/use-transactions";
+
+// Feature configuration
 export const TransactionsFeature = {
   name: 'transactions',
-  enabled: false,
-  // Add actual components here when implemented
+  enabled: true,
+  version: '1.0.0',
+  routes: [
+    { path: '/school-management/transactions', name: 'Transactions' },
+    { path: '/school-management/transactions/new', name: 'Add Transaction' },
+  ],
+  permissions: ['VIEW_TRANSACTIONS', 'MANAGE_TRANSACTIONS'],
 };
+
+// Main exports
+export { default as TransactionsDashboard } from "./components/transactions-dashboard";
