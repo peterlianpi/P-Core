@@ -26,7 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import ImageUpload from "@/features/system/image-upload/components/upload-image-show";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import type { UserRole } from "@/lib/types/database";
+// import { UserRole } from "@/lib/types/database";
 import { useData } from "@/providers/data-provider";
 import { SettingsSchema } from "@/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -401,7 +401,7 @@ const SettingsComponentPage = ({ telegram, organizations }: Props) => {
                   <FormItem>
                     <FormLabel>Role</FormLabel>
                     <Select
-                      disabled={isPending || user?.role !== UserRole.SUPERADMIN}
+                      disabled={isPending || user?.role !== "SUPERADMIN"}
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
@@ -412,14 +412,12 @@ const SettingsComponentPage = ({ telegram, organizations }: Props) => {
                       </FormControl>
                       <FormMessage />
                       <SelectContent>
-                        <SelectItem value={UserRole.SUPERADMIN}>
+                        <SelectItem value={"SUPERADMIN"}>
                           Super Admin
-                        </SelectItem>{" "}
-                        <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
-                        <SelectItem value={UserRole.MANAGER}>
-                          Manager
                         </SelectItem>
-                        <SelectItem value={UserRole.USER}>User</SelectItem>{" "}
+                        <SelectItem value={"ADMIN"}>Admin</SelectItem>
+                        <SelectItem value={"MANAGER"}>Manager</SelectItem>
+                        <SelectItem value={"USER"}>User</SelectItem>{" "}
                       </SelectContent>
                     </Select>
                     <FormMessage />

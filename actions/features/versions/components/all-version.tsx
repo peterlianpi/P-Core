@@ -15,7 +15,7 @@ export default async function VersionListPage() {
       <ul>
         {result.data.map((version) => (
           <li key={version.id}>
-            {version.status} - {version.version}
+            {version.name} - {version.version}
           </li>
         ))}
       </ul>

@@ -10,11 +10,7 @@ export const SettingsSchema = z
   .object({
     name: z.optional(z.string()), // Optional name field
     isTwoFactorEnabled: z.optional(z.boolean()), // Optional 2FA flag
-    role: z.enum([
-      UserRole.SUPERADMIN,
-      UserRole.ADMIN,
-      UserRole.USER,
-    ]), // Must be one of the defined user roles
+    role: z.enum([UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.USER]), // Must be one of the defined user roles
     telegramChatId: z.optional(z.string()), // Optional Telegram chat ID
     telegramBotToken: z.optional(z.string()), // Optional Telegram bot token
     email: z.optional(z.string().email()), // Optional email field with email validation
@@ -174,7 +170,7 @@ export const OrganizationsAPISchema = z.array(
 // All Version Server Action use
 export const Versions = z.array(
   z.object({
-    status: z.string(),
+    name: z.string(),
     id: z.string(),
     description: z.string().optional().nullable(),
     createdAt: z.date(),
