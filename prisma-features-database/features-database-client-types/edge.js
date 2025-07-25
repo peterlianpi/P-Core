@@ -349,7 +349,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\Users\\DELL\\Desktop\\Portfolio\\P-Core\\prisma-features-database\\features-database-client-types",
+      "value": "/workspace/prisma-features-database/features-database-client-types",
       "fromEnvVar": null
     },
     "config": {
@@ -358,17 +358,16 @@ const config = {
     "binaryTargets": [
       {
         "fromEnvVar": null,
-        "value": "windows",
+        "value": "debian-openssl-3.0.x",
         "native": true
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "C:\\Users\\DELL\\Desktop\\Portfolio\\P-Core\\prisma-features-database\\schema.prisma",
+    "sourceFilePath": "/workspace/prisma-features-database/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": null,
-    "schemaEnvPath": "../../.env"
+    "rootEnvPath": null
   },
   "relativePath": "..",
   "clientVersion": "6.12.0",
@@ -377,6 +376,7 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
