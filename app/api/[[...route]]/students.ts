@@ -1,12 +1,10 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { db } from '@/lib/db/client';
-import { currentUser } from '@/lib/auth';
-import { handleApiError, ApiError } from '@/lib/utils/api-errors';
+import { prisma as db } from '@/lib/db/client'; // Corrected DB import
+import { ApiError } from '@/lib/utils/api-errors';
 import { Prisma } from '@prisma/client';
-
-const app = new Hono();
+import { getOrganizationContext } from '@/lib/security/tenant';
 
 // Validation schemas
 const createStudentSchema = z.object({
@@ -41,250 +39,181 @@ const querySchema = z.object({
   section: z.string().optional(),
 });
 
+
+const app = new Hono()
+
+
+
 // GET /students - List students with pagination and filtering
-app.get(
+.get(
   '/',
   zValidator('query', querySchema),
   async (c) => {
-    try {
-      const user = await currentUser();
-      if (!user) {
-        throw new ApiError('Unauthorized', 401);
-      }
+    const orgContext = getOrganizationContext(c); // Correctly get context
+    const { page, limit, search, status, gradeLevel, section } = c.req.valid('query');
+    const skip = (page - 1) * limit;
 
-      const { page, limit, search, status, gradeLevel, section } = c.req.valid('query');
-      const skip = (page - 1) * limit;
+    // Build where clause
+    const where: Prisma.StudentWhereInput = {
+      organizationId: orgContext.organizationId,
+    };
 
-      // Build where clause
-      const where: Prisma.StudentWhereInput = {
-        organizationId: user.organizationId,
-      };
+    if (search) {
+      where.OR = [
+        { firstName: { contains: search, mode: 'insensitive' } },
+        { lastName: { contains: search, mode: 'insensitive' } },
+        { studentId: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+      ];
+    }
 
-      if (search) {
-        where.OR = [
-          { firstName: { contains: search, mode: 'insensitive' } },
-          { lastName: { contains: search, mode: 'insensitive' } },
-          { studentId: { contains: search, mode: 'insensitive' } },
-          { email: { contains: search, mode: 'insensitive' } },
-        ];
-      }
+    if (status) where.status = status;
+    if (gradeLevel) where.gradeLevel = gradeLevel;
+    if (section) where.section = section;
 
-      if (status) where.status = status;
-      if (gradeLevel) where.gradeLevel = gradeLevel;
-      if (section) where.section = section;
-
-      const [students, total] = await Promise.all([
-        db.student.findMany({
-          where,
-          skip,
-          take: limit,
-          orderBy: [
-            { lastName: 'asc' },
-            { firstName: 'asc' },
-          ],
-          include: {
-            enrollments: {
-              include: {
-                course: {
-                  select: { id: true, name: true, code: true },
-                },
-              },
-            },
-            _count: {
-              select: {
-                enrollments: true,
+    const [students, total] = await db.$transaction([
+      db.student.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: [
+          { lastName: 'asc' },
+          { firstName: 'asc' },
+        ],
+        include: {
+          enrollments: {
+            include: {
+              course: {
+                select: { id: true, name: true, code: true },
               },
             },
           },
-        }),
-        db.student.count({ where }),
-      ]);
-
-      return c.json({
-        data: students,
-        pagination: {
-          page,
-          limit,
-          total,
-          pages: Math.ceil(total / limit),
+          _count: {
+            select: {
+              enrollments: true,
+            },
+          },
         },
-      });
-    } catch (error) {
-      return handleApiError(c, error);
-    }
+      }),
+      db.student.count({ where }),
+    ]);
+
+    return c.json({
+      data: students,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
   }
-);
+)
 
 // GET /students/:id - Get student by ID
-app.get('/:id', async (c) => {
-  try {
-    const user = await getCurrentUser();
-    if (!user) {
-      throw new ApiError('Unauthorized', 401);
+.get('/:id', async (c) => {
+  const orgContext = getOrganizationContext(c);
+  const id = c.req.param('id');
+  const student = await db.student.findFirst({
+    where: {
+      id,
+      organizationId: orgContext.organizationId,
+    },
+    include: {
+      enrollments: {
+        include: {
+          course: {
+            select: { id: true, name: true, code: true, credits: true },
+          },
+        },
+      },
+      grades: {
+        include: {
+          course: {
+            select: { id: true, name: true, code: true },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      },
+      attendance: {
+        include: {
+          course: {
+            select: { id: true, name: true, code: true },
+          },
+        },
+        orderBy: { date: 'desc' },
+        take: 10,
+      },
+    },
+  });
+
+  if (!student) {
+    throw new ApiError('Student not found', 404);
+  }
+
+  return c.json({ data: student });
+});
+
+// POST /students - Create new student
+.post(
+  '/',
+  zValidator('json', createStudentSchema),
+  async (c) => {
+    const orgContext = getOrganizationContext(c);
+    const data = c.req.valid('json');
+
+    if (!['OWNER', 'ADMIN', 'MANAGER'].includes(orgContext.role)) {
+      throw new ApiError('Insufficient permissions', 403);
     }
 
-    const id = c.req.param('id');
-    const student = await db.student.findFirst({
+    // Check if student ID already exists
+    const existingStudent = await db.student.findFirst({
       where: {
-        id,
-        organizationId: user.organizationId,
+        studentId: data.studentId,
+        organizationId: orgContext.organizationId,
+      },
+    });
+
+    if (existingStudent) {
+      throw new ApiError('Student ID already exists', 400);
+    }
+
+    const student = await db.student.create({
+      data: {
+        ...data,
+        organizationId: orgContext.organizationId,
       },
       include: {
-        enrollments: {
-          include: {
-            course: {
-              select: { id: true, name: true, code: true, credits: true },
-            },
+        _count: {
+          select: {
+            enrollments: true,
           },
-        },
-        grades: {
-          include: {
-            course: {
-              select: { id: true, name: true, code: true },
-            },
-          },
-          orderBy: { createdAt: 'desc' },
-        },
-        attendance: {
-          include: {
-            course: {
-              select: { id: true, name: true, code: true },
-            },
-          },
-          orderBy: { date: 'desc' },
-          take: 10,
         },
       },
     });
 
-    if (!student) {
-      throw new ApiError('Student not found', 404);
-    }
-
-    return c.json({ data: student });
-  } catch (error) {
-    return handleApiError(c, error);
-  }
-});
-
-// POST /students - Create new student
-app.post(
-  '/',
-  zValidator('json', createStudentSchema),
-  async (c) => {
-    try {
-      const user = await currentUser();
-      if (!user) {
-        throw new ApiError('Unauthorized', 401);
-      }
-
-      if (!['SUPER_ADMIN', 'ADMIN', 'EDITOR'].includes(user.role)) {
-        throw new ApiError('Insufficient permissions', 403);
-      }
-
-      const data = c.req.valid('json');
-
-      // Check if student ID already exists
-      const existingStudent = await db.student.findFirst({
-        where: {
-          studentId: data.studentId,
-          organizationId: user.organizationId,
-        },
-      });
-
-      if (existingStudent) {
-        throw new ApiError('Student ID already exists', 400);
-      }
-
-      const student = await db.student.create({
-        data: {
-          ...data,
-          organizationId: user.organizationId,
-        },
-        include: {
-          _count: {
-            select: {
-              enrollments: true,
-            },
-          },
-        },
-      });
-
-      return c.json({ data: student }, 201);
-    } catch (error) {
-      return handleApiError(c, error);
-    }
+    return c.json({ data: student }, 201);
   }
 );
 
 // PUT /students/:id - Update student
-app.put(
+.put(
   '/:id',
   zValidator('json', updateStudentSchema),
   async (c) => {
-    try {
-      const user = await currentUser();
-      if (!user) {
-        throw new ApiError('Unauthorized', 401);
-      }
+    const orgContext = getOrganizationContext(c);
+    const id = c.req.param('id');
+    const data = c.req.valid('json');
 
-      if (!['SUPER_ADMIN', 'ADMIN', 'EDITOR'].includes(user.role)) {
-        throw new ApiError('Insufficient permissions', 403);
-      }
-
-      const id = c.req.param('id');
-      const data = c.req.valid('json');
-
-      // Check if student exists
-      const existingStudent = await db.student.findFirst({
-        where: {
-          id,
-          organizationId: user.organizationId,
-        },
-      });
-
-      if (!existingStudent) {
-        throw new ApiError('Student not found', 404);
-      }
-
-      const student = await db.student.update({
-        where: { id },
-        data,
-        include: {
-          _count: {
-            select: {
-              enrollments: true,
-            },
-          },
-        },
-      });
-
-      return c.json({ data: student });
-    } catch (error) {
-      return handleApiError(c, error);
-    }
-  }
-);
-
-// DELETE /students/:id - Delete student
-app.delete('/:id', async (c) => {
-  try {
-    const user = await getCurrentUser();
-    if (!user) {
-      throw new ApiError('Unauthorized', 401);
-    }
-
-    if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
+    if (!['OWNER', 'ADMIN', 'MANAGER'].includes(orgContext.role)) {
       throw new ApiError('Insufficient permissions', 403);
     }
-
-    const id = c.req.param('id');
 
     // Check if student exists
     const existingStudent = await db.student.findFirst({
       where: {
         id,
-        organizationId: user.organizationId,
+        organizationId: orgContext.organizationId,
       },
     });
 
@@ -292,130 +221,148 @@ app.delete('/:id', async (c) => {
       throw new ApiError('Student not found', 404);
     }
 
-    // Check if student has enrollments or grades
-    const hasData = await db.student.findFirst({
+    const student = await db.student.update({
       where: { id },
+      data,
       include: {
         _count: {
           select: {
             enrollments: true,
-            grades: true,
-            attendance: true,
           },
         },
       },
     });
 
-    if (hasData && (hasData._count.enrollments > 0 || hasData._count.grades > 0 || hasData._count.attendance > 0)) {
-      // Soft delete by marking as inactive
-      await db.student.update({
-        where: { id },
-        data: { status: 'INACTIVE' },
-      });
-      
-      return c.json({ 
-        message: 'Student has associated data and has been marked as inactive instead of deleted' 
-      });
-    }
-
-    // Hard delete if no associated data
-    await db.student.delete({
-      where: { id },
-    });
-
-    return c.json({ message: 'Student deleted successfully' });
-  } catch (error) {
-    return handleApiError(c, error);
+    return c.json({ data: student });
   }
+);
+
+// DELETE /students/:id - Delete student
+.delete('/:id', async (c) => {
+  const orgContext = getOrganizationContext(c);
+  const id = c.req.param('id');
+
+  if (!['OWNER', 'ADMIN'].includes(orgContext.role)) {
+    throw new ApiError('Insufficient permissions', 403);
+  }
+
+  // Check if student exists
+  const existingStudent = await db.student.findFirst({
+    where: {
+      id,
+      organizationId: orgContext.organizationId,
+    },
+  });
+
+  if (!existingStudent) {
+    throw new ApiError('Student not found', 404);
+  }
+
+  // Check if student has enrollments or grades
+  const hasData = await db.student.findFirst({
+    where: { id },
+    include: {
+      _count: {
+        select: {
+          enrollments: true,
+          grades: true,
+          attendance: true,
+        },
+      },
+    },
+  });
+
+  if (hasData && (hasData._count.enrollments > 0 || hasData._count.grades > 0 || hasData._count.attendance > 0)) {
+    // Soft delete by marking as inactive
+    await db.student.update({
+      where: { id },
+      data: { status: 'INACTIVE' },
+    });
+    
+    return c.json({ 
+      message: 'Student has associated data and has been marked as inactive instead of deleted' 
+    });
+  }
+
+  // Hard delete if no associated data
+  await db.student.delete({
+    where: { id },
+  });
+
+  return c.json({ message: 'Student deleted successfully' });
 });
 
 // GET /students/:id/enrollments - Get student enrollments
-app.get('/:id/enrollments', async (c) => {
-  try {
-    const user = await getCurrentUser();
-    if (!user) {
-      throw new ApiError('Unauthorized', 401);
-    }
+.get('/:id/enrollments', async (c) => {
+  const orgContext = getOrganizationContext(c);
+  const id = c.req.param('id');
 
-    const id = c.req.param('id');
+  // Check if student exists and belongs to organization
+  const student = await db.student.findFirst({
+    where: {
+      id,
+      organizationId: orgContext.organizationId,
+    },
+  });
 
-    // Check if student exists and belongs to organization
-    const student = await db.student.findFirst({
-      where: {
-        id,
-        organizationId: user.organizationId,
-      },
-    });
+  if (!student) {
+    throw new ApiError('Student not found', 404);
+  }
 
-    if (!student) {
-      throw new ApiError('Student not found', 404);
-    }
-
-    const enrollments = await db.enrollment.findMany({
-      where: { studentId: id },
-      include: {
-        course: {
-          select: {
-            id: true,
-            name: true,
-            code: true,
-            credits: true,
-            description: true,
-          },
+  const enrollments = await db.enrollment.findMany({
+    where: { studentId: id },
+    include: {
+      course: {
+        select: {
+          id: true,
+          name: true,
+          code: true,
+          credits: true,
+          description: true,
         },
       },
-      orderBy: { enrolledAt: 'desc' },
-    });
+    },
+    orderBy: { enrolledAt: 'desc' },
+  });
 
-    return c.json({ data: enrollments });
-  } catch (error) {
-    return handleApiError(c, error);
-  }
+  return c.json({ data: enrollments });
 });
 
 // GET /students/:id/grades - Get student grades
-app.get('/:id/grades', async (c) => {
-  try {
-    const user = await getCurrentUser();
-    if (!user) {
-      throw new ApiError('Unauthorized', 401);
-    }
+.get('/:id/grades', async (c) => {
+  const orgContext = getOrganizationContext(c);
+  const id = c.req.param('id');
 
-    const id = c.req.param('id');
+  // Check if student exists and belongs to organization
+  const student = await db.student.findFirst({
+    where: {
+      id,
+      organizationId: orgContext.organizationId,
+    },
+  });
 
-    // Check if student exists and belongs to organization
-    const student = await db.student.findFirst({
-      where: {
-        id,
-        organizationId: user.organizationId,
-      },
-    });
+  if (!student) {
+    throw new ApiError('Student not found', 404);
+  }
 
-    if (!student) {
-      throw new ApiError('Student not found', 404);
-    }
-
-    const grades = await db.grade.findMany({
-      where: { studentId: id },
-      include: {
-        course: {
-          select: {
-            id: true,
-            name: true,
-            code: true,
-          },
+  const grades = await db.grade.findMany({
+    where: { studentId: id },
+    include: {
+      course: {
+        select: {
+          id: true,
+          name: true,
+          code: true,
         },
       },
-      orderBy: [
-        { createdAt: 'desc' },
-        { course: { name: 'asc' } },
-      ],
-    });
+    },
+    orderBy: [
+      { createdAt: 'desc' },
+      { course: { name: 'asc' } },
+    ],
+  });
 
-    return c.json({ data: grades });
-  } catch (error) {
-    return handleApiError(c, error);
-  }
+  return c.json({ data: grades });
 });
 
 export { app as studentsRouter };

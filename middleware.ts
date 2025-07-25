@@ -17,30 +17,21 @@ export default auth((req) => {
   const isPublicRoute = publicRoutes.includes(nextUrl.pathname);
   const isAuthRoute = authRoutes.includes(nextUrl.pathname);
 
-  // SECURITY ENHANCEMENT: Add security headers for all responses
-  const response = NextResponse.next();
-  
-  // Prevent MIME type sniffing attacks
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  // Prevent page from being embedded in frames (clickjacking protection)
-  response.headers.set('X-Frame-Options', 'DENY');
-  // Enable XSS filtering in browsers
-  response.headers.set('X-XSS-Protection', '1; mode=block');
-  // Restrict camera and microphone access
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  // Note: Security headers are now consistently applied by Hono in the API layer.
+  // Removing them from middleware avoids duplication and potential conflicts.
 
   if (isApiAuthRoute) {
-    return response; // Allow API auth routes with security headers
+    return NextResponse.next();
   }
 
   if (isAuthRoute) {
     if (isLoggedIn) {
-      // SECURITY FIX: Prevent redirect loops by checking if target equals current path
+      // SECURITY FIX: Prevent redirect loops
       if (nextUrl.pathname !== DEFAULT_LOGIN_REDIRECT) {
         return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
       }
     }
-    return response; // Allow auth routes with security headers
+    return NextResponse.next();
   }
 
   if (!isLoggedIn && !isPublicRoute) {
@@ -55,7 +46,7 @@ export default auth((req) => {
     );
   }
   
-  return response; // Return response with security headers
+  return NextResponse.next();
 });
 
 // Optionally, don't invoke Middleware on some paths

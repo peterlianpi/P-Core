@@ -2,122 +2,92 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { prisma } from "@/lib/db/client";
-import { ensureUserInOrganization } from "@/lib/auth-helpers";
+import { getOrganizationContext, requirePermission } from "@/lib/security/tenant";
+import { ApiError } from "@/lib/utils/api-errors";
 import { courseSchema } from "@/features/school-management/types/schemas";
+import { Prisma } from "@prisma/client";
 
 const courses = new Hono()
 
-  // Create course
   .post(
     "/",
     zValidator("json", courseSchema.omit({ id: true, orgId: true })),
-    zValidator("query", z.object({ orgId: z.string() })),
+    requirePermission("write:courses"), // Example permission
     async (c) => {
-      const authResult = await ensureUserInOrganization(c);
-      if ("json" in authResult) return authResult; // Return error if unauthorized
-      const { organizationId } = authResult;
-
+      const orgContext = getOrganizationContext(c);
       const values = c.req.valid("json");
+
+      const existingCourse = await prisma.course.findFirst({
+        where: { name: values.name, orgId: orgContext.organizationId }
+      });
+      if (existingCourse) throw new ApiError("A course with this name already exists", 409);
 
       const created = await prisma.course.create({
         data: {
           ...values,
-          orgId: organizationId,
+          orgId: orgContext.organizationId,
         },
       });
 
-      return c.json(created);
+      return c.json(created, 201);
     }
   )
 
-  // GET all courses for org
-  .get("/", zValidator("query", z.object({ orgId: z.string() })), async (c) => {
-    const authResult = await ensureUserInOrganization(c);
-    if ("json" in authResult) return authResult; // Return error if unauthorized
-    const { organizationId } = authResult;
-    const all = await prisma.course.findMany({
-      where: { orgId: organizationId },
-      select: {
-        id: true,
-        name: true,
-        level: true,
-        image: true,
-        description: true,
-        isActive: true,
-        isArchived: true,
-        price: true,
-      },
-    });
-    return c.json(all);
-  })
-
-  // PATCH update course by id
-  .patch(
-    "/:id",
-    zValidator("param", z.object({ id: z.string() })),
-    zValidator("query", z.object({ orgId: z.string() })),
-    zValidator("json", courseSchema.omit({ id: true, orgId: true })),
-
+  .get(
+    "/", 
+    zValidator("query", z.object({ search: z.string().optional() })),
+    requirePermission("read:courses"),
     async (c) => {
-      const { id } = c.req.valid("param");
-      const authResult = await ensureUserInOrganization(c);
-      if ("json" in authResult) return authResult; // Return error if unauthorized
-      const { organizationId } = authResult;
+        const orgContext = getOrganizationContext(c);
+        const { search } = c.req.valid("query");
 
-      const values = c.req.valid("json");
-
-      try {
-        const existingCourse = await prisma.course.findUnique({
-          where: { id, orgId: organizationId },
-        });
-
-        if (!existingCourse) {
-          return c.json({ error: "Course not found" }, 404);
+        const where: Prisma.CourseWhereInput = { orgId: orgContext.organizationId };
+        if (search) {
+            where.name = { contains: search, mode: "insensitive" };
         }
 
-        const updated = await prisma.course.updateMany({
-          where: {
-            id,
-            orgId: organizationId,
-          },
-          data: {
-            ...values,
-          },
+        const all = await prisma.course.findMany({
+            where,
+            orderBy: { name: "asc" },
         });
-
-        return c.json(updated);
-      } catch {
-        return c.json(
-          {
-            error: "Failed to update course",
-          },
-          500
-        );
-      }
+        return c.json(all);
     }
   )
 
-  // GET course by id
+  .patch(
+    "/:id",
+    zValidator("json", courseSchema.partial().omit({ id: true, orgId: true })),
+    requirePermission("write:courses"),
+    async (c) => {
+      const { id } = c.req.param();
+      const orgContext = getOrganizationContext(c);
+      const values = c.req.valid("json");
+
+      const existingCourse = await prisma.course.findFirst({
+        where: { id, orgId: orgContext.organizationId },
+      });
+      if (!existingCourse) throw new ApiError("Course not found", 404);
+
+      const updated = await prisma.course.update({
+        where: { id },
+        data: values,
+      });
+
+      return c.json(updated);
+    }
+  )
+
   .get(
     "/:id",
-    zValidator("param", z.object({ id: z.string() })),
-    zValidator("query", z.object({ orgId: z.string() })),
+    requirePermission("read:courses"),
     async (c) => {
-      const authResult = await ensureUserInOrganization(c);
-      if ("json" in authResult) return authResult; // Return error if unauthorized
-      const { organizationId } = authResult;
-
-      const { id } = c.req.valid("param");
-
-      if (!id) return c.json({ error: "Course ID is required" }, 400);
+      const orgContext = getOrganizationContext(c);
+      const { id } = c.req.param();
 
       const course = await prisma.course.findFirst({
-        where: {
-          id,
-          orgId: organizationId,
-        },
+        where: { id, orgId: orgContext.organizationId },
       });
-      if (!course) return c.json({ error: "Course not found" }, 404);
+      if (!course) throw new ApiError("Course not found", 404);
 
       return c.json(course);
     }

@@ -1,18 +1,17 @@
 "use server";
 
-import { trackOrganizationCreatedBy } from "@/actions/auth/track-system-activities";
-import { prisma } from "@/lib/db/client";
-import { OrganizationsAPISchema } from "@/schemas";
 import { revalidatePath } from "next/cache";
-
-export async function handleError(error: unknown, fallbackMessage: string) {
-  if (error instanceof Error) {
-    return { error: error.message || fallbackMessage };
-  }
-  return { error: fallbackMessage };
-}
+import { z } from "zod";
+import { prisma } from "@/lib/db/client";
+import { trackOrganizationCreatedBy } from "@/actions/auth/track-system-activities";
+import { organizationSchema } from "@/features/organization-management/schemas";
+import { ApiError, handleApiError } from "@/lib/utils/api-errors";
+import { OrganizationsAPISchema } from "@/schemas";
 
 export async function getOrganizationsByUserId(userId: string | undefined) {
+  if (!userId) {
+    return { data: [] };
+  }
   const userOrganizations = await prisma.userOrganization.findMany({
     where: { userId },
     select: {
@@ -31,61 +30,58 @@ export async function getOrganizationsByUserId(userId: string | undefined) {
   });
 
   const result = OrganizationsAPISchema.safeParse(userOrganizations);
-  if (result.error) {
-    console.log("Error : ", result.error.message);
+  if (!result.success) {
+    console.error("Zod validation error in getOrganizationsByUserId:", result.error.flatten());
+    throw new Error("Invalid organization data");
   }
-
-  if (!result.success) throw new Error("Invalid data");
 
   return result;
 }
 
-export async function createOrganization({
-  userId,
-  value,
-}: {
-  userId: string;
-  value: {
-    name: string;
-    description?: string;
-    logoImage?: string;
-    startedAt?: Date;
-    type?: string;
-  };
-}) {
+type CreateOrganizationInput = z.infer<typeof organizationSchema>;
+
+export async function createOrganization(userId: string, values: CreateOrganizationInput) {
   try {
-    const result = await prisma.$transaction(async (prisma) => {
-      const organization = await prisma.organization.create({
+    // 1. Validate input with the dedicated Zod schema on the server.
+    const validatedData = organizationSchema.parse(values);
+
+    // 2. Check for uniqueness to provide clear error messages.
+    const existingOrg = await prisma.organization.findFirst({
+      where: { name: validatedData.name, createdById: userId },
+    });
+    if (existingOrg) {
+      throw new ApiError("An organization with this name already exists.", 409);
+    }
+    
+    // 3. Use a transaction for atomic creation of organization and user link.
+    const newOrganization = await prisma.$transaction(async (tx) => {
+      const organization = await tx.organization.create({
         data: {
-          name: value.name,
-          description: value.description,
-          logoImage: value.logoImage,
-          startedAt: value.startedAt,
+          ...validatedData,
           createdBy: { connect: { id: userId } },
-          type: value.type,
         },
       });
 
-      await prisma.userOrganization.create({
+      await tx.userOrganization.create({
         data: {
           userId,
           organizationId: organization.id,
           role: "OWNER",
         },
       });
-
       return organization;
     });
 
     await trackOrganizationCreatedBy({
-      userId: result.createdById,
-      organizationId: result.id,
+      userId: newOrganization.createdById,
+      organizationId: newOrganization.id,
     });
-    revalidatePath("/organization"); // Optional: revalidate page
 
-    return { success: result };
-  } catch (error: unknown) {
-    return handleError(error, "Failed to create organization");
+    revalidatePath("/organization");
+    return { success: true, data: newOrganization };
+    
+  } catch (error) {
+    return handleApiError(null, error, "Failed to create organization");
   }
 }
 

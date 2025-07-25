@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useGetVersions } from "@/features/version/api/use-get-version";
+import { useGetVersions } from "@/features/system/version/api/use-get-version";
 
 export default function VersionButton() {
   const { data: versions, isLoading, error } = useGetVersions();
@@ -20,7 +20,10 @@ export default function VersionButton() {
     return <Button variant="destructive">Version Error</Button>;
 
   // Get the first version with the name "beta"
-  const betaVersion = versions.find((v) => v.status.toLowerCase() === "beta");
+  const betaVersion = versions.find(
+    (v: { name: string; version: string; description?: string | null }) =>
+      v.name.toLowerCase() === "beta"
+  );
 
   if (!betaVersion) return <Button variant="outline">No Beta Version</Button>;
 
@@ -31,7 +34,7 @@ export default function VersionButton() {
         className="bg-blue-500 text-white"
         onClick={() => setOpen(true)}
       >
-        {betaVersion.status} (v{betaVersion.version})
+        {betaVersion.name} (v{betaVersion.version})
       </Button>
       <div>
         <Dialog open={open} onOpenChange={setOpen}>
@@ -39,7 +42,7 @@ export default function VersionButton() {
             <DialogContent className="w-[90%] rounded-lg mx-auto">
               <DialogHeader className="py-2 mb-2">
                 <DialogTitle>
-                  Version {betaVersion.version} - {betaVersion.status}
+                  Version {betaVersion.version} - {betaVersion.name}
                 </DialogTitle>
               </DialogHeader>
               <p>{betaVersion.description || "No description available."}</p>

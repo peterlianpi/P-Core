@@ -6,11 +6,9 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { prisma } from "@/lib/db/client";
-import { 
-  organizationSecurityMiddleware, 
-  getOrganizationContext,
-  requirePermission 
-} from "@/lib/security/tenant";
+import { getOrganizationContext, requirePermission } from "@/lib/security/tenant";
+import { ApiError } from "@/lib/utils/api-errors";
+import { Prisma } from "@prisma/client";
 
 // Member schemas
 const MemberSchema = z.object({
@@ -32,212 +30,65 @@ const MemberSchema = z.object({
 });
 
 const members = new Hono()
-  // Apply organization security middleware to all routes
-  .use("*", organizationSecurityMiddleware)
+  // Middleware is now applied in the main router, no need for .use() here.
 
-  // GET /api/members - Get all members with filtering
   .get(
     "/",
-    zValidator(
-      "query",
-      z.object({
-        take: z.string().optional(),
-        skip: z.string().optional(),
-        searchQuery: z.string().optional(),
-        homeId: z.string().optional(),
-        vengId: z.string().optional(),
-        khawkId: z.string().optional(),
-        roleId: z.string().optional(),
-        isActive: z.string().optional(),
-      })
-    ),
+    zValidator("query", z.object({
+      take: z.string().optional(),
+      skip: z.string().optional(),
+      searchQuery: z.string().optional(),
+      homeId: z.string().optional(),
+      vengId: z.string().optional(),
+      khawkId: z.string().optional(),
+      roleId: z.string().optional(),
+      isActive: z.string().optional(),
+    })),
     requirePermission("read:members"),
     async (c) => {
-      try {
-        const orgContext = getOrganizationContext(c);
-        const { 
-          take = "20", 
-          skip = "0", 
-          searchQuery, 
-          homeId, 
-          vengId, 
-          khawkId, 
-          roleId,
-          isActive = "true"
-        } = c.req.valid("query");
+      const orgContext = getOrganizationContext(c);
+      const { take = "20", skip = "0", searchQuery, homeId, vengId, khawkId, roleId, isActive = "true" } = c.req.valid("query");
 
-        const takeNumber = parseInt(take);
-        const skipNumber = parseInt(skip);
-        const activeFilter = isActive === "true";
-
-        // Build where clause with filters
-        const where: any = {
-          isActive: activeFilter,
-        };
-
-        // Add search filter
-        if (searchQuery) {
-          where.OR = [
-            { name: { contains: searchQuery, mode: "insensitive" } },
-            { email: { contains: searchQuery, mode: "insensitive" } },
-            { phone: { contains: searchQuery, mode: "insensitive" } },
-          ];
-        }
-
-        // Add location filters
-        if (homeId) where.homeId = homeId;
-        if (vengId) {
-          where.home = { vengId };
-        }
-        if (khawkId) {
-          where.home = { veng: { khawkId } };
-        }
-
-        // Add role filter
-        if (roleId) {
-          where.roles = {
-            some: { roleId, endedAt: null }
-          };
-        }
-
-        // Get members with related data
-        const [members, totalCount, activeCount, inactiveCount] = await Promise.all([
-          prisma.member.findMany({
-            where,
-            take: takeNumber,
-            skip: skipNumber,
-            orderBy: { name: "asc" },
-            include: {
-              home: {
-                include: {
-                  veng: {
-                    include: {
-                      khawk: true
-                    }
-                  }
-                }
-              },
-              spouse: {
-                select: { id: true, name: true }
-              },
-              roles: {
-                where: { endedAt: null },
-                include: {
-                  role: {
-                    select: { id: true, name: true }
-                  }
-                }
-              },
-              familyFrom: {
-                include: {
-                  to: { select: { id: true, name: true } },
-                  type: { select: { id: true, name: true } }
-                }
-              },
-              familyTo: {
-                include: {
-                  from: { select: { id: true, name: true } },
-                  type: { select: { id: true, name: true } }
-                }
-              }
-            }
-          }),
-          prisma.member.count({ where }),
-          prisma.member.count({ where: { isActive: true } }),
-          prisma.member.count({ where: { isActive: false } })
-        ]);
-
-        // Get statistics
-        const homeStats = await prisma.member.groupBy({
-          by: ['homeId'],
-          _count: true,
-          where: { isActive: true, homeId: { not: null } }
-        });
-
-        return c.json({
-          data: members,
-          totalItems: totalCount,
-          active: activeCount,
-          inactive: inactiveCount,
-          homeStats: homeStats.reduce((acc, stat) => {
-            if (stat.homeId) {
-              acc[stat.homeId] = stat._count;
-            }
-            return acc;
-          }, {} as Record<string, number>)
-        });
-
-      } catch (error) {
-        console.error("Get members error:", error);
-        return c.json({ error: "Failed to fetch members" }, 500);
+      const where: Prisma.MemberWhereInput = { orgId: orgContext.organizationId }; // Use specific Prisma type
+      
+      if (searchQuery) {
+        where.OR = [
+          { name: { contains: searchQuery, mode: "insensitive" } },
+          { email: { contains: searchQuery, mode: "insensitive" } },
+          { phone: { contains: searchQuery, mode: "insensitive" } },
+        ];
       }
-    }
-  )
 
-  // POST /api/members - Create new member
-  .post(
-    "/",
-    zValidator("json", MemberSchema.omit({ roleIds: true, familyRelationships: true })),
-    requirePermission("write:members"),
-    async (c) => {
-      try {
-        const orgContext = getOrganizationContext(c);
-        const memberData = c.req.valid("json");
+      if (homeId) where.homeId = homeId;
+      if (vengId) {
+        where.home = { vengId };
+      }
+      if (khawkId) {
+        where.home = { veng: { khawkId } };
+      }
 
-        // Check for existing email/phone
-        if (memberData.email) {
-          const existingEmail = await prisma.member.findFirst({
-            where: { email: memberData.email, isActive: true }
-          });
-          if (existingEmail) {
-            return c.json({ error: "Email already exists", code: "EMAIL_ALREADY_EXISTS" }, 409);
-          }
-        }
+      if (roleId) {
+        where.roles = {
+          some: { roleId, endedAt: null }
+        };
+      }
 
-        if (memberData.phone) {
-          const existingPhone = await prisma.member.findFirst({
-            where: { phone: memberData.phone, isActive: true }
-          });
-          if (existingPhone) {
-            return c.json({ error: "Phone already exists", code: "PHONE_ALREADY_EXISTS" }, 409);
-          }
-        }
+      const activeFilter = isActive === "true";
+      where.isActive = activeFilter;
 
-        // Validate home exists
-        if (memberData.homeId) {
-          const home = await prisma.home.findUnique({
-            where: { id: memberData.homeId }
-          });
-          if (!home) {
-            return c.json({ error: "Invalid home", code: "INVALID_HOME" }, 400);
-          }
-        }
-
-        // Validate spouse exists and is not already married
-        if (memberData.spouseId) {
-          const spouse = await prisma.member.findUnique({
-            where: { id: memberData.spouseId }
-          });
-          if (!spouse) {
-            return c.json({ error: "Invalid spouse", code: "INVALID_SPOUSE" }, 400);
-          }
-          if (spouse.spouseId && spouse.spouseId !== memberData.spouseId) {
-            return c.json({ error: "Spouse is already married", code: "SPOUSE_ALREADY_MARRIED" }, 400);
-          }
-        }
-
-        // Create member
-        const member = await prisma.member.create({
-          data: {
-            ...memberData,
-            birthDate: memberData.birthDate ? new Date(memberData.birthDate) : null,
-            orgId: orgContext.organizationId,
-          },
+      const [members, totalCount, activeCount, inactiveCount] = await Promise.all([
+        prisma.member.findMany({
+          where,
+          take: parseInt(take),
+          skip: parseInt(skip),
+          orderBy: { name: "asc" },
           include: {
             home: {
               include: {
                 veng: {
-                  include: { khawk: true }
+                  include: {
+                    khawk: true
+                  }
                 }
               }
             },
@@ -245,230 +96,287 @@ const members = new Hono()
               select: { id: true, name: true }
             },
             roles: {
-              include: {
-                role: { select: { id: true, name: true } }
-              }
-            }
-          }
-        });
-
-        // Update spouse relationship if specified
-        if (memberData.spouseId) {
-          await prisma.member.update({
-            where: { id: memberData.spouseId },
-            data: { spouseId: member.id }
-          });
-        }
-
-        return c.json(member, 201);
-
-      } catch (error) {
-        console.error("Create member error:", error);
-        return c.json({ error: "Failed to create member" }, 500);
-      }
-    }
-  )
-
-  // GET /api/members/:id - Get specific member
-  .get(
-    "/:id",
-    zValidator("param", z.object({ id: z.string() })),
-    requirePermission("read:members"),
-    async (c) => {
-      try {
-        const { id } = c.req.valid("param");
-
-        const member = await prisma.member.findUnique({
-          where: { id },
-          include: {
-            home: {
-              include: {
-                veng: {
-                  include: { khawk: true }
-                }
-              }
-            },
-            spouse: {
-              select: { id: true, name: true, image: true }
-            },
-            roles: {
               where: { endedAt: null },
               include: {
                 role: {
-                  select: { id: true, name: true, description: true }
+                  select: { id: true, name: true }
                 }
               }
             },
             familyFrom: {
               include: {
-                to: { 
-                  select: { id: true, name: true, image: true, birthDate: true }
-                },
-                type: { 
-                  select: { id: true, name: true, description: true }
-                }
+                to: { select: { id: true, name: true } },
+                type: { select: { id: true, name: true } }
               }
             },
             familyTo: {
               include: {
-                from: { 
-                  select: { id: true, name: true, image: true, birthDate: true }
-                },
-                type: { 
-                  select: { id: true, name: true, description: true }
-                }
+                from: { select: { id: true, name: true } },
+                type: { select: { id: true, name: true } }
               }
-            },
-            user: {
-              select: { id: true, email: true, role: true }
             }
           }
-        });
+        }),
+        prisma.member.count({ where }),
+        prisma.member.count({ where: { isActive: true } }),
+        prisma.member.count({ where: { isActive: false } })
+      ]);
 
-        if (!member) {
-          return c.json({ error: "Member not found", code: "MEMBER_NOT_FOUND" }, 404);
-        }
+      // Get statistics
+      const homeStats = await prisma.member.groupBy({
+        by: ['homeId'],
+        _count: true,
+        where: { isActive: true, homeId: { not: null } }
+      });
 
-        return c.json(member);
-
-      } catch (error) {
-        console.error("Get member error:", error);
-        return c.json({ error: "Failed to fetch member" }, 500);
-      }
+      return c.json({
+        data: members,
+        totalItems: totalCount,
+        active: activeCount,
+        inactive: inactiveCount,
+        homeStats: homeStats.reduce((acc, stat) => {
+          if (stat.homeId) {
+            acc[stat.homeId] = stat._count;
+          }
+          return acc;
+        }, {} as Record<string, number>)
+      });
     }
   )
 
-  // PATCH /api/members/:id - Update member
+  .post(
+    "/",
+    zValidator("json", MemberSchema.omit({ roleIds: true, familyRelationships: true })),
+    requirePermission("write:members"),
+    async (c) => {
+      const orgContext = getOrganizationContext(c);
+      const memberData = c.req.valid("json");
+
+      // Simplified validation checks that throw ApiError
+      if (memberData.email) {
+          const existing = await prisma.member.findFirst({ where: { email: memberData.email, orgId: orgContext.organizationId } });
+          if (existing) throw new ApiError("Email already exists", 409);
+      }
+
+      if (memberData.phone) {
+          const existing = await prisma.member.findFirst({ where: { phone: memberData.phone, orgId: orgContext.organizationId } });
+          if (existing) throw new ApiError("Phone already exists", 409);
+      }
+
+      // Validate home exists
+      if (memberData.homeId) {
+        const home = await prisma.home.findUnique({
+          where: { id: memberData.homeId }
+        });
+        if (!home) throw new ApiError("Invalid home", 400);
+      }
+
+      // Validate spouse exists and is not already married
+      if (memberData.spouseId) {
+        const spouse = await prisma.member.findUnique({
+          where: { id: memberData.spouseId }
+        });
+        if (!spouse) throw new ApiError("Invalid spouse", 400);
+        if (spouse.spouseId && spouse.spouseId !== memberData.spouseId) {
+          throw new ApiError("Spouse is already married", 400);
+        }
+      }
+
+      const member = await prisma.member.create({
+        data: {
+          ...memberData,
+          birthDate: memberData.birthDate ? new Date(memberData.birthDate) : null,
+          orgId: orgContext.organizationId,
+        },
+        include: {
+          home: {
+            include: {
+              veng: {
+                include: { khawk: true }
+              }
+            }
+          },
+          spouse: {
+            select: { id: true, name: true }
+          },
+          roles: {
+            include: {
+              role: { select: { id: true, name: true } }
+            }
+          }
+        }
+      });
+
+      // Update spouse relationship if specified
+      if (memberData.spouseId) {
+        await prisma.member.update({
+          where: { id: memberData.spouseId },
+          data: { spouseId: member.id }
+        });
+      }
+
+      return c.json(member, 201);
+    }
+  )
+
+  .get(
+    "/:id",
+    zValidator("param", z.object({ id: z.string() })),
+    requirePermission("read:members"),
+    async (c) => {
+      const { id } = c.req.valid("param");
+      const orgContext = getOrganizationContext(c);
+      
+      const member = await prisma.member.findUnique({
+        where: { id, orgId: orgContext.organizationId },
+        include: {
+          home: {
+            include: {
+              veng: {
+                include: { khawk: true }
+              }
+            }
+          },
+          spouse: {
+            select: { id: true, name: true, image: true }
+          },
+          roles: {
+            where: { endedAt: null },
+            include: {
+              role: {
+                select: { id: true, name: true, description: true }
+              }
+            }
+          },
+          familyFrom: {
+            include: {
+              to: { 
+                select: { id: true, name: true, image: true, birthDate: true }
+              },
+              type: { 
+                select: { id: true, name: true, description: true }
+              }
+            }
+          },
+          familyTo: {
+            include: {
+              from: { 
+                select: { id: true, name: true, image: true, birthDate: true }
+              },
+              type: { 
+                select: { id: true, name: true, description: true }
+              }
+            }
+          },
+          user: {
+            select: { id: true, email: true, role: true }
+          }
+        }
+      });
+
+      if (!member) throw new ApiError("Member not found", 404);
+      return c.json(member);
+    }
+  )
+
   .patch(
     "/:id",
     zValidator("param", z.object({ id: z.string() })),
     zValidator("json", MemberSchema.partial()),
     requirePermission("write:members"),
     async (c) => {
-      try {
-        const { id } = c.req.valid("param");
-        const updateData = c.req.valid("json");
+      const { id } = c.req.valid("param");
+      const updateData = c.req.valid("json");
+      const orgContext = getOrganizationContext(c);
 
-        // Check member exists
-        const existingMember = await prisma.member.findUnique({
-          where: { id }
-        });
-
-        if (!existingMember) {
-          return c.json({ error: "Member not found", code: "MEMBER_NOT_FOUND" }, 404);
-        }
-
-        // Validate email/phone uniqueness if being updated
-        if (updateData.email && updateData.email !== existingMember.email) {
-          const emailExists = await prisma.member.findFirst({
-            where: { 
-              email: updateData.email, 
-              id: { not: id },
-              isActive: true 
-            }
-          });
-          if (emailExists) {
-            return c.json({ error: "Email already exists", code: "EMAIL_ALREADY_EXISTS" }, 409);
-          }
-        }
-
-        if (updateData.phone && updateData.phone !== existingMember.phone) {
-          const phoneExists = await prisma.member.findFirst({
-            where: { 
-              phone: updateData.phone, 
-              id: { not: id },
-              isActive: true 
-            }
-          });
-          if (phoneExists) {
-            return c.json({ error: "Phone already exists", code: "PHONE_ALREADY_EXISTS" }, 409);
-          }
-        }
-
-        // Update member
-        const updatedMember = await prisma.member.update({
-          where: { id },
-          data: {
-            ...updateData,
-            birthDate: updateData.birthDate ? new Date(updateData.birthDate) : undefined,
-          },
-          include: {
-            home: {
-              include: {
-                veng: {
-                  include: { khawk: true }
-                }
-              }
-            },
-            spouse: {
-              select: { id: true, name: true }
-            },
-            roles: {
-              include: {
-                role: { select: { id: true, name: true } }
-              }
-            }
+      const existingMember = await prisma.member.findUnique({ where: { id, orgId: orgContext.organizationId } });
+      if (!existingMember) throw new ApiError("Member not found", 404);
+      
+      // Simplified uniqueness validation for email/phone
+      if (updateData.email && updateData.email !== existingMember.email) {
+        const emailExists = await prisma.member.findFirst({
+          where: { 
+            email: updateData.email, 
+            id: { not: id },
+            orgId: orgContext.organizationId,
+            isActive: true 
           }
         });
-
-        return c.json(updatedMember);
-
-      } catch (error) {
-        console.error("Update member error:", error);
-        return c.json({ error: "Failed to update member" }, 500);
+        if (emailExists) throw new ApiError("Email already exists", 409);
       }
+
+      if (updateData.phone && updateData.phone !== existingMember.phone) {
+        const phoneExists = await prisma.member.findFirst({
+          where: { 
+            phone: updateData.phone, 
+            id: { not: id },
+            orgId: orgContext.organizationId,
+            isActive: true 
+          }
+        });
+        if (phoneExists) throw new ApiError("Phone already exists", 409);
+      }
+
+      const updatedMember = await prisma.member.update({
+        where: { id },
+        data: {
+          ...updateData,
+          birthDate: updateData.birthDate ? new Date(updateData.birthDate) : undefined,
+        },
+        include: {
+          home: {
+            include: {
+              veng: {
+                include: { khawk: true }
+              }
+            }
+          },
+          spouse: {
+            select: { id: true, name: true }
+          },
+          roles: {
+            include: {
+              role: { select: { id: true, name: true } }
+            }
+          }
+        }
+      });
+
+      return c.json(updatedMember);
     }
   )
 
-  // DELETE /api/members/:id - Soft delete member
   .delete(
     "/:id",
     zValidator("param", z.object({ id: z.string() })),
     requirePermission("delete:members"),
     async (c) => {
-      try {
-        const { id } = c.req.valid("param");
+      const { id } = c.req.valid("param");
+      const orgContext = getOrganizationContext(c);
 
-        // Check member exists
-        const member = await prisma.member.findUnique({
-          where: { id }
-        });
+      const member = await prisma.member.findUnique({ where: { id, orgId: orgContext.organizationId } });
+      if (!member) throw new ApiError("Member not found", 404);
 
-        if (!member) {
-          return c.json({ error: "Member not found", code: "MEMBER_NOT_FOUND" }, 404);
-        }
+      // Soft delete logic
+      await prisma.member.update({
+        where: { id },
+        data: { isActive: false, isDeleted: true }
+      });
 
-        // Soft delete by setting isActive to false
-        await prisma.member.update({
-          where: { id },
-          data: { 
-            isActive: false,
-            // Clear sensitive data
-            email: null,
-            phone: null,
-            spouseId: null,
-          }
-        });
+      // End all role assignments
+      await prisma.memberRoleAssignment.updateMany({
+        where: { 
+          memberId: id,
+          orgId: orgContext.organizationId,
+          endedAt: null 
+        },
+        data: { endedAt: new Date() }
+      });
 
-        // End all role assignments
-        await prisma.memberRoleAssignment.updateMany({
-          where: { 
-            memberId: id,
-            endedAt: null 
-          },
-          data: { endedAt: new Date() }
-        });
-
-        return c.json({ message: "Member deleted successfully" });
-
-      } catch (error) {
-        console.error("Delete member error:", error);
-        return c.json({ error: "Failed to delete member" }, 500);
-      }
+      return c.json({ message: "Member archived successfully" });
     }
   )
 
-  // POST /api/members/:id/roles - Assign role to member
   .post(
     "/:id/roles",
     zValidator("param", z.object({ id: z.string() })),
@@ -478,51 +386,42 @@ const members = new Hono()
     })),
     requirePermission("write:members"),
     async (c) => {
-      try {
-        const { id } = c.req.valid("param");
-        const { roleId, startedAt } = c.req.valid("json");
-        const orgContext = getOrganizationContext(c);
+      const { id } = c.req.valid("param");
+      const { roleId, startedAt } = c.req.valid("json");
+      const orgContext = getOrganizationContext(c);
 
-        // Check if role assignment already exists
-        const existingAssignment = await prisma.memberRoleAssignment.findUnique({
-          where: {
-            memberId_roleId_orgId: {
-              memberId: id,
-              roleId,
-              orgId: orgContext.organizationId
-            }
-          }
-        });
-
-        if (existingAssignment) {
-          return c.json({ error: "Role already assigned", code: "ROLE_ALREADY_ASSIGNED" }, 409);
-        }
-
-        // Create role assignment
-        const assignment = await prisma.memberRoleAssignment.create({
-          data: {
+      // Check if role assignment already exists
+      const existingAssignment = await prisma.memberRoleAssignment.findUnique({
+        where: {
+          memberId_roleId_orgId: {
             memberId: id,
             roleId,
-            orgId: orgContext.organizationId,
-            startedAt: startedAt ? new Date(startedAt) : new Date(),
-          },
-          include: {
-            role: {
-              select: { id: true, name: true, description: true }
-            }
+            orgId: orgContext.organizationId
           }
-        });
+        }
+      });
 
-        return c.json(assignment, 201);
+      if (existingAssignment) throw new ApiError("Role already assigned", 409);
 
-      } catch (error) {
-        console.error("Assign role error:", error);
-        return c.json({ error: "Failed to assign role" }, 500);
-      }
+      // Create role assignment
+      const assignment = await prisma.memberRoleAssignment.create({
+        data: {
+          memberId: id,
+          roleId,
+          orgId: orgContext.organizationId,
+          startedAt: startedAt ? new Date(startedAt) : new Date(),
+        },
+        include: {
+          role: {
+            select: { id: true, name: true, description: true }
+          }
+        }
+      });
+
+      return c.json(assignment, 201);
     }
   )
 
-  // DELETE /api/members/:id/roles/:roleId - Remove role from member
   .delete(
     "/:id/roles/:roleId",
     zValidator("param", z.object({ 
@@ -531,99 +430,87 @@ const members = new Hono()
     })),
     requirePermission("write:members"),
     async (c) => {
-      try {
-        const { id, roleId } = c.req.valid("param");
-        const orgContext = getOrganizationContext(c);
+      const { id, roleId } = c.req.valid("param");
+      const orgContext = getOrganizationContext(c);
 
-        // End the role assignment
-        const assignment = await prisma.memberRoleAssignment.updateMany({
-          where: {
-            memberId: id,
-            roleId,
-            orgId: orgContext.organizationId,
-            endedAt: null
-          },
-          data: {
-            endedAt: new Date()
-          }
-        });
-
-        if (assignment.count === 0) {
-          return c.json({ error: "Role assignment not found", code: "ASSIGNMENT_NOT_FOUND" }, 404);
+      // End the role assignment
+      const assignment = await prisma.memberRoleAssignment.updateMany({
+        where: {
+          memberId: id,
+          roleId,
+          orgId: orgContext.organizationId,
+          endedAt: null
+        },
+        data: {
+          endedAt: new Date()
         }
+      });
 
-        return c.json({ message: "Role removed successfully" });
+      if (assignment.count === 0) throw new ApiError("Role assignment not found", 404);
 
-      } catch (error) {
-        console.error("Remove role error:", error);
-        return c.json({ error: "Failed to remove role" }, 500);
-      }
+      return c.json({ message: "Role removed successfully" });
     }
   )
 
-  // GET /api/members/stats - Get member statistics
   .get(
     "/stats",
     requirePermission("read:members"),
     async (c) => {
-      try {
-        const stats = await Promise.all([
-          // Basic counts
-          prisma.member.count({ where: { isActive: true } }),
-          prisma.member.count({ where: { isActive: false } }),
-          
-          // Gender distribution
-          prisma.member.groupBy({
-            by: ['gender'],
-            _count: true,
-            where: { isActive: true }
-          }),
-          
-          // Age groups (approximate)
-          prisma.member.count({
-            where: {
-              isActive: true,
-              birthDate: {
-                gte: new Date(Date.now() - 18 * 365 * 24 * 60 * 60 * 1000)
-              }
+      const orgContext = getOrganizationContext(c);
+      const stats = await Promise.all([
+        // Basic counts
+        prisma.member.count({ where: { isActive: true, orgId: orgContext.organizationId } }),
+        prisma.member.count({ where: { isActive: false, orgId: orgContext.organizationId } }),
+        
+        // Gender distribution
+        prisma.member.groupBy({
+          by: ['gender'],
+          _count: true,
+          where: { isActive: true, orgId: orgContext.organizationId }
+        }),
+        
+        // Age groups (approximate)
+        prisma.member.count({
+          where: {
+            isActive: true,
+            orgId: orgContext.organizationId,
+            birthDate: {
+              gte: new Date(Date.now() - 18 * 365 * 24 * 60 * 60 * 1000)
             }
-          }),
-          
-          // Home distribution
-          prisma.member.groupBy({
-            by: ['homeId'],
-            _count: true,
-            where: { 
-              isActive: true,
-              homeId: { not: null }
-            }
-          })
-        ]);
+          }
+        }),
+        
+        // Home distribution
+        prisma.member.groupBy({
+          by: ['homeId'],
+          _count: true,
+          where: { 
+            isActive: true,
+            orgId: orgContext.organizationId,
+            homeId: { not: null }
+          }
+        })
+      ]);
 
-        const [activeCount, inactiveCount, genderStats, youthCount, homeStats] = stats;
+      const [activeCount, inactiveCount, genderStats, youthCount, homeStats] = stats;
 
-        return c.json({
-          total: activeCount + inactiveCount,
-          active: activeCount,
-          inactive: inactiveCount,
-          youth: youthCount,
-          adults: activeCount - youthCount,
-          gender: genderStats.reduce((acc, stat) => {
-            acc[stat.gender || 'UNKNOWN'] = stat._count;
-            return acc;
-          }, {} as Record<string, number>),
-          byHome: homeStats.reduce((acc, stat) => {
-            if (stat.homeId) {
-              acc[stat.homeId] = stat._count;
-            }
-            return acc;
-          }, {} as Record<string, number>)
-        });
-
-      } catch (error) {
-        console.error("Get member stats error:", error);
-        return c.json({ error: "Failed to fetch member statistics" }, 500);
-      }
+      return c.json({
+        total: activeCount + inactiveCount,
+        active: activeCount,
+        inactive: inactiveCount,
+        youth: youthCount,
+        adults: activeCount - youthCount,
+        gender: genderStats.reduce((acc, stat) => {
+          acc[stat.gender || 'UNKNOWN'] = stat._count;
+          return acc;
+        }, {} as Record<string, number>),
+        byHome: homeStats.reduce((acc, stat) => {
+          if (stat.homeId) {
+            acc[stat.homeId] = stat._count;
+          }
+          return acc;
+        }, {} as Record<string, number>)
+      });
     }
   );
 

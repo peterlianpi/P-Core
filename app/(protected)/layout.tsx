@@ -22,7 +22,7 @@ const ProtectedLayout = async ({ children }: ProtectedLayoutProps) => {
     image: u.image,
     organization: u.organizations.map((i) => ({
       id: i.organizationId,
-      role: i.role as OrganizationUserRole,
+      role: i.role as OrganizationRole,
       status: i.status,
     })),
   }));

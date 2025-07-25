@@ -402,7 +402,8 @@ model VersionInfo {
   // Timestamps
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
-  
+  deletedAt   DateTime? // Added for soft-delete support
+
   // Created by (SUPERADMIN only)
   createdBy   String   @map("created_by")
   createdByUser User   @relation("VersionCreator", fields: [createdBy], references: [id])
@@ -416,6 +417,102 @@ model VersionInfo {
   @@index([orgId])
   @@map("version_info")
   @@schema("domain")
+}
+
+// --- CHURCH MANAGEMENT MODELS (domain schema) ---
+model Member {
+  id        String   @id @default(cuid())
+  number    Int?
+  name      String
+  birthdate DateTime?
+  gender    String?
+  phone     String?
+  email     String?
+  bloodType String?
+  image     String?
+  fbLink    String?
+  orgId     String // Multi-tenant org ID
+  homeId    String?
+  home      Home? @relation(fields: [homeId], references: [id])
+  roles     MemberRoleAssignment[]
+  familyFrom FamilyRelationship[] @relation("FamilyFrom")
+  familyTo   FamilyRelationship[] @relation("FamilyTo")
+  spouseId  String?
+  spouse    Member?  @relation("SpouseRelation", fields: [spouseId], references: [id])
+  spouseOf  Member[] @relation("SpouseRelation")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Home {
+  id        String   @id @default(cuid())
+  homeNumber String
+  address   String?
+  latitude  Float?
+  longitude Float?
+  orgId     String
+  vengId    String
+  veng      Veng @relation(fields: [vengId], references: [id])
+  members   Member[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Veng {
+  id        String   @id @default(cuid())
+  name      String
+  orgId     String
+  khawkId   String
+  khawk     Khawk @relation(fields: [khawkId], references: [id])
+  homes     Home[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Khawk {
+  id        String   @id @default(cuid())
+  name      String
+  orgId     String
+  vengs     Veng[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FamilyRelationship {
+  id     String @id @default(cuid())
+  fromId String
+  toId   String
+  typeId String
+  from   Member           @relation("FamilyFrom", fields: [fromId], references: [id])
+  to     Member           @relation("FamilyTo", fields: [toId], references: [id])
+  type   RelationshipType @relation(fields: [typeId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([fromId, toId, typeId])
+}
+
+model RelationshipType {
+  id   String @id @default(cuid())
+  name String @unique
+  relationships FamilyRelationship[]
+}
+
+model MemberRole {
+  id   String @id @default(cuid())
+  name String @unique
+  members MemberRoleAssignment[]
+}
+
+model MemberRoleAssignment {
+  id       String        @id @default(cuid())
+  memberId String
+  roleId   String
+  member   Member     @relation(fields: [memberId], references: [id])
+  role     MemberRole  @relation(fields: [roleId], references: [id])
+  assignedAt DateTime @default(now())
+  startedAt DateTime?
+  endedAt   DateTime?
+  @@unique([memberId, roleId])
 }
 
 // ============================================================================

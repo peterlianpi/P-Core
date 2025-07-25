@@ -13,9 +13,10 @@ export async function getVersionById(id: string) {
       description: true,
       createdAt: true,
       updatedAt: true,
+      deletedAt: true,
     },
   });
-  const result = Versions.safeParse(version);
+  const result = Versions.safeParse([version]); // Parse as an array of one
 
   if (!result.success) {
     throw new Error("Invalid data");
@@ -34,6 +35,7 @@ export async function getAllVersions() {
       description: true,
       createdAt: true,
       updatedAt: true,
+      deletedAt: true,
     },
   });
 
