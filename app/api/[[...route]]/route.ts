@@ -31,8 +31,8 @@ import courseStatusLogs from "./courseStatusLogs";
 import schedules from "./schedules";
 import dashboard from "./dashboard";
 import members from "./members";
-import choirs from "./choirs";
-import books from "./books";
+// import choirs from "./choirs";
+// import books from "./books";
 import superadmin from "./superadmin";
 
 const app = new Hono().basePath("/api");
@@ -96,8 +96,8 @@ const protectedRoutes = new Hono()
     .route("/courseStatusLogs", courseStatusLogs)
     .route("/dashboard", dashboard)
     .route("/members", members)
-    .route("/choirs", choirs)
-    .route("/books", books);
+    // .route("/choirs", choirs)
+    // .route("/books", books);
 
 // Mount the protected routes group onto the main app.
 app.route("/", protectedRoutes);

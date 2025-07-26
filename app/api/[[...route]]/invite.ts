@@ -16,12 +16,12 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { sendInviteEmail } from "@/lib/mail/send-invite";
-import { handleError } from "@/lib/error-handler";
-import { 
-  organizationSecurityMiddleware, 
-  getOrganizationContext,
-  requirePermission 
-} from "@/lib/security/tenant";
+// import { handleError } from "@/lib/error-handler";
+// import { 
+//   organizationSecurityMiddleware, 
+//   getOrganizationContext,
+//   requirePermission 
+// } from "@/lib/security/tenant";
 import crypto from "crypto";
 import { prisma } from "@/lib/db/client";
 
@@ -73,10 +73,10 @@ const revokeRequestSchema = z.object({
  * Schema for querying invitations
  * Supports filtering by token or organization ID
  */
-const queryInvitesSchema = z.object({
-  token: z.string().optional(),
-  orgId: z.string().optional(),
-});
+// const queryInvitesSchema = z.object({
+//   token: z.string().optional(),
+//   orgId: z.string().optional(),
+// });
 
 // ============================================================================
 // MAIN APP ROUTER

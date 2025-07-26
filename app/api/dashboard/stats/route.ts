@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/client';
+// import { prisma } from '@/lib/db/client';
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const timeRange = searchParams.get('timeRange') || 'month';
+    // const timeRange = searchParams.get('timeRange') || 'month';
     const organizationType = searchParams.get('organizationType') || 'business';
-    const includeGrowth = searchParams.get('includeGrowth') !== 'false';
+    // const includeGrowth = searchParams.get('includeGrowth') !== 'false';
 
     // Mock stats data for now - in production this would fetch real data
     const baseStats = {

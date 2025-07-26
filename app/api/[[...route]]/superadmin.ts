@@ -4,7 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db/client";
 import { handleError } from "@/lib/error-handler";
 import type { Context } from "hono";
-import type { User, UserRole } from "@prisma/client";
+// import type { User, UserRole } from "@prisma/client";
 import { getUser } from "@/lib/types/hono";
 
 const superadmin = new Hono()

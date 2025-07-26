@@ -23,7 +23,8 @@ import {
   Palette,
   Shield,
   BarChart3,
-  ShieldCheck
+  ShieldCheck,
+  User
 } from "lucide-react";
 
 import { NavUser } from "@/components/admin-panel/nav-user";
@@ -52,6 +53,7 @@ import {
   hasFeaturePermission,
   type FeatureConfig 
 } from "@/features/feature-registry";
+import { OrganizationRole, UserRole } from "@prisma/client";
 
 type Organizations = {
   organization: {
@@ -82,7 +84,7 @@ const FEATURE_ICONS = {
 // Generate navigation items from enabled features
 function generateNavFromFeatures(
   enabledFeatures: FeatureConfig[],
-  userRole: string,
+  userRole: UserRole,
   pathname: string,
   orgType?: string
 ) {
@@ -134,7 +136,7 @@ function generateNavFromFeatures(
   }
 
   // Add superadmin section (SUPERADMIN only)
-  if (userRole === "SUPERADMIN") {
+  if (userRole === UserRole.SUPERADMIN) {
     navItems.push({
       title: "System Admin",
       url: "/superadmin",
@@ -183,9 +185,9 @@ function getFeatureBaseUrl(featureId: string): string {
   }
 }
 
-function getFeatureSubItems(featureId: string, userRole: string, orgType?: string): Array<{title: string, url: string}> {
-  const isAdmin = ["SUPER_ADMIN", "ADMIN"].includes(userRole);
-  const isEditor = ["SUPER_ADMIN", "ADMIN", "EDITOR"].includes(userRole);
+function getFeatureSubItems(featureId: string, userRole: UserRole, orgType?: string): Array<{title: string, url: string}> {
+  const isAdmin = ["SUPERADMIN", "ADMIN"].includes(userRole);
+  const isEditor = ["SUPERADMIN", "ADMIN", "EDITOR"].includes(userRole);
 
   switch (featureId) {
     case "organization-management":
@@ -261,8 +263,8 @@ export function AppSidebarEnhanced({
   // Current organization context
   const currentOrg = organizations.find((org) => org.organization.id === orgId);
   const orgType = currentOrg?.organization?.type;
-  const userRole = user?.role || "VIEWER";
-  const orgRole = currentOrg?.role;
+const userRole = user?.role || UserRole.USER;
+  const orgRole = currentOrg?.role || OrganizationRole.MEMBER;
 
   // Generate navigation from features
   const navMain = generateNavFromFeatures(enabledFeatures, userRole, pathname, orgType);

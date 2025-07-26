@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/client';
-import { getOrganizationContext } from '@/lib/security/tenant';
+// import { prisma } from '@/lib/db/client';
+// import { getOrganizationContext } from '@/lib/security/tenant';
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const timeRange = searchParams.get('timeRange') || 'month';
     const organizationType = searchParams.get('organizationType');
-    const metrics = searchParams.get('metrics');
+    // const metrics = searchParams.get('metrics');
 
     // For now, return mock data until proper authentication is implemented
     const orgType = organizationType || 'business';

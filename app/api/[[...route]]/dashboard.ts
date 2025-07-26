@@ -238,8 +238,8 @@ const dashboard = new Hono()
             availableBooks,
             loanedBooks,
             overdueBooks,
-            totalLoans,
-            activeLoans
+            // totalLoans,
+            // activeLoans
           ] = await Promise.all([
             prisma.book.count({ where: { isActive: true } }),
             prisma.book.count({ where: { isActive: true, available: { gt: 0 } } }),
@@ -538,7 +538,9 @@ const dashboard = new Hono()
     async (c) => {
       try {
         const orgContext = getOrganizationContext(c);
-        const { timeRange = 'month', organizationType, metrics } = c.req.valid("query");
+        const { timeRange = 'month', organizationType, 
+          // metrics 
+        } = c.req.valid("query");
         
         // Get organization info
         const organization = await prisma.organization.findUnique({
@@ -590,7 +592,7 @@ const dashboard = new Hono()
     requirePermission("read:dashboard"),
     async (c) => {
       try {
-        const { limit = "20", offset = "0" } = c.req.valid("query");
+        // const { limit = "20", offset = "0" } = c.req.valid("query");
         
         // Mock activity data
         const activities = [

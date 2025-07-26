@@ -20,8 +20,10 @@
 
 import * as React from "react";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
-import { Palette, Settings, Activity } from "lucide-react";
+// import { motion } from "framer-motion";
+import { 
+  // Palette, Settings,
+   Activity } from "lucide-react";
 
 import { NavUser } from "@/components/admin-panel/nav-user";
 import { NavMain } from "@/components/admin-panel/nav-main";
@@ -38,7 +40,6 @@ import {
   SidebarRail,
   SidebarMenu,
   SidebarMenuItem,
-  SidebarMenuButton,
 } from "@/components/ui/sidebar";
 
 import { useCurrentUser } from "@/hooks/use-current-user";

@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db/client";
 import { handleError } from "@/lib/error-handler";
 import { 
   organizationSecurityMiddleware, 
-  getOrganizationContext,
+  // getOrganizationContext,
   requirePermission 
 } from "@/lib/security/tenant";
 
