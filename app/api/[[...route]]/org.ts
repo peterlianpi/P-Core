@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { OrgSchema, teamFormSchema } from "@/lib/schemas";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
-import { prisma } from "@/lib/db/client";
+import { OrganizationType, prisma } from "@/lib/db/client";
 import { handleError } from "@/lib/error-handler";
 import { 
   organizationSecurityMiddleware, 
@@ -109,7 +109,7 @@ const org = new Hono()
               description: parsed.data.description,
               logoImage: parsed.data.logoImage,
               startedAt: parsed.data.startedAt,
-              type: parsed.data.type,
+              type: parsed.data.type as OrganizationType,
               createdById: userId,
             },
           });
@@ -275,7 +275,7 @@ const org = new Hono()
 
         const updatedOrg = await prisma.organization.update({
           where: { id: orgId },
-          data: parsed.data,
+          data: {...parsed.data,type:parsed.data.type as OrganizationType},
         });
 
         return c.json(updatedOrg);

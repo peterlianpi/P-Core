@@ -21,18 +21,18 @@ import {
   Users, 
   BookOpen, 
   BarChart3, 
-  Globe,
+  // Globe,
   Zap,
-  Star,
+  // Star,
   ArrowRight,
   CheckCircle,
   Github,
   Mail,
   MapPin,
-  Phone,
+  // Phone,
   Sparkles,
   Database,
-  Lock,
+  // Lock,
   Palette
 } from 'lucide-react';
 

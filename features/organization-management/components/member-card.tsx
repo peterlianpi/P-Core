@@ -1,9 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 // components/member-card.tsx
 import { Button } from "@/components/ui/button";
+import { capitalizeFormat } from "@/lib/utils/custom-function";
 import React from "react";
-import { capitalizeFormat } from "../../../helpers/custom-function";
-
+ 
 type MemberCardProps = {
   id: string;
   name: string | null;

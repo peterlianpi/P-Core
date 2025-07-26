@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
-import { prisma } from "@/lib/db/client";
+import { prisma, UserRole } from "@/lib/db/client";
 import { handleError } from "@/lib/error-handler";
 import type { Context } from "hono";
 // import type { User, UserRole } from "@prisma/client";
