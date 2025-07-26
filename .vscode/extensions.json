@@ -1,0 +1,40 @@
+{
+  "recommendations": [
+    // Essential P-Core Development Extensions
+    "ms-vscode.vscode-typescript-next",
+    "bradlc.vscode-tailwindcss",
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "prisma.prisma",
+    
+    // AI & Intelligence (Choose one)
+    "github.copilot",
+    "continue.continue",
+    "codeium.codeium",
+    
+    // Git & Conventional Commits
+    "vivaxy.vscode-conventional-commits",
+    "mhutchie.git-graph",
+    
+    // Next.js & React Development
+    "ms-vscode.vscode-json",
+    "willuke.nextjs",
+    "formulahendry.auto-close-tag",
+    "formulahendry.auto-rename-tag"
+  ],
+  "unwantedRecommendations": [
+    "ms-vscode.vscode-typescript",
+    "hookyqr.beautify",
+    "eamodio.gitlens",
+    "steoates.autoimport-es6-ts",
+    "aaron-bond.better-comments",
+    "streetsidesoftware.code-spell-checker",
+    "ms-vscode.powershell",
+    "ms-vscode-remote.remote-containers",
+    "humao.rest-client",
+    "postman.postman-for-vscode",
+    "cweijan.vscode-database-client2",
+    "ms-vscode.vscode-node-azure-pack",
+    "ms-dotnettools.vscode-dotnet-runtime"
+  ]
+}

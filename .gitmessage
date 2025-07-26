@@ -1,0 +1,20 @@
+# P-Core System Commit Template
+# 
+# Type(scope): Brief description (50 chars max)
+#
+# Longer description (wrap at 72 chars)
+# - What changed and why
+# - Any breaking changes
+# - Related issues/PRs
+#
+# Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore
+# Scopes: dashboard, auth, organization, school-management, students, api, etc.
+#
+# Examples:
+# feat(dashboard): add analytics charts with real-time data
+# fix(auth): resolve session timeout issue in production
+# refactor(api): migrate to new Hono client pattern
+# docs(readme): update deployment instructions
+#
+# Breaking changes: Add "BREAKING CHANGE:" in footer
+# Close issues: Add "Closes #123" in footer
