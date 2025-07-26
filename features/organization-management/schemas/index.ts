@@ -6,7 +6,10 @@ export const organizationSchema = z.object({
   description: z.string().optional(),
   logoImage: z.string().url().optional().or(z.literal('')),
   startedAt: z.date().optional(),
-  type: z.nativeEnum(OrganizationType).optional(),
+  type: z.string()
+    .transform((val) => val?.toUpperCase())
+    .pipe(z.nativeEnum(OrganizationType))
+    .optional(),
 });
 
 export type OrganizationSchema = z.infer<typeof organizationSchema>; 

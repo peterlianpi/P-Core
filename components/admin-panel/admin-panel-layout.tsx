@@ -7,6 +7,7 @@ import { getAllVersions } from "@/actions/features/versions/get-version";
 import AddTeamPage from "./add-team";
 import { getOrganizationsByUserId } from "@/actions/features/org/organization";
 import { currentUser } from "@/lib/auth";
+import { PerformanceMonitorWrapper } from "./performance-monitor-wrapper";
 
 interface ProtectedLayoutProps {
   children: React.ReactNode;
@@ -30,6 +31,7 @@ export async function AdminPanelLayoutPage({ children }: ProtectedLayoutProps) {
           {children}
         </div>
       </SidebarInset>
+      <PerformanceMonitorWrapper />
     </SidebarProvider>
   );
 }

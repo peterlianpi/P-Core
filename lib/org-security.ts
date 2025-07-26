@@ -15,6 +15,7 @@
 import { auth } from "@/auth";
 import { getUserById } from "@/data/user";
 import { userDBPrismaClient } from "./prisma-client/user-prisma-client";
+import type { Context } from "hono";
 
 /**
  * Interface for organization access validation result
@@ -119,7 +120,7 @@ export async function validateOrgAccess(orgId: string): Promise<OrgAccessResult>
  * @param req - Request object (Hono Context)
  * @param next - Next middleware function
  */
-export async function orgSecurityMiddleware(c: any, next: () => Promise<void>) {
+export async function orgSecurityMiddleware(c: Context, next: () => Promise<void>) {
   // Extract orgId from URL parameters
   const orgId = c.req.param('orgId') || c.req.query('orgId');
   
@@ -220,10 +221,10 @@ export function addOrgFilter(orgId: string) {
  * @param descriptor - Method descriptor
  */
 export function requireOrgAccess(orgIdParamIndex: number = 0) {
-  return function (target: any, propertyName: string, descriptor: PropertyDescriptor) {
+  return function (target: object, propertyName: string, descriptor: PropertyDescriptor) {
     const method = descriptor.value;
 
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (...args: unknown[]) {
       const orgId = args[orgIdParamIndex];
       
       if (!orgId) {

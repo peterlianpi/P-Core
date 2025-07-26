@@ -117,10 +117,24 @@ export const teamFormSchema = z.object({
   description: z.string().optional(),
   logoImage: z.string().optional(),
   startedAt: z.date().optional(),
-  type: z
-    .enum(["school", "church", "business", "nonprofit"], {
-      required_error: "Team type is required",
+  type: z.string()
+    .transform((val) => {
+      if (!val) return val;
+      // Handle mapping from lowercase to uppercase
+      const typeMap: Record<string, string> = {
+        'school': 'SCHOOL',
+        'training_center': 'TRAINING_CENTER',
+        'university': 'UNIVERSITY', 
+        'corporate': 'CORPORATE',
+        'church': 'CHURCH',
+        'business': 'CORPORATE', // Map business to corporate
+        'nonprofit': 'OTHER', // Map nonprofit to other
+        'other': 'OTHER'
+      };
+      const upperVal = val.toUpperCase();
+      return typeMap[val.toLowerCase()] || upperVal;
     })
+    .pipe(z.enum(["SCHOOL", "TRAINING_CENTER", "UNIVERSITY", "CORPORATE", "CHURCH", "OTHER"]))
     .optional(),
 });
 
@@ -159,7 +173,7 @@ export const OrganizationsAPISchema = z.array(
       startedAt: z.date().optional().nullable(),
       logoImage: z.string().optional(),
       type: z
-        .enum(["school", "church", "business", "nonprofit"], {
+        .enum(["SCHOOL", "TRAINING_CENTER", "UNIVERSITY", "CORPORATE", "CHURCH", "OTHER"], {
           required_error: "Team type is required",
         })
         .optional(),

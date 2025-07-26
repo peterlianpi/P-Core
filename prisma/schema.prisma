@@ -233,6 +233,7 @@ model Student {
   // Relations
   courses   StudentCourse[]
   purchases Purchase[]
+  bookLoans BookLoan[]
 
   @@unique([email, orgId])
   @@unique([phone, orgId])
@@ -424,95 +425,151 @@ model Member {
   id        String   @id @default(cuid())
   number    Int?
   name      String
-  birthdate DateTime?
-  gender    String?
+  birthdate DateTime? @map("birth_date")
+  gender    Gender?
   phone     String?
   email     String?
-  bloodType String?
+  bloodType String?  @map("blood_type")
   image     String?
-  fbLink    String?
-  orgId     String // Multi-tenant org ID
-  homeId    String?
-  home      Home? @relation(fields: [homeId], references: [id])
+  fbLink    String?  @map("fb_link")
+  isActive  Boolean  @default(true) @map("is_active")
+  
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId     String   @map("org_id")
+  
+  homeId    String?  @map("home_id")
+  home      Home?    @relation(fields: [homeId], references: [id])
   roles     MemberRoleAssignment[]
   familyFrom FamilyRelationship[] @relation("FamilyFrom")
   familyTo   FamilyRelationship[] @relation("FamilyTo")
-  spouseId  String?
+  spouseId  String?  @map("spouse_id")
   spouse    Member?  @relation("SpouseRelation", fields: [spouseId], references: [id])
   spouseOf  Member[] @relation("SpouseRelation")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  choirMemberships ChoirMember[]
+  bookLoans BookLoan[]
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([email, orgId])
+  @@unique([phone, orgId])
+  @@index([orgId])
+  @@index([isActive, orgId])
+  @@index([homeId])
+  @@map("members")
+  @@schema("domain")
 }
 
 model Home {
-  id        String   @id @default(cuid())
-  homeNumber String
-  address   String?
-  latitude  Float?
-  longitude Float?
-  orgId     String
-  vengId    String
-  veng      Veng @relation(fields: [vengId], references: [id])
-  members   Member[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(cuid())
+  homeNumber String   @map("home_number")
+  address    String?
+  latitude   Float?
+  longitude  Float?
+  isActive   Boolean  @default(true) @map("is_active")
+  
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId      String   @map("org_id")
+  
+  vengId     String   @map("veng_id")
+  veng       Veng     @relation(fields: [vengId], references: [id])
+  members    Member[]
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([homeNumber, orgId])
+  @@index([orgId])
+  @@index([vengId])
+  @@map("homes")
+  @@schema("domain")
 }
 
 model Veng {
   id        String   @id @default(cuid())
   name      String
-  orgId     String
-  khawkId   String
-  khawk     Khawk @relation(fields: [khawkId], references: [id])
+  isActive  Boolean  @default(true) @map("is_active")
+  
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId     String   @map("org_id")
+  
+  khawkId   String   @map("khawk_id")
+  khawk     Khawk    @relation(fields: [khawkId], references: [id])
   homes     Home[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([name, orgId])
+  @@index([orgId])
+  @@index([khawkId])
+  @@map("vengs")
+  @@schema("domain")
 }
 
 model Khawk {
   id        String   @id @default(cuid())
   name      String
-  orgId     String
+  isActive  Boolean  @default(true) @map("is_active")
+  
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId     String   @map("org_id")
+  
   vengs     Veng[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([name, orgId])
+  @@index([orgId])
+  @@map("khawks")
+  @@schema("domain")
 }
 
 model FamilyRelationship {
   id     String @id @default(cuid())
-  fromId String
-  toId   String
-  typeId String
+  fromId String @map("from_id")
+  toId   String @map("to_id")
+  typeId String @map("type_id")
   from   Member           @relation("FamilyFrom", fields: [fromId], references: [id])
   to     Member           @relation("FamilyTo", fields: [toId], references: [id])
   type   RelationshipType @relation(fields: [typeId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
   @@unique([fromId, toId, typeId])
+  @@map("family_relationships")
+  @@schema("domain")
 }
 
 model RelationshipType {
   id   String @id @default(cuid())
   name String @unique
   relationships FamilyRelationship[]
+  
+  @@map("relationship_types")
+  @@schema("domain")
 }
 
 model MemberRole {
   id   String @id @default(cuid())
   name String @unique
   members MemberRoleAssignment[]
+  
+  @@map("member_roles")
+  @@schema("domain")
 }
 
 model MemberRoleAssignment {
-  id       String        @id @default(cuid())
-  memberId String
-  roleId   String
-  member   Member     @relation(fields: [memberId], references: [id])
-  role     MemberRole  @relation(fields: [roleId], references: [id])
-  assignedAt DateTime @default(now())
-  startedAt DateTime?
-  endedAt   DateTime?
+  id         String      @id @default(cuid())
+  memberId   String      @map("member_id")
+  roleId     String      @map("role_id")
+  member     Member      @relation(fields: [memberId], references: [id])
+  role       MemberRole  @relation(fields: [roleId], references: [id])
+  assignedAt DateTime    @default(now()) @map("assigned_at")
+  startedAt  DateTime?   @map("started_at")
+  endedAt    DateTime?   @map("ended_at")
+  
   @@unique([memberId, roleId])
+  @@map("member_role_assignments")
+  @@schema("domain")
 }
 
 // ============================================================================
@@ -620,5 +677,173 @@ enum PaymentMethod {
   MOBILE_PAYMENT
   OTHER
 
+  @@schema("domain")
+}
+
+// --- CHOIR MANAGEMENT MODELS ---
+model Choir {
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.Text
+  isActive    Boolean  @default(true) @map("is_active")
+  
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId       String   @map("org_id")
+  
+  members     ChoirMember[]
+  songs       Song[]
+  events      ChoirEvent[]
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([name, orgId])
+  @@index([orgId])
+  @@index([isActive, orgId])
+  @@map("choirs")
+  @@schema("domain")
+}
+
+model ChoirMember {
+  id        String            @id @default(cuid())
+  choirId   String            @map("choir_id")
+  memberId  String            @map("member_id")
+  voice     String?           // Soprano, Alto, Tenor, Bass
+  status    ChoirMemberStatus @default(ACTIVE)
+  joinedAt  DateTime          @default(now()) @map("joined_at")
+  leftAt    DateTime?         @map("left_at")
+  
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId     String            @map("org_id")
+  
+  choir     Choir             @relation(fields: [choirId], references: [id], onDelete: Cascade)
+  member    Member            @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
+
+  @@unique([choirId, memberId, orgId])
+  @@index([orgId])
+  @@index([choirId])
+  @@index([memberId])
+  @@map("choir_members")
+  @@schema("domain")
+}
+
+model Song {
+  id          String   @id @default(cuid())
+  title       String
+  composer    String?
+  key         String?
+  tempo       String?
+  lyrics      String?  @db.Text
+  isActive    Boolean  @default(true) @map("is_active")
+  
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId       String   @map("org_id")
+  
+  choirId     String   @map("choir_id")
+  choir       Choir    @relation(fields: [choirId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([orgId])
+  @@index([choirId])
+  @@map("songs")
+  @@schema("domain")
+}
+
+model ChoirEvent {
+  id          String    @id @default(cuid())
+  title       String
+  description String?   @db.Text
+  eventDate   DateTime  @map("event_date")
+  location    String?
+  
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId       String    @map("org_id")
+  
+  choirId     String    @map("choir_id")
+  choir       Choir     @relation(fields: [choirId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([orgId])
+  @@index([choirId])
+  @@index([eventDate])
+  @@map("choir_events")
+  @@schema("domain")
+}
+
+// --- LIBRARY MANAGEMENT MODELS ---
+model Book {
+  id          String     @id @default(cuid())
+  title       String
+  author      String
+  isbn        String?
+  category    String?
+  publisher   String?
+  publishedAt DateTime?  @map("published_at")
+  description String?    @db.Text
+  total       Int        @default(1)
+  available   Int        @default(1)
+  isActive    Boolean    @default(true) @map("is_active")
+  
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId       String     @map("org_id")
+  
+  loans       BookLoan[]
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  @@unique([isbn, orgId])
+  @@index([orgId])
+  @@index([isActive, orgId])
+  @@map("books")
+  @@schema("domain")
+}
+
+model BookLoan {
+  id         String         @id @default(cuid())
+  bookId     String         @map("book_id")
+  memberId   String         @map("member_id")
+  studentId  String?        @map("student_id")
+  loanDate   DateTime       @default(now()) @map("loan_date")
+  dueDate    DateTime       @map("due_date")
+  returnDate DateTime?      @map("return_date")
+  status     BookLoanStatus @default(ACTIVE)
+  notes      String?        @db.Text
+  
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId      String         @map("org_id")
+  
+  book       Book           @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  member     Member?        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  student    Student?       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdAt  DateTime       @default(now()) @map("created_at")
+  updatedAt  DateTime       @updatedAt @map("updated_at")
+
+  @@index([orgId])
+  @@index([bookId])
+  @@index([memberId])
+  @@index([studentId])
+  @@index([status, orgId])
+  @@map("book_loans")
+  @@schema("domain")
+}
+
+// --- ADDITIONAL ENUMS ---
+enum ChoirMemberStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  
+  @@schema("domain")
+}
+
+enum BookLoanStatus {
+  ACTIVE
+  RETURNED
+  OVERDUE
+  LOST
+  
   @@schema("domain")
 }

@@ -33,6 +33,7 @@ import dashboard from "./dashboard";
 import members from "./members";
 import choirs from "./choirs";
 import books from "./books";
+import superadmin from "./superadmin";
 
 const app = new Hono().basePath("/api");
 
@@ -79,7 +80,8 @@ app
     .route("/org", org)
     .route("/version", versionInfo)
     .route("/feedback", feedback)
-    .route("/invite", invite);
+    .route("/invite", invite)
+    .route("/superadmin", superadmin);
 
 // --- Protected Route Group ---
 // A single group for all routes that require the organization security middleware.

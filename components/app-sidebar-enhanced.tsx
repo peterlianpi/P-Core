@@ -22,7 +22,8 @@ import {
   Activity,
   Palette,
   Shield,
-  BarChart3
+  BarChart3,
+  ShieldCheck
 } from "lucide-react";
 
 import { NavUser } from "@/components/admin-panel/nav-user";
@@ -104,7 +105,8 @@ function generateNavFromFeatures(
     const baseUrl = getFeatureBaseUrl(feature.id);
     const subItems = getFeatureSubItems(feature.id, userRole, orgType);
 
-    if (subItems.length > 0) {
+    // Always add organization-management even if no subitems
+    if (feature.id === "organization-management" || subItems.length > 0) {
       navItems.push({
         title: feature.name,
         url: baseUrl,
@@ -131,6 +133,23 @@ function generateNavFromFeatures(
     });
   }
 
+  // Add superadmin section (SUPERADMIN only)
+  if (userRole === "SUPERADMIN") {
+    navItems.push({
+      title: "System Admin",
+      url: "/superadmin",
+      icon: ShieldCheck,
+      isActive: pathname.startsWith("/superadmin"),
+      items: [
+        { title: "Dashboard", url: "/superadmin" },
+        { title: "Users", url: "/superadmin#users" },
+        { title: "Organizations", url: "/superadmin#organizations" },
+        { title: "Analytics", url: "/superadmin#analytics" },
+        { title: "System Health", url: "/superadmin#system" },
+      ],
+    });
+  }
+
   // Add settings section
   navItems.push({
     title: "Settings",
@@ -154,9 +173,9 @@ function generateNavFromFeatures(
 function getFeatureBaseUrl(featureId: string): string {
   switch (featureId) {
     case "organization-management": return "/organization";
-    case "school-management": return "/school-management";
-    case "church-management": return "/church-management";
-    case "library-management": return "/library-management";
+    case "school-management": return "/school";
+    case "church-management": return "/church";
+    case "library-management": return "/library";
     case "dashboard": return "/dashboard";
     case "site": return "/settings/site";
     case "version": return "/admin/version";
@@ -177,46 +196,46 @@ function getFeatureSubItems(featureId: string, userRole: string, orgType?: strin
 
     case "school-management":
       return [
-        { title: "Overview", url: "/school-management/overview" },
-        { title: "Students", url: "/school-management/students" },
-        { title: "Courses", url: "/school-management/courses" },
+        { title: "Overview", url: "/school/overview" },
+        { title: "Students", url: "/school/students" },
+        { title: "Courses", url: "/school/courses" },
         ...(isEditor ? [
-          { title: "Enrollments", url: "/school-management/enrollments" },
-          { title: "Grades", url: "/school-management/grades" },
-          { title: "Attendance", url: "/school-management/attendance" },
-          { title: "Lesson Books", url: "/school-management/lesson-books" },
+          { title: "Enrollments", url: "/school/enrollments" },
+          { title: "Grades", url: "/school/grades" },
+          { title: "Attendance", url: "/school/attendance" },
+          { title: "Lesson Books", url: "/school/lesson-books" },
         ] : []),
         ...(isAdmin ? [
-          { title: "Schedule", url: "/school-management/schedule" },
-          { title: "Transactions", url: "/school-management/transactions" },
-          { title: "Reports", url: "/school-management/reports" },
+          { title: "Schedule", url: "/school/schedule" },
+          { title: "Transactions", url: "/school/transactions" },
+          { title: "Reports", url: "/school/reports" },
         ] : []),
       ];
 
     case "church-management":
       return [
-        { title: "Members", url: "/church-management/members" },
-        { title: "Choirs", url: "/church-management/choirs" },
+        { title: "Members", url: "/church/members" },
+        { title: "Choirs", url: "/church/choirs" },
         ...(isEditor ? [
-          { title: "Families", url: "/church-management/families" },
-          { title: "Groups", url: "/church-management/groups" },
+          { title: "Families", url: "/church/families" },
+          { title: "Groups", url: "/church/groups" },
         ] : []),
         ...(isAdmin ? [
-          { title: "Add Member", url: "/church-management/members/add" },
-          { title: "Manage Groups", url: "/church-management/groups/manage" },
+          { title: "Add Member", url: "/church/members/add" },
+          { title: "Manage Groups", url: "/church/groups/manage" },
         ] : []),
       ];
 
     case "library-management":
       return [
-        { title: "Books", url: "/library-management/books" },
-        { title: "Loans", url: "/library-management/loans" },
+        { title: "Books", url: "/library/books" },
+        { title: "Loans", url: "/library/loans" },
         ...(isEditor ? [
-          { title: "Inventory", url: "/library-management/inventory" },
+          { title: "Inventory", url: "/library/inventory" },
         ] : []),
         ...(isAdmin ? [
-          { title: "Add Book", url: "/library-management/books/add" },
-          { title: "Reports", url: "/library-management/reports" },
+          { title: "Add Book", url: "/library/books/add" },
+          { title: "Reports", url: "/library/reports" },
         ] : []),
       ];
 

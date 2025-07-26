@@ -2,11 +2,18 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { sendInviteEmail } from "@/lib/mail/send-invite";
+import { handleError } from "@/lib/error-handler";
+import { 
+  organizationSecurityMiddleware, 
+  getOrganizationContext,
+  requirePermission 
+} from "@/lib/security/tenant";
 import crypto from "crypto";
-import { db } from "@/lib/db/client";
+import { userDBPrismaClient as db } from "@/lib/db/client";
 
+// Validation schemas
 const acceptSchema = z.object({
-  token: z.string(),
+  token: z.string().min(1, "Token is required"),
 });
 
 const OrganizationUserRoleEnum = z.enum([
@@ -17,16 +24,21 @@ const OrganizationUserRoleEnum = z.enum([
   "ADMIN",
 ]);
 
-const schema = z.object({
-  email: z.string().email(),
-  organizationId: z.string(),
+const inviteSchema = z.object({
+  email: z.string().email("Invalid email format"),
+  organizationId: z.string().min(1, "Organization ID is required"),
   role: OrganizationUserRoleEnum.optional(),
-  actionType: z.enum(["invite", "resend"]).optional(), // NEW
+  actionType: z.enum(["invite", "resend"]).optional(),
 });
 
-const RevokeRequestSchema = z.object({
-  email: z.string().email(),
-  organizationId: z.string(),
+const revokeRequestSchema = z.object({
+  email: z.string().email("Invalid email format"),
+  organizationId: z.string().min(1, "Organization ID is required"),
+});
+
+const queryInvitesSchema = z.object({
+  token: z.string().optional(),
+  orgId: z.string().optional(),
 });
 
 const app = new Hono()

@@ -140,7 +140,7 @@ function logError(error: any, context?: any, severity: ErrorSeverity = ErrorSeve
  */
 export function handleError(
   c: Context,
-  error: any,
+  error: unknown,
   statusCode: number = 500,
   errorCode: string = 'INTERNAL_ERROR',
   severity: ErrorSeverity = ErrorSeverity.MEDIUM
@@ -156,8 +156,8 @@ export function handleError(
     requestId: c.get('requestId') || undefined,
     // Include additional details only in development
     details: process.env.NODE_ENV === 'development' ? {
-      originalMessage: error?.message,
-      stack: error?.stack?.split('\n').slice(0, 5) // Limit stack trace
+      originalMessage: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack?.split('\n').slice(0, 5) : undefined
     } : undefined
   };
 
@@ -174,7 +174,7 @@ export function handleError(
  * @param validationError - Zod or other validation error
  * @returns JSON validation error response
  */
-export function handleValidationError(c: Context, validationError: any) {
+export function handleValidationError(c: Context, validationError: unknown) {
   const errorMessage = 'Validation failed: Please check your input data';
   
   logError(validationError, c, ErrorSeverity.LOW);
@@ -257,21 +257,22 @@ export function handleRateLimitError(c: Context, retryAfter?: number) {
  * @param dbError - Database error object
  * @returns JSON database error response
  */
-export function handleDatabaseError(c: Context, dbError: any) {
+export function handleDatabaseError(c: Context, dbError: unknown) {
   let errorMessage = 'Database operation failed';
   let errorCode = 'DATABASE_ERROR';
   let statusCode = 500;
   
   // Handle specific Prisma error types
-  if (dbError?.code === 'P2002') {
+  const prismaError = dbError as { code?: string };
+  if (prismaError?.code === 'P2002') {
     errorMessage = 'A record with this information already exists';
     errorCode = 'DUPLICATE_ERROR';
     statusCode = 409;
-  } else if (dbError?.code === 'P2025') {
+  } else if (prismaError?.code === 'P2025') {
     errorMessage = 'The requested record was not found';
     errorCode = 'NOT_FOUND_ERROR';
     statusCode = 404;
-  } else if (dbError?.code === 'P2003') {
+  } else if (prismaError?.code === 'P2003') {
     errorMessage = 'This operation would violate a data constraint';
     errorCode = 'CONSTRAINT_ERROR';
     statusCode = 400;

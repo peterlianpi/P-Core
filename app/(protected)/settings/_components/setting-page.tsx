@@ -13,6 +13,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -94,21 +95,47 @@ const SettingsComponentPage = ({ organizations }: SettingsComponentPageProps) =>
                 </FormItem>
               )}
             />
-            {user?.isOAuth === false && (
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="email" placeholder="your.email@example.com" disabled />
-                    </FormControl>
-                    <FormDescription>Your email is managed by your OAuth provider and cannot be changed here.</FormDescription>
-                  </FormItem>
-                )}
-              />
-            )}
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input 
+                      {...field} 
+                      type="email" 
+                      placeholder="your.email@example.com" 
+                      disabled={user?.isOAuth || true} 
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    {user?.isOAuth 
+                      ? "Your email is managed by your OAuth provider and cannot be changed here."
+                      : "Email changes require additional verification (currently disabled)."
+                    }
+                  </FormDescription>
+                </FormItem>
+              )}
+            />
+            
+            {/* User Role Display */}
+            <div className="space-y-2">
+              <FormLabel>Current Role</FormLabel>
+              <div className="flex items-center space-x-2">
+                <Badge 
+                  variant={
+                    user?.role === "SUPERADMIN" ? "destructive" : 
+                    user?.role === "ADMIN" ? "default" : "secondary"
+                  }
+                >
+                  {user?.role || 'USER'}
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  Your system role determines your access level
+                </span>
+              </div>
+            </div>
           </CardContent>
         </Card>
 

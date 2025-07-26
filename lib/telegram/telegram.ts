@@ -74,7 +74,7 @@ export async function sendTelegramLog({
   title: string;
   message: string;
   type?: LogType;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }) {
   const timestamp = new Date().toISOString();
   const logId = `LOG_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -112,7 +112,14 @@ export async function sendTelegramLog({
 
     // Enhanced database logging with better error handling
     try {
-      const logData: any = {
+      const logData: {
+        name: string;
+        message: string;
+        updatedBy: string;
+        type?: LogType;
+        date: Date;
+        orgId?: string;
+      } = {
         name: title.substring(0, 100), // Ensure title fits DB constraints
         message: message.substring(0, 1000), // Prevent overly long messages
         updatedBy: userId || "SYSTEM",
@@ -146,10 +153,11 @@ export async function sendTelegramLog({
         type: savedLog.type,
       });
 
-    } catch (dbError: any) {
+    } catch (dbError: unknown) {
+      const error = dbError as Error & { code?: string };
       console.error(`❌ Database logging failed:`, {
-        error: dbError.message,
-        code: dbError.code,
+        error: error.message,
+        code: error.code,
         userId,
         orgId,
         title: title.substring(0, 50),
@@ -197,16 +205,17 @@ export async function sendTelegramLog({
 
           return { success: true, settingIndex: index, messageId: result.message_id };
 
-        } catch (telegramError: any) {
+        } catch (telegramError: unknown) {
+          const error = telegramError as Error;
           console.error(`❌ Telegram send failed for setting ${index}:`, {
-            error: telegramError.message,
+            error: error.message,
             chatId: setting.chatId,
             logId,
-            isTimeout: telegramError.name === 'TimeoutError',
-            isNetworkError: telegramError.name === 'TypeError',
+            isTimeout: error.name === 'TimeoutError',
+            isNetworkError: error.name === 'TypeError',
           });
           
-          return { success: false, settingIndex: index, error: telegramError.message };
+          return { success: false, settingIndex: index, error: error.message };
         }
       })
     );
@@ -235,10 +244,11 @@ export async function sendTelegramLog({
       });
     }
 
-  } catch (globalError: any) {
+  } catch (globalError: unknown) {
+    const error = globalError as Error;
     console.error(`💥 Critical error in sendTelegramLog:`, {
-      error: globalError.message,
-      stack: globalError.stack,
+      error: error.message,
+      stack: error.stack,
       logId,
       title: title.substring(0, 50),
       hasUserId: !!userId,
@@ -251,7 +261,7 @@ export async function sendTelegramLog({
 }
 
 // Helper function to format Telegram messages consistently
-function formatTelegramMessage(title: string, message: string, context: any): string {
+function formatTelegramMessage(title: string, message: string, context: Record<string, unknown>): string {
   const emoji = getTypeEmoji(context.type);
   const timestamp = new Date().toLocaleString();
   

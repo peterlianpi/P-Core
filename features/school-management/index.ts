@@ -3,7 +3,6 @@
 
 // Re-export from features directory
 export * from "./features/students";
-export * from "./features/students-management";
 export * from "./features/courses";
 export * from "./features/schedule";
 export * from "./features/lesson-books";
@@ -24,7 +23,6 @@ const SchoolManagementFeature = {
   category: "domain" as const,
   features: [
     "students",
-    "students-management",
     "courses",
     "schedule", 
     "lesson-books",

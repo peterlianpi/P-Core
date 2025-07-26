@@ -67,7 +67,7 @@ const dashboard = new Hono()
           }
         });
 
-        const results: any = { organization };
+        const results: Record<string, unknown> = { organization };
 
         // Student Statistics
         if (includeStudents === "true") {
@@ -519,6 +519,157 @@ const dashboard = new Hono()
       } catch (error) {
         console.error("Dashboard error:", error);
         return c.json({ error: "Failed to fetch dashboard data" }, 500);
+      }
+    }
+  )
+
+  // GET /api/dashboard/analytics - Get analytics data for charts
+  .get(
+    "/analytics",
+    zValidator(
+      "query",
+      z.object({
+        timeRange: z.enum(['week', 'month', 'quarter', 'year']).optional(),
+        organizationType: z.string().optional(),
+        metrics: z.string().optional(), // comma-separated list
+      })
+    ),
+    requirePermission("read:dashboard"),
+    async (c) => {
+      try {
+        const orgContext = getOrganizationContext(c);
+        const { timeRange = 'month', organizationType, metrics } = c.req.valid("query");
+        
+        // Get organization info
+        const organization = await prisma.organization.findUnique({
+          where: { id: orgContext.organizationId },
+          select: { type: true }
+        });
+
+        const orgType = organizationType || organization?.type || 'business';
+
+        // Mock data for now - replace with real queries later
+        const data = {
+          timeRange,
+          organizationType: orgType,
+          metrics: {
+            ...(orgType === 'school' && {
+              enrollments: Array.from({ length: 6 }, (_, i) => ({
+                month: new Date(Date.now() - i * 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short' }),
+                value: Math.floor(Math.random() * 50) + 10
+              })),
+              revenue: Array.from({ length: 6 }, (_, i) => ({
+                month: new Date(Date.now() - i * 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short' }),
+                value: Math.floor(Math.random() * 10000) + 1000
+              }))
+            })
+          }
+        };
+
+        return c.json({ data });
+
+      } catch (error) {
+        console.error("Dashboard analytics error:", error);
+        return c.json({ error: "Failed to fetch analytics data" }, 500);
+      }
+    }
+  )
+
+  // GET /api/dashboard/activity - Get recent activity
+  .get(
+    "/activity",
+    zValidator(
+      "query",
+      z.object({
+        limit: z.string().optional(),
+        offset: z.string().optional(),
+        types: z.string().optional(),
+        timeRange: z.enum(['today', 'week', 'month']).optional(),
+      })
+    ),
+    requirePermission("read:dashboard"),
+    async (c) => {
+      try {
+        const { limit = "20", offset = "0" } = c.req.valid("query");
+        
+        // Mock activity data
+        const activities = [
+          {
+            id: '1',
+            type: 'enrollment',
+            title: 'New Student Enrollment',
+            description: 'Student enrolled in course',
+            user: { name: 'Admin User' },
+            timestamp: new Date(),
+            metadata: {}
+          }
+        ];
+
+        return c.json({
+          data: {
+            activities,
+            total: activities.length,
+            hasMore: false
+          }
+        });
+
+      } catch (error) {
+        console.error("Dashboard activity error:", error);
+        return c.json({ error: "Failed to fetch activity data" }, 500);
+      }
+    }
+  )
+
+  // GET /api/dashboard/stats - Get dashboard statistics
+  .get(
+    "/stats",
+    zValidator(
+      "query",
+      z.object({
+        timeRange: z.enum(['today', 'week', 'month', 'quarter', 'year']).optional(),
+        organizationType: z.string().optional(),
+        includeGrowth: z.string().optional(),
+      })
+    ),
+    requirePermission("read:dashboard"),
+    async (c) => {
+      try {
+        const orgContext = getOrganizationContext(c);
+        const { organizationType } = c.req.valid("query");
+
+        // Get organization info
+        const organization = await prisma.organization.findUnique({
+          where: { id: orgContext.organizationId },
+          select: { type: true }
+        });
+
+        const orgType = organizationType || organization?.type || 'business';
+
+        // Get basic stats
+        const [totalStudents, totalMembers] = await Promise.all([
+          prisma.student.count({ where: { orgId: orgContext.organizationId, isActive: true } }),
+          prisma.member.count({ where: { orgId: orgContext.organizationId, isActive: true } })
+        ]);
+
+        const stats = {
+          totalUsers: totalStudents + totalMembers,
+          totalRevenue: 0,
+          activeMembers: totalMembers,
+          completionRate: 85,
+          organizationType: orgType,
+          periodGrowth: {
+            users: 12,
+            revenue: 8,
+            members: 5,
+            completion: 3
+          }
+        };
+
+        return c.json({ data: stats });
+
+      } catch (error) {
+        console.error("Dashboard stats error:", error);
+        return c.json({ error: "Failed to fetch stats data" }, 500);
       }
     }
   );

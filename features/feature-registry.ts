@@ -35,7 +35,7 @@ export const DOMAIN_FEATURES: Record<string, DomainFeatureConfig> = {
     category: "domain",
     orgSpecific: true,
     version: "1.0.0",
-    requiredRole: "ADMIN",
+    requiredRole: "VIEWER",
     component: () => import("./organization-management"),
     routes: ["/organization", "/organization/manage-member"],
   },

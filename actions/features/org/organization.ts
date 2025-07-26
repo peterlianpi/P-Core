@@ -5,8 +5,9 @@ import { z } from "zod";
 import { prisma } from "@/lib/db/client";
 import { trackOrganizationCreatedBy } from "@/actions/auth/track-system-activities";
 import { organizationSchema } from "@/features/organization-management/schemas";
-import { ApiError, handleApiError } from "@/lib/utils/api-errors";
+import { ApiError, handleApiError, handleError } from "@/lib/utils/api-errors";
 import { OrganizationsAPISchema } from "@/schemas";
+import { OrganizationType } from "@prisma/client";
 
 export async function getOrganizationsByUserId(userId: string | undefined) {
   if (!userId) {
@@ -99,9 +100,15 @@ export async function updateOrganization({
   };
 }) {
   try {
+    // Transform the type to the correct enum if provided
+    const updateData = {
+      ...value,
+      type: value.type ? (value.type.toUpperCase() as OrganizationType) : undefined,
+    };
+
     const updated = await prisma.organization.update({
       where: { id: organizationId },
-      data: { ...value },
+      data: updateData,
     });
     revalidatePath("/organization"); // Optional: revalidate page
 

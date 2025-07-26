@@ -24,11 +24,7 @@ import { motion } from "framer-motion";
 import { 
   Users, 
   GraduationCap, 
-  BookOpen, 
-  DollarSign,
   TrendingUp,
-  Calendar,
-  Award,
   Activity,
   BarChart3,
   PieChart,
@@ -38,10 +34,9 @@ import {
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { DataLoadingState, CardSkeleton } from "@/components/ui/modern-loading";
+import { CardSkeleton } from "@/components/ui/modern-loading";
 import { ErrorBoundaryWrapper } from "@/components/error/error-boundary";
 
 import { useSession } from "next-auth/react";
@@ -71,16 +66,25 @@ const itemVariants = {
   }
 };
 
+interface OrganizationWithRole {
+  organization: {
+    id: string;
+    name: string;
+    type: string;
+  };
+  role: string;
+}
+
 const DashboardPage = () => {
   const { data: session } = useSession();
-  const [organizations, setOrganizations] = useState<any[]>([]);
+  const [organizations, setOrganizations] = useState<OrganizationWithRole[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchOrganizations = async () => {
       try {
         if (session?.user?.id) {
-          const result: any = await organizationsApi.getByUserId();
+          const result = await organizationsApi.getByUserId() as { data: OrganizationWithRole[] };
           setOrganizations(result.data || []);
         }
       } catch (error) {
@@ -95,7 +99,7 @@ const DashboardPage = () => {
 
   // Get current organization context
   const currentOrgId = session?.user?.defaultOrgId;
-  const currentOrg = organizations.find((org: any) => org.organization.id === currentOrgId);
+  const currentOrg = organizations.find((org) => org.organization.id === currentOrgId);
   const orgType = currentOrg?.organization?.type;
   const userRole = currentOrg?.role;
 

@@ -41,7 +41,7 @@ export class ApiClient {
     return response.json()
   }
 
-  async post<T>(endpoint: string, data?: any): Promise<T> {
+  async post<T>(endpoint: string, data?: unknown): Promise<T> {
     const response = await fetch(this.baseUrl + endpoint, {
       method: 'POST',
       headers: {
@@ -57,7 +57,7 @@ export class ApiClient {
     return response.json()
   }
 
-  async patch<T>(endpoint: string, data?: any): Promise<T> {
+  async patch<T>(endpoint: string, data?: unknown): Promise<T> {
     const response = await fetch(this.baseUrl + endpoint, {
       method: 'PATCH',
       headers: {
@@ -129,16 +129,16 @@ export const studentsApi = {
   search: (params: Record<string, string>) =>
     apiClient.get('/students/search', params),
   
-  create: (data: any) =>
+  create: (data: Record<string, unknown>) =>
     apiClient.post('/students', data),
   
-  update: (id: string, data: any) =>
+  update: (id: string, data: Record<string, unknown>) =>
     apiClient.patch(`/students/${id}`, data),
   
   delete: (id: string) =>
     apiClient.delete(`/students/${id}`),
   
-  bulkCreate: (data: any) =>
+  bulkCreate: (data: Record<string, unknown>[]) =>
     apiClient.post('/students/bulk-create', data),
 }
 
