@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/form";
 import { DatePicker } from "@/components/date-picker";
 import { useEffect, useState } from "react";
-import { teamFormSchema } from "@/schemas";
+import { teamFormSchema } from "@/lib/schemas";
 import { useData } from "@/providers/data-provider";
 import CustomUploadImagePage from "@/features/system/image-upload/components/upload-image";
 import { useIsOrgOwner } from "@/hooks/use-current-team-role";

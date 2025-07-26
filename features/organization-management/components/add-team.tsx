@@ -3,7 +3,7 @@
 
 import { toast } from "sonner";
 import { z } from "zod";
-import { teamFormSchema } from "@/schemas";
+import { teamFormSchema } from "@/lib/schemas";
 import { useCreateOrg } from "../api/use-create-org";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { TeamForm } from "./team-form";

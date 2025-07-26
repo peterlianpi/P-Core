@@ -1,6 +1,6 @@
 "use server";
 import * as z from "zod";
-import { NewPasswordSchema } from "@/schemas";
+import { NewPasswordSchema } from "@/lib/schemas";
 import { getPasswordResetTokenByToken } from "@/data/password-reset-token";
 import { getUserByEmail } from "@/data/user";
 import bcrypt from "bcryptjs";

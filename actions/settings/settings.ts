@@ -4,7 +4,7 @@ import { getUserByEmail, getUserById } from "@/data/user";
 import { currentUser } from "@/lib/auth";
 
 import { generateVerificationToken } from "@/lib/tokens";
-import { SettingsSchema } from "@/schemas";
+import { SettingsSchema } from "@/lib/schemas";
 import * as z from "zod";
 import bcrypt from "bcryptjs";
 import { uploadImageSettings } from "@/data/upload-image-cloudinary";

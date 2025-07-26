@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db/client";
 import { trackOrganizationCreatedBy } from "@/actions/auth/track-system-activities";
 import { organizationSchema } from "@/features/organization-management/schemas";
 import { ApiError, handleApiError, handleError } from "@/lib/utils/api-errors";
-import { OrganizationsAPISchema } from "@/schemas";
+import { OrganizationsAPISchema } from "@/lib/schemas";
 import { OrganizationType } from "@prisma/client";
 
 export async function getOrganizationsByUserId(userId: string | undefined) {

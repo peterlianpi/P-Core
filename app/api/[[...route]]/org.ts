@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { OrgSchema, teamFormSchema } from "@/schemas";
+import { OrgSchema, teamFormSchema } from "@/lib/schemas";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { prisma } from "@/lib/db/client";

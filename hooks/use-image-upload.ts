@@ -7,7 +7,7 @@ import type {
   ImageListInput,
   ImageOwnerType,
   ImageFeature 
-} from "@/schemas/image-schemas";
+} from "@/lib/schemas/image-schemas";
 
 // API functions for image operations
 async function uploadImage(data: ImageUploadInput) {

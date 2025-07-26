@@ -1,6 +1,6 @@
 "use server";
 
-import { signIn } from "@/auth";
+import { signIn } from "@/lib/auth/auth";
 import { getTwoFactorConfirmationByUserId } from "@/data/two-factor-confirmation";
 import { getTwoFactorTokenByEmail } from "@/data/two-factor-token";
 import { getUserByEmail } from "@/data/user";
@@ -13,8 +13,8 @@ import {
   generateVerificationToken,
   verifyToken,
 } from "@/lib/tokens";
-import { DEFAULT_LOGIN_REDIRECT } from "@/routes";
-import { LoginSchema } from "@/schemas";
+import { DEFAULT_LOGIN_REDIRECT } from "@/lib/auth/routes";
+import { LoginSchema } from "@/lib/schemas";
 import { AuthError } from "next-auth";
 import * as z from "zod";
 import { trackLogin } from "./track-system-activities";

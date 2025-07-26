@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/db/client";
-import { Versions } from "@/schemas";
+import { Versions } from "@/lib/schemas";
 
 export async function getVersionById(id: string) {
   const version = await prisma.versionInfo.findUnique({

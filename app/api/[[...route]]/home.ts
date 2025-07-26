@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { HomeSchema } from "../types/schemas";
+import { HomeSchema } from "@/lib/schemas";
 import { prisma } from "@/lib/db/client";
 
 const homeApi = new Hono();

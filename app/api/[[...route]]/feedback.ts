@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
-import { feedbackSchema, feedbackUpdateSchema } from "@/schemas";
+import { feedbackSchema, feedbackUpdateSchema } from "@/lib/schemas";
 import { handleError } from "@/lib/error-handler";
 import { 
   organizationSecurityMiddleware, 

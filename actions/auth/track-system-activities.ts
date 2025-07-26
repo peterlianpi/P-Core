@@ -1,8 +1,9 @@
 "use server";
-import { loginDate } from "@/helpers/date-format";
+
 import { currentUser } from "@/lib/auth";
 import { logUserActivity } from "@/lib/logging/log-user-activity";
 import { notifySuperAdmins } from "@/lib/notification/notify-superadmin";
+import { loginDate } from "@/lib/utils/date-format";
 import { UserRole } from "@prisma/client";
 
 type UserEvent = { value: string };

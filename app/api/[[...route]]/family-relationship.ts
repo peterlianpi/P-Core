@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { FamilyRelationshipSchema } from "../types/schemas";
+import { FamilyRelationshipSchema } from "@/lib/schemas";
 import { prisma } from "@/lib/db/client";
 
 const familyRelationshipApi = new Hono();

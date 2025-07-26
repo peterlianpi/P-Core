@@ -12,7 +12,7 @@
  * - Reduces risk of data breaches in multi-tenant environments
  */
 
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth/auth";
 import { getUserById } from "@/data/user";
 import { prisma } from "./prisma-client/user-prisma-client";
 import type { Context } from "hono";

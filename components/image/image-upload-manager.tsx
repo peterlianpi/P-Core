@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Trash2, Upload, Eye, Loader2, Image as ImageIcon } from "lucide-react";
 import { useFileImageUpload, useEntityImages, useImageDelete } from "@/hooks/use-image-upload";
-import type { ImageOwnerType, ImageFeature } from "@/schemas/image-schemas";
+import type { ImageOwnerType, ImageFeature } from "@/lib/schemas/image-schemas";
 
 interface ImageUploadManagerProps {
   ownerType: ImageOwnerType;

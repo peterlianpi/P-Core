@@ -4,7 +4,8 @@
 
 import { Context } from "hono";
 import { prisma } from "@/lib/db/client";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth/auth";
+import { ContentfulStatusCode } from "hono/utils/http-status";
 
 // Types for organization context
 export interface OrganizationContext {
@@ -141,7 +142,7 @@ export async function validateOrganizationAccess(
         organizationId,
         userId,
         role: "SUPERADMIN",
-        permissions: ROLE_PERMISSIONS.SUPERADMIN,
+        permissions: [...ROLE_PERMISSIONS.SUPERADMIN],
       };
     }
 
@@ -186,7 +187,7 @@ export async function validateOrganizationAccess(
       organizationId,
       userId,
       role: userOrg.role,
-      permissions,
+      permissions: [...permissions],
     };
   } catch (error) {
     if (error instanceof TenantSecurityError) {
@@ -279,7 +280,7 @@ export async function organizationSecurityMiddleware(
     if (error instanceof TenantSecurityError) {
       return c.json(
         { error: error.message, code: error.code },
-        error.statusCode
+        error.statusCode as ContentfulStatusCode
       );
     }
 
@@ -418,5 +419,4 @@ export function requireSuperadmin() {
   };
 }
 // Export types and utilities
-export type { OrganizationContext };
 export { ROLE_HIERARCHY, ROLE_PERMISSIONS };

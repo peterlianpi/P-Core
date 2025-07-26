@@ -1,5 +1,5 @@
 // Import the authentication module
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth/auth";
 
 /**
  * Fetches the current user from the authentication session.

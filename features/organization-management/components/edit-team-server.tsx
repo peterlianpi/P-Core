@@ -2,7 +2,7 @@
 
 import { toast } from "sonner";
 import { z } from "zod";
-import { teamFormSchema } from "@/schemas";
+import { teamFormSchema } from "@/lib/schemas";
 import { TeamForm } from "./team-form";
 import { useData } from "@/providers/data-provider";
 import { updateOrganization } from "@/actions/features/org/organization";

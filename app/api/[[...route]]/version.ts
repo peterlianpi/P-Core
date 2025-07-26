@@ -11,6 +11,11 @@ const createVersionSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   status: z.enum(["DEVELOPMENT", "TESTING", "STAGING", "PRODUCTION", "DEPRECATED"]).default("DEVELOPMENT"),
+  releaseDate: z.date({
+    required_error: "Release date is required",
+    invalid_type_error: "Release date must be a valid date",
+  }),
+  createdBy: z.string().min(1, "Created by is required"),
 });
 
 const updateVersionSchema = createVersionSchema.partial();
@@ -90,7 +95,7 @@ const app = new Hono()
         }
 
         const data = await prisma.versionInfo.create({
-          data: values,
+          data: {...values},
         });
 
         return c.json(data, 201);

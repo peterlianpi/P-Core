@@ -17,7 +17,7 @@ import { Button } from "../ui/button";
 import { FormError } from "../form-error";
 import { FormSuccess } from "../form-success";
 import { useState, useTransition } from "react";
-import { NewPasswordSchema } from "@/schemas";
+import { NewPasswordSchema } from "@/lib/schemas";
 import { useSearchParams } from "next/navigation";
 import { newPassword } from "@/actions/auth/new-password";
 

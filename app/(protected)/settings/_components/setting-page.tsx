@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 
 import { settings } from "@/actions/settings/settings";
-import { SettingsSchema } from "@/schemas";
+import { SettingsSchema } from "@/lib/schemas";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
 import { Card, CardHeader, CardContent } from "@/components/ui/card";

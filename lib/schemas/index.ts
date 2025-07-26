@@ -1,363 +1,352 @@
-/**
- * ENHANCED SCHEMA SYSTEM: Centralized Validation & Type Safety
- * 
- * This module provides:
- * 1. Centralized schema definitions for consistency
- * 2. Enhanced validation with better error messages
- * 3. Type-safe schemas with TypeScript integration
- * 4. Reusable validation patterns
- * 5. Performance optimized validation
- * 
- * WHY THIS IS NEEDED:
- * - Ensures data consistency across the application
- * - Provides better user experience with clear error messages
- * - Prevents security vulnerabilities through strict validation
- * - Reduces code duplication with reusable schemas
- * - Maintains type safety throughout the system
- */
-
 import { UserRole } from "@prisma/client";
 import * as z from "zod";
 
-// ============================================================================
-// COMMON VALIDATION PATTERNS
-// ============================================================================
-
 /**
- * Common validation patterns for reuse across schemas
+ * Schema for validating user settings updates.
+ * Includes validations for optional fields like name, email, and passwords.
  */
-export const CommonPatterns = {
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(8, { message: "Password must be at least 8 characters" })
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, { 
-      message: "Password must contain at least one uppercase letter, one lowercase letter, and one number" 
-    }),
-  strongPassword: z.string().min(12, { message: "Password must be at least 12 characters" })
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/, {
-      message: "Password must contain uppercase, lowercase, number, and special character"
-    }),
-  phoneNumber: z.string().regex(/^\+?[\d\s\-\(\)]+$/, { 
-    message: "Please enter a valid phone number" 
-  }).optional(),
-  url: z.string().url({ message: "Please enter a valid URL" }).optional(),
-  orgId: z.string().cuid2({ message: "Invalid organization ID" }),
-  userId: z.string().cuid2({ message: "Invalid user ID" }),
-  name: z.string().min(1, { message: "Name is required" })
-    .max(100, { message: "Name must be less than 100 characters" })
-    .regex(/^[a-zA-Z\s\-'\.]+$/, { message: "Name contains invalid characters" }),
-};
 
-// ============================================================================
-// AUTHENTICATION SCHEMAS
-// ============================================================================
-
-/**
- * Enhanced login schema with security improvements
- */
-export const LoginSchema = z.object({
-  email: CommonPatterns.email,
-  password: z.string().min(1, { message: "Password is required" }),
-  code: z.string().regex(/^\d{6}$/, { message: "2FA code must be 6 digits" }).optional(),
-  rememberMe: z.boolean().default(false),
-});
+export const SettingsSchema = z
+  .object({
+    name: z.optional(z.string()), // Optional name field
+    isTwoFactorEnabled: z.optional(z.boolean()), // Optional 2FA flag
+    role: z.enum([UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.USER]), // Must be one of the defined user roles
+    telegramChatId: z.optional(z.string()), // Optional Telegram chat ID
+    telegramBotToken: z.optional(z.string()), // Optional Telegram bot token
+    email: z.optional(z.string().email()), // Optional email field with email validation
+    password: z.optional(z.string().min(6)), // Optional current password with a minimum length of 6
+    newPassword: z.optional(z.string().min(6)), // Optional new password with a minimum length of 6
+    image:
+      typeof window === "undefined"
+        ? z.any()
+        : z.instanceof(FileList).optional(),
+    defaultOrgId: z.string().optional(),
+  })
+  // Ensure newPassword is required if password is provided
+  .refine((data) => !(data.password && !data.newPassword), {
+    message: "New password is required!",
+    path: ["newPassword"],
+  })
+  // Ensure password is required if newPassword is provided
+  .refine((data) => !(data.newPassword && !data.password), {
+    message: "Password is required!",
+    path: ["password"],
+  });
 
 /**
- * Enhanced registration schema with stronger validation
- */
-export const RegisterSchema = z.object({
-  email: CommonPatterns.email,
-  password: CommonPatterns.password,
-  name: CommonPatterns.name,
-  acceptTerms: z.boolean().refine(val => val === true, {
-    message: "You must accept the terms and conditions"
-  }),
-});
-
-/**
- * Password reset schema
- */
-export const ResetSchema = z.object({
-  email: CommonPatterns.email,
-});
-
-/**
- * New password schema with confirmation
+ * Schema for validating new password input.
+ * Ensures the password is at least 6 characters long.
  */
 export const NewPasswordSchema = z.object({
-  password: CommonPatterns.password,
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
+  password: z.string().min(6, {
+    message: "Minimum 6 characters required",
+  }),
 });
 
 /**
- * Enhanced user settings schema
+ * Schema for resetting a user's password.
+ * Ensures the email field is valid.
  */
-export const SettingsSchema = z.object({
-  name: CommonPatterns.name.optional(),
-  email: CommonPatterns.email.optional(),
-  phone: CommonPatterns.phoneNumber,
-  isTwoFactorEnabled: z.boolean().optional(),
-  role: z.enum([
-    UserRole.SUPERADMIN,
-    UserRole.ADMIN,
-    UserRole.MANAGER,
-    UserRole.USER,
-  ]).optional(),
-  telegramChatId: z.string().optional(),
-  telegramBotToken: z.string().optional(),
-  currentPassword: z.string().min(1).optional(),
-  newPassword: CommonPatterns.password.optional(),
-  confirmPassword: z.string().optional(),
-  image: typeof window === "undefined" ? z.any() : z.instanceof(FileList).optional(),
-  defaultOrgId: z.string().optional(),
-  theme: z.string().optional(),
-  language: z.enum(['en', 'my', 'zh']).default('en'),
-  timezone: z.string().default('Asia/Yangon'),
-}).refine((data) => {
-  if (data.newPassword && !data.currentPassword) {
-    return false;
-  }
-  return true;
-}, {
-  message: "Current password is required to set new password",
-  path: ["currentPassword"],
-}).refine((data) => {
-  if (data.newPassword && data.newPassword !== data.confirmPassword) {
-    return false;
-  }
-  return true;
-}, {
-  message: "New passwords don't match",
-  path: ["confirmPassword"],
+export const ResetSchema = z.object({
+  email: z.string().email({
+    message: "Email is required",
+  }),
 });
 
-// ============================================================================
-// ORGANIZATION SCHEMAS
-// ============================================================================
+/**
+ * Schema for validating login input.
+ * Requires email and password fields, with an optional 2FA code.
+ */
+export const LoginSchema = z.object({
+  email: z.string().email({
+    message: "Email is required",
+  }),
+  password: z.string().min(1, {
+    message: "Password is required",
+  }),
+  code: z.optional(z.string()), // Optional 2FA code
+});
 
 /**
- * Enhanced organization schema
+ * Schema for validating user registration input.
+ * Requires email, password, and name fields.
  */
+export const RegisterSchema = z.object({
+  email: z.string().email({
+    message: "Email is required",
+  }),
+  password: z.string().min(6, {
+    message: "Minimum 6 characters required",
+  }),
+  name: z.string().min(1, {
+    message: "Name is required",
+  }),
+});
+
+// Organization Schema
 export const OrganizationSchema = z.object({
-  id: z.string().cuid2().optional(),
-  name: z.string().min(2, { message: "Organization name must be at least 2 characters" })
-    .max(100, { message: "Organization name must be less than 100 characters" }),
-  description: z.string().max(500, { message: "Description must be less than 500 characters" }).optional(),
-  type: z.enum(["school", "church", "business", "nonprofit"], {
-    required_error: "Organization type is required",
-  }),
-  logoImage: z.string().url({ message: "Logo must be a valid URL" }).optional(),
-  website: CommonPatterns.url,
-  email: CommonPatterns.email.optional(),
-  phone: CommonPatterns.phoneNumber,
-  address: z.string().max(200, { message: "Address must be less than 200 characters" }).optional(),
+  id: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
   startedAt: z.date().optional(),
-  settings: z.record(z.any()).optional(),
-  isActive: z.boolean().default(true),
+  logoImage: z.string().optional(),
+  type: z.string().optional(),
 });
 
-/**
- * Organization membership schema
- */
+// UserOrganization Schema (Join Table)
 export const UserOrganizationSchema = z.object({
-  userId: CommonPatterns.userId,
-  organizationId: CommonPatterns.orgId,
-  role: z.enum(["OWNER", "ADMIN", "ACCOUNTANT", "OFFICE_STAFF", "MEMBER"], {
-    required_error: "Organization role is required",
-  }),
-  permissions: z.array(z.string()).default([]),
-  joinedAt: z.date().optional(),
+  id: z.number(),
+  userId: z.string(),
+  organizationId: z.number(),
+  organization: OrganizationSchema, // Nested organization
+});
+
+// Schema Validation
+export const OrgSchema = z.object({
+  name: z.string(),
+  description: z.string().optional(),
+  startedAt: z.date().optional(), // Date format
+  logoImage: z.string().optional(),
+  role: z.string().optional(),
+  type: z.string().optional(),
+});
+
+export const teamFormSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "Team name is required"),
+  description: z.string().optional(),
+  logoImage: z.string().optional(),
+  startedAt: z.date().optional(),
+  type: z.string()
+    .transform((val) => {
+      if (!val) return val;
+      // Handle mapping from lowercase to uppercase
+      const typeMap: Record<string, string> = {
+        'school': 'SCHOOL',
+        'training_center': 'TRAINING_CENTER',
+        'university': 'UNIVERSITY', 
+        'corporate': 'CORPORATE',
+        'church': 'CHURCH',
+        'business': 'CORPORATE', // Map business to corporate
+        'nonprofit': 'OTHER', // Map nonprofit to other
+        'other': 'OTHER'
+      };
+      const upperVal = val.toUpperCase();
+      return typeMap[val.toLowerCase()] || upperVal;
+    })
+    .pipe(z.enum(["SCHOOL", "TRAINING_CENTER", "UNIVERSITY", "CORPORATE", "CHURCH", "OTHER"]))
+    .optional(),
+});
+
+// Define Feedback Schema
+export const feedbackSchema = z.object({
+  name: z.string().optional(), // Allow anonymous feedback
+  email: z.string().optional(),
+  phone: z.string().optional(),
+  message: z.string().min(5, "Message must be at least 5 characters long"),
+  anonymous: z.boolean().default(false),
+  status: z.enum(["Pending", "Resolved", "Reviewed"]).default("Pending"),
+});
+
+// Define Update Schema (Only allows status update)
+export const feedbackUpdateSchema = z.object({
+  status: z.enum(["Pending", "Resolved", "Reviewed"]),
+});
+
+// Address Schema
+export const AddressSchema = z.object({
+  id: z.string(), // ID is optional when creating a new record
+  name: z.string().nonempty("Name number is required"), // Home number must be a string and required
+  address: z.string().optional(), // Address is optional
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
+});
+
+// Default Org select Server Action use
+export const OrganizationsAPISchema = z.array(
+  z.object({
+    role: z.string().optional(),
+    organization: z.object({
+      id: z.string(),
+      name: z.string(),
+      description: z.string().optional(),
+      startedAt: z.date().optional().nullable(),
+      logoImage: z.string().optional(),
+      type: z
+        .enum(["SCHOOL", "TRAINING_CENTER", "UNIVERSITY", "CORPORATE", "CHURCH", "OTHER"], {
+          required_error: "Team type is required",
+        })
+        .optional(),
+    }),
+  })
+);
+
+// All Version Server Action use
+export const Versions = z.array(
+  z.object({
+    name: z.string(),
+    id: z.string(),
+    description: z.string().optional().nullable(),
+    createdAt: z.date(),
+    updatedAt: z.date(),
+    deletedAt: z.date().nullable(),
+    version: z.string(),
+  })
+);
+
+export const OrgUserRole = z.object({
+  userId: z.string(),
+  orgId: z.string(),
+  role: z.string().optional(),
+});
+
+// Church Management Schemas
+export const FamilyRelationshipSchema = z.object({
+  id: z.string(),
+  fromId: z.string(),
+  toId: z.string(),
+  typeId: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export const HomeSchema = z.object({
+  id: z.string(),
+  homeNumber: z.string(),
+  address: z.string().optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
+  orgId: z.string(),
+  vengId: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export const KhawkSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  orgId: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export const MemberSchema = z.object({
+  id: z.string(),
+  number: z.number().optional(),
+  name: z.string(),
+  birthdate: z.date().optional(),
+  gender: z.string().optional(),
+  phone: z.string().optional(),
+  email: z.string().optional(),
+  bloodType: z.string().optional(),
+  image: z.string().optional(),
+  fbLink: z.string().optional(),
+  orgId: z.string(),
+  homeId: z.string().optional(),
+  spouseId: z.string().optional(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export const VengSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  orgId: z.string(),
+  khawkId: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+// Library Management Schemas
+export const LibrarySchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "Library name is required"),
+  code: z.string().optional(),
+  description: z.string().optional(),
+  
+  // Location
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zipCode: z.string().optional(),
+  country: z.string().default("Myanmar"),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
+  
+  // Contact
+  phone: z.string().optional(),
+  email: z.string().email().optional(),
+  website: z.string().url().optional(),
+  
+  // Library Details
+  type: z.enum(["PUBLIC", "ACADEMIC", "SCHOOL", "SPECIAL", "PRIVATE", "DIGITAL", "RESEARCH"]).default("PUBLIC"),
+  capacity: z.number().int().positive().optional(),
+  floors: z.number().int().positive().default(1),
+  totalArea: z.number().positive().optional(),
+  
+  // Policies
+  loanPeriod: z.number().int().positive().default(14),
+  maxRenewals: z.number().int().min(0).default(2),
+  finePerDay: z.number().min(0).optional(),
+  maxBooksPerUser: z.number().int().positive().default(5),
+  
+  // Status
+  isActive: z.boolean().default(true),
+  isMainBranch: z.boolean().default(false),
+  
+  // Organization
+  orgId: z.string(),
+});
+
+export const LibrarySectionSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "Section name is required"),
+  code: z.string().optional(),
+  description: z.string().optional(),
+  floor: z.number().int().positive().default(1),
+  capacity: z.number().int().positive().optional(),
+  libraryId: z.string(),
+  orgId: z.string(),
   isActive: z.boolean().default(true),
 });
 
-// ============================================================================
-// STUDENT MANAGEMENT SCHEMAS
-// ============================================================================
-
-/**
- * Enhanced student schema with better validation
- */
-export const StudentSchema = z.object({
-  id: z.string().cuid2().optional(),
-  orgId: CommonPatterns.orgId,
-  rollNumber: z.string().min(1, { message: "Roll number is required" })
-    .max(20, { message: "Roll number must be less than 20 characters" }),
-  name: CommonPatterns.name,
-  email: CommonPatterns.email.optional(),
-  phone: CommonPatterns.phoneNumber,
-  dateOfBirth: z.date({ required_error: "Date of birth is required" })
-    .refine(date => date < new Date(), { message: "Date of birth must be in the past" }),
-  gender: z.enum(["MALE", "FEMALE", "OTHER"], {
-    required_error: "Gender is required",
-  }),
-  address: z.string().max(200, { message: "Address must be less than 200 characters" }).optional(),
-  guardianName: z.string().min(1, { message: "Guardian name is required" })
-    .max(100, { message: "Guardian name must be less than 100 characters" }),
-  guardianPhone: z.string().regex(/^\+?[\d\s\-\(\)]+$/, { 
-    message: "Please enter a valid guardian phone number" 
-  }),
-  guardianEmail: CommonPatterns.email.optional(),
-  emergencyContact: z.string().regex(/^\+?[\d\s\-\(\)]+$/, { 
-    message: "Please enter a valid emergency contact number" 
-  }).optional(),
-  bloodGroup: z.enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]).optional(),
-  medicalConditions: z.string().max(500, { message: "Medical conditions must be less than 500 characters" }).optional(),
-  profileImage: z.string().url({ message: "Profile image must be a valid URL" }).optional(),
-  admissionDate: z.date().optional(),
-  status: z.enum(["ACTIVE", "INACTIVE", "GRADUATED", "TRANSFERRED"]).default("ACTIVE"),
-  notes: z.string().max(1000, { message: "Notes must be less than 1000 characters" }).optional(),
+export const LibraryStaffSchema = z.object({
+  id: z.string().optional(),
+  employeeId: z.string().optional(),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Valid email is required"),
+  phone: z.string().optional(),
+  position: z.enum([
+    "LIBRARIAN", 
+    "ASSISTANT_LIBRARIAN", 
+    "LIBRARY_TECHNICIAN", 
+    "CLERK", 
+    "MANAGER", 
+    "DIRECTOR", 
+    "VOLUNTEER", 
+    "STUDENT_ASSISTANT"
+  ]).default("LIBRARIAN"),
+  department: z.string().optional(),
+  hireDate: z.date(),
+  salary: z.number().min(0).optional(),
+  canIssueBooks: z.boolean().default(true),
+  canManageBooks: z.boolean().default(false),
+  canManageMembers: z.boolean().default(false),
+  libraryId: z.string(),
+  userId: z.string().optional(),
+  orgId: z.string(),
+  isActive: z.boolean().default(true),
 });
 
-/**
- * Student import schema for bulk operations
- */
-export const StudentImportSchema = StudentSchema.omit({ id: true, orgId: true });
+// Type exports
+export type FamilyRelationship = z.infer<typeof FamilyRelationshipSchema>;
+export type Home = z.infer<typeof HomeSchema>;
+export type Khawk = z.infer<typeof KhawkSchema>;
+export type Member = z.infer<typeof MemberSchema>;
+export type Veng = z.infer<typeof VengSchema>;
 
-// ============================================================================
-// COURSE MANAGEMENT SCHEMAS
-// ============================================================================
-
-/**
- * Enhanced course schema
- */
-export const CourseSchema = z.object({
-  id: z.string().cuid2().optional(),
-  orgId: CommonPatterns.orgId,
-  name: z.string().min(2, { message: "Course name must be at least 2 characters" })
-    .max(100, { message: "Course name must be less than 100 characters" }),
-  code: z.string().min(2, { message: "Course code must be at least 2 characters" })
-    .max(20, { message: "Course code must be less than 20 characters" })
-    .regex(/^[A-Z0-9\-]+$/, { message: "Course code must contain only uppercase letters, numbers, and hyphens" }),
-  description: z.string().max(1000, { message: "Description must be less than 1000 characters" }).optional(),
-  credits: z.number().min(1, { message: "Credits must be at least 1" })
-    .max(10, { message: "Credits must be less than 10" }).optional(),
-  duration: z.number().min(1, { message: "Duration must be at least 1 hour" })
-    .max(1000, { message: "Duration must be less than 1000 hours" }).optional(),
-  teacherId: z.string().optional(),
-  roomId: z.string().optional(),
-  schedule: z.string().max(200, { message: "Schedule must be less than 200 characters" }).optional(),
-  capacity: z.number().min(1, { message: "Capacity must be at least 1" })
-    .max(1000, { message: "Capacity must be less than 1000" }).optional(),
-  fee: z.number().min(0, { message: "Fee cannot be negative" }).optional(),
-  startDate: z.date().optional(),
-  endDate: z.date().optional(),
-  status: z.enum(["ACTIVE", "INACTIVE", "COMPLETED", "CANCELLED"]).default("ACTIVE"),
-  requirements: z.string().max(500, { message: "Requirements must be less than 500 characters" }).optional(),
-  materials: z.array(z.string()).default([]),
-});
-
-// ============================================================================
-// FEEDBACK SCHEMAS
-// ============================================================================
-
-/**
- * Enhanced feedback schema with better validation
- */
-export const FeedbackSchema = z.object({
-  name: z.string().max(100, { message: "Name must be less than 100 characters" }).optional(),
-  email: CommonPatterns.email.optional(),
-  phone: CommonPatterns.phoneNumber,
-  subject: z.string().min(5, { message: "Subject must be at least 5 characters" })
-    .max(200, { message: "Subject must be less than 200 characters" }).optional(),
-  message: z.string().min(10, { message: "Message must be at least 10 characters" })
-    .max(2000, { message: "Message must be less than 2000 characters" }),
-  category: z.enum(["bug", "feature", "support", "general"]).default("general"),
-  priority: z.enum(["low", "medium", "high", "critical"]).default("medium"),
-  anonymous: z.boolean().default(false),
-  status: z.enum(["pending", "in_progress", "resolved", "rejected"]).default("pending"),
-  attachments: z.array(z.string().url()).default([]),
-});
-
-/**
- * Feedback update schema for admin use
- */
-export const FeedbackUpdateSchema = z.object({
-  status: z.enum(["pending", "in_progress", "resolved", "rejected"]),
-  adminNotes: z.string().max(1000, { message: "Admin notes must be less than 1000 characters" }).optional(),
-  assignedTo: z.string().optional(),
-});
-
-// ============================================================================
-// UTILITY SCHEMAS
-// ============================================================================
-
-/**
- * Pagination schema for consistent pagination
- */
-export const PaginationSchema = z.object({
-  page: z.number().min(1, { message: "Page must be at least 1" }).default(1),
-  limit: z.number().min(1, { message: "Limit must be at least 1" })
-    .max(100, { message: "Limit must be less than 100" }).default(10),
-  sortBy: z.string().optional(),
-  sortOrder: z.enum(["asc", "desc"]).default("desc"),
-  search: z.string().max(100, { message: "Search term must be less than 100 characters" }).optional(),
-});
-
-/**
- * File upload schema
- */
-export const FileUploadSchema = z.object({
-  file: z.any(),
-  type: z.enum(["image", "document", "video", "audio"]),
-  maxSize: z.number().default(10 * 1024 * 1024), // 10MB default
-  allowedTypes: z.array(z.string()).default(["image/jpeg", "image/png", "image/webp"]),
-});
-
-// ============================================================================
-// TYPE EXPORTS
-// ============================================================================
-
-// Export types for TypeScript integration
-export type LoginInput = z.infer<typeof LoginSchema>;
-export type RegisterInput = z.infer<typeof RegisterSchema>;
-export type SettingsInput = z.infer<typeof SettingsSchema>;
-export type OrganizationInput = z.infer<typeof OrganizationSchema>;
-export type StudentInput = z.infer<typeof StudentSchema>;
-export type CourseInput = z.infer<typeof CourseSchema>;
-export type FeedbackInput = z.infer<typeof FeedbackSchema>;
-export type PaginationInput = z.infer<typeof PaginationSchema>;
-
-// ============================================================================
-// SCHEMA COLLECTIONS
-// ============================================================================
-
-/**
- * Grouped schemas for easier imports
- */
-export const AuthSchemas = {
-  login: LoginSchema,
-  register: RegisterSchema,
-  reset: ResetSchema,
-  newPassword: NewPasswordSchema,
-  settings: SettingsSchema,
-};
-
-export const OrgSchemas = {
-  organization: OrganizationSchema,
-  membership: UserOrganizationSchema,
-};
-
-export const EducationSchemas = {
-  student: StudentSchema,
-  studentImport: StudentImportSchema,
-  course: CourseSchema,
-};
-
-export const SystemSchemas = {
-  feedback: FeedbackSchema,
-  feedbackUpdate: FeedbackUpdateSchema,
-  pagination: PaginationSchema,
-  fileUpload: FileUploadSchema,
-};
-
-/**
- * All schemas combined for convenience
- */
-export const AllSchemas = {
-  ...AuthSchemas,
-  ...OrgSchemas,
-  ...EducationSchemas,
-  ...SystemSchemas,
-};
+// Library Types
+export type Library = z.infer<typeof LibrarySchema>;
+export type LibrarySection = z.infer<typeof LibrarySectionSchema>;
+export type LibraryStaff = z.infer<typeof LibraryStaffSchema>;

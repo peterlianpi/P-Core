@@ -8,7 +8,7 @@ import {
   ImageUploadSchema,
   ImageDeleteSchema,
   ImageListSchema
-} from "@/schemas/image-schemas";
+} from "@/lib/schemas/image-schemas";
 
 // Configure Cloudinary
 cloudinary.config({

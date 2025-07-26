@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { KhawkSchema } from "../types/schemas";
+import { KhawkSchema } from "@/lib/schemas";
 import { prisma } from "@/lib/db/client";
 
 const khawkApi = new Hono();

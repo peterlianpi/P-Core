@@ -1,12 +1,12 @@
 // EDGE RUNTIME FIX: Use edge-compatible auth configuration
 // This prevents Prisma client from being bundled in middleware
-import { auth } from "./auth.edge";
+import { auth } from "./lib/auth/auth.edge";
 import {
   apiAuthPrefix,
   authRoutes,
   DEFAULT_LOGIN_REDIRECT,
   publicRoutes,
-} from "./routes";
+} from "./lib/auth/routes";
 import { NextResponse } from "next/server";
 
 export default auth((req) => {

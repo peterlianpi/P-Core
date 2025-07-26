@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { CardWrapper } from "./card-wrapper";
 import { z } from "zod";
-import { ResetSchema } from "@/schemas";
+import { ResetSchema } from "@/lib/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,

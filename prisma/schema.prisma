@@ -55,8 +55,8 @@ model Image {
   publicId  String     @unique
   url       String
   folder    String
-  feature   String     // e.g. 'user-profile', 'org-logo', 'student-profile'
-  ownerId   String     // Entity ID - polymorphic reference
+  feature   String // e.g. 'user-profile', 'org-logo', 'student-profile'
+  ownerId   String // Entity ID - polymorphic reference
   ownerType ImageOwner // Type of entity
   orgId     String?    @map("org_id") // For tenant isolation
   createdAt DateTime   @default(now())
@@ -73,7 +73,7 @@ model User {
   name                  String?
   email                 String                 @unique
   emailVerified         DateTime?              @map("email_verified")
-  image                 String?                // Store image URL directly
+  image                 String? // Store image URL directly
   password              String?
   role                  UserRole               @default(USER)
   isTwoFactorEnabled    Boolean                @default(false) @map("is_two_factor_enabled")
@@ -90,6 +90,9 @@ model User {
   createdVersions      VersionInfo[]      @relation("VersionCreator")
   telegramSettings     TelegramSetting[]
   defaultOrganization  Organization?      @relation("DefaultOrganization", fields: [defaultOrgId], references: [id], onDelete: SetNull)
+
+  // Library Management Relations
+  libraryStaff LibraryStaff[]
 
   @@map("users")
   @@schema("auth")
@@ -156,7 +159,13 @@ model Organization {
   versions         VersionInfo[] // Organization-specific versions
   telegramSettings TelegramSetting[]
   invites          OrganizationInvite[]
-  defaultUsers     User[]             @relation("DefaultOrganization") // Users who have this as default org
+  defaultUsers     User[]               @relation("DefaultOrganization") // Users who have this as default org
+
+  // Library Management Relations
+  libraries       Library[]
+  librarySections LibrarySection[]
+  libraryStaff    LibraryStaff[]
+  books           Book[]
 
   @@map("organizations")
   @@schema("auth")
@@ -388,6 +397,7 @@ model LessonBook {
   courseId  String   @map("course_id")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+  isActive  Boolean  @default(true) @map("is_active")
 
   // Multi-tenancy field (CRITICAL for RLS)
   orgId String @map("org_id")
@@ -486,7 +496,7 @@ model VersionInfo {
 // --- CHURCH MANAGEMENT MODELS (domain schema) ---
 model Member {
   id        String    @id @default(cuid())
-  number    String?   // Changed to String for consistency
+  number    String? // Changed to String for consistency
   name      String
   birthdate DateTime? @map("birth_date")
   gender    Gender?
@@ -866,6 +876,190 @@ model ChoirEvent {
 }
 
 // --- LIBRARY MANAGEMENT MODELS ---
+
+// Core Library Model
+model Library {
+  id          String  @id @default(cuid())
+  name        String  @db.VarChar(255)
+  code        String? @db.VarChar(50) // Library code/identifier
+  description String? @db.Text
+
+  // Location Information
+  address   String? @db.Text
+  city      String? @db.VarChar(100)
+  state     String? @db.VarChar(100)
+  zipCode   String? @map("zip_code") @db.VarChar(20)
+  country   String? @default("Myanmar") @db.VarChar(100)
+  latitude  Float?
+  longitude Float?
+
+  // Contact Information
+  phone   String? @db.VarChar(20)
+  email   String? @db.VarChar(255)
+  website String? @db.VarChar(255)
+
+  // Library Details
+  type      LibraryType @default(PUBLIC)
+  capacity  Int? // Total capacity (number of people)
+  floors    Int?        @default(1)
+  totalArea Float?      @map("total_area") // in square meters
+
+  // Operating Hours (JSON format for flexibility)
+  operatingHours Json? @map("operating_hours") @db.Json
+
+  // Library Rules and Policies
+  loanPeriod      Int?     @default(14) @map("loan_period") // Default loan period in days
+  maxRenewals     Int?     @default(2) @map("max_renewals")
+  finePerDay      Decimal? @map("fine_per_day") @db.Decimal(10, 2)
+  maxBooksPerUser Int?     @default(5) @map("max_books_per_user")
+
+  // Status and Management
+  isActive     Boolean @default(true) @map("is_active")
+  isMainBranch Boolean @default(false) @map("is_main_branch")
+
+  // Organization Relationship
+  orgId        String       @map("org_id")
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  // Relationships
+  books    Book[]
+  sections LibrarySection[]
+  staff    LibraryStaff[]
+
+  // Audit Fields
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@unique([orgId, code])
+  // Indexes for performance
+  @@index([orgId])
+  @@index([isActive])
+  @@index([code])
+  @@map("libraries")
+  @@schema("domain")
+}
+
+// Library Types Enum
+enum LibraryType {
+  PUBLIC // Public library
+  ACADEMIC // University/School library
+  SCHOOL // K-12 school library
+  SPECIAL // Special collections
+  PRIVATE // Private library
+  DIGITAL // Digital-only library
+  RESEARCH // Research library
+
+  @@schema("domain")
+}
+
+// Library Sections/Departments
+model LibrarySection {
+  id          String  @id @default(cuid())
+  name        String  @db.VarChar(255)
+  code        String? @db.VarChar(50)
+  description String? @db.Text
+  floor       Int?    @default(1)
+  capacity    Int? // Number of books this section can hold
+
+  // Library Relationship
+  libraryId String  @map("library_id")
+  library   Library @relation(fields: [libraryId], references: [id], onDelete: Cascade)
+
+  // Organization Relationship  
+  orgId        String       @map("org_id")
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  // Relationships
+  books Book[]
+
+  // Status
+  isActive Boolean @default(true) @map("is_active")
+
+  // Audit Fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([libraryId, code])
+  // Indexes
+  @@index([libraryId])
+  @@index([orgId])
+  @@index([isActive])
+  @@map("library_sections")
+  @@schema("domain")
+}
+
+// Library Staff Model
+model LibraryStaff {
+  id         String  @id @default(cuid())
+  employeeId String? @map("employee_id") @db.VarChar(50)
+
+  // Personal Information
+  firstName String  @map("first_name") @db.VarChar(100)
+  lastName  String  @map("last_name") @db.VarChar(100)
+  email     String  @db.VarChar(255)
+  phone     String? @db.VarChar(20)
+
+  // Employment Details
+  position   StaffPosition @default(LIBRARIAN)
+  department String?       @db.VarChar(100)
+  hireDate   DateTime      @map("hire_date")
+  salary     Decimal?      @db.Decimal(10, 2)
+
+  // Work Schedule
+  workSchedule Json? @map("work_schedule") @db.Json
+
+  // Access Permissions
+  permissions      Json?   @db.Json
+  canIssueBooks    Boolean @default(true) @map("can_issue_books")
+  canManageBooks   Boolean @default(false) @map("can_manage_books")
+  canManageMembers Boolean @default(false) @map("can_manage_members")
+
+  // Library Relationship
+  libraryId String  @map("library_id")
+  library   Library @relation(fields: [libraryId], references: [id], onDelete: Cascade)
+
+  // User Account Relationship (optional)
+  userId String? @map("user_id")
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Organization Relationship
+  orgId        String       @map("org_id")
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  // Status
+  isActive Boolean @default(true) @map("is_active")
+
+  // Audit Fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([orgId, employeeId])
+  @@unique([libraryId, email])
+  // Indexes
+  @@index([libraryId])
+  @@index([userId])
+  @@index([orgId])
+  @@index([email])
+  @@index([employeeId])
+  @@map("library_staff")
+  @@schema("domain")
+}
+
+// Staff Position Enum
+enum StaffPosition {
+  LIBRARIAN // Professional librarian
+  ASSISTANT_LIBRARIAN // Assistant librarian
+  LIBRARY_TECHNICIAN // Library technician
+  CLERK // Library clerk
+  MANAGER // Library manager
+  DIRECTOR // Library director
+  VOLUNTEER // Volunteer staff
+  STUDENT_ASSISTANT // Student worker
+
+  @@schema("domain")
+}
+
 model Book {
   id          String    @id @default(cuid())
   title       String
@@ -882,8 +1076,16 @@ model Book {
   // Add constraint: available <= total AND available >= 0
   // This needs to be added in migration SQL
 
+  // Library relationships
+  libraryId String?  @map("library_id")
+  library   Library? @relation(fields: [libraryId], references: [id], onDelete: SetNull)
+
+  sectionId String?         @map("section_id")
+  section   LibrarySection? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+
   // Multi-tenancy field (CRITICAL for RLS)
-  orgId String @map("org_id")
+  orgId        String       @map("org_id")
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
   loans     BookLoan[]
   createdAt DateTime   @default(now()) @map("created_at")
@@ -891,6 +1093,8 @@ model Book {
 
   @@unique([isbn, orgId])
   @@index([orgId])
+  @@index([libraryId])
+  @@index([sectionId])
   @@index([isActive, orgId])
   @@map("books")
   @@schema("domain")

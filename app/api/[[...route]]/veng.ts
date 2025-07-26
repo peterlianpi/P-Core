@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { VengSchema } from "../types/schemas";
+import { VengSchema } from "@/lib/schemas";
 import { prisma } from "@/lib/db/client";
 
 const vengApi = new Hono();

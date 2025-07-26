@@ -25,6 +25,7 @@ const courses = new Hono()
       const created = await prisma.course.create({
         data: {
           ...values,
+          price: values.price??0,
           orgId: orgContext.organizationId,
         },
       });

@@ -3,7 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import type { OrganizationRole } from "@/lib/types/database";
-import { capitalizeFormat } from "../../../helpers/custom-function";
+import { capitalizeFormat } from "@/lib/utils/custom-function";
 
 type Invite = {
   email: string;

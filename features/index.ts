@@ -23,7 +23,6 @@ export * from './organization-management'
 // School Management Features
 export * from './school-management/features/overview/components/overview-grid'
 export * from './school-management/features/overview/components/stats-charts'
-export * from './school-management/features/students-management/components/students-table'
 export * from './school-management/features/students/components/students-table'
 export * from './school-management/features/courses/components/courses-table'
 export * from './school-management/features/schedule/components/schedules-table'
