@@ -23,7 +23,7 @@ export default function OrganizationInviteList({ orgId }: Props) {
 
   const handleResend = (invite: {
     email: string;
-    role: OrganizationUserRole | null;
+    role: OrganizationRole | null;
   }) => {
     resendInvite.mutate(
       {

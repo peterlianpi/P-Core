@@ -14,7 +14,7 @@
 
 import { auth } from "@/auth";
 import { getUserById } from "@/data/user";
-import { userDBPrismaClient } from "./prisma-client/user-prisma-client";
+import { prisma } from "./prisma-client/user-prisma-client";
 import type { Context } from "hono";
 
 /**
@@ -63,7 +63,7 @@ export async function validateOrgAccess(orgId: string): Promise<OrgAccessResult>
     }
 
     // Step 3: Check organization membership
-    const userOrg = await userDBPrismaClient.userOrganization.findFirst({
+    const userOrg = await prisma.userOrganization.findFirst({
       where: {
         userId: user.id,
         organizationId: orgId,

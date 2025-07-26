@@ -33,7 +33,7 @@ export default function OrganizationInviteForm({ selectedOrgId }: Props) {
     const values = {
       email: addEmail,
       organizationId: selectedOrgId!,
-      role: addRole as OrganizationUserRole,
+      role: addRole as OrganizationRole,
     };
 
     createInviteMember.mutate(values, {

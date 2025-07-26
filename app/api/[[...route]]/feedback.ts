@@ -9,7 +9,8 @@ import {
   requirePermission 
 } from "@/lib/security/tenant";
 import { cors } from "hono/cors";
-import { userDBPrismaClient } from "@/lib/db/client";
+import { prisma } from "@/lib/db/client";
+import type { Prisma } from "@prisma/client";
 
 // Updated query schema for pagination and filtering
 const querySchema = z.object({
@@ -58,12 +59,14 @@ const feedback = new Hono()
     async (c) => {
       try {
         const data = c.req.valid("json");
+        const { organizationId } = getOrganizationContext(c);
 
         // Save feedback to database
-        const feedback = await userDBPrismaClient.feedback.create({ 
+        const feedback = await prisma.feedback.create({ 
           data: {
             ...data,
             status: "PENDING",
+            orgId: organizationId,
           }
         });
 
@@ -99,9 +102,13 @@ ${data.anonymous ? "🕵️‍♂️ Anonymous" : `👤 Name: ${data.name || "N/
       try {
         const { page, limit, status, anonymous, fromDate, toDate } = c.req.valid("query");
         const skip = (page - 1) * limit;
+        const { organizationId } = getOrganizationContext(c);
 
         // Build where clause
-        const where: Record<string, unknown> = {};
+        const where: Prisma.FeedbackWhereInput = {};
+
+        // Add organization filtering
+        where.orgId = organizationId;
 
         if (status) where.status = status;
         if (anonymous !== undefined) where.anonymous = anonymous;
@@ -113,13 +120,13 @@ ${data.anonymous ? "🕵️‍♂️ Anonymous" : `👤 Name: ${data.name || "N/
         }
 
         const [feedbacks, total] = await Promise.all([
-          userDBPrismaClient.feedback.findMany({
+          prisma.feedback.findMany({
             where,
             skip,
             take: limit,
             orderBy: { createdAt: "desc" },
           }),
-          userDBPrismaClient.feedback.count({ where }),
+          prisma.feedback.count({ where }),
         ]);
 
         return c.json({
@@ -144,9 +151,13 @@ ${data.anonymous ? "🕵️‍♂️ Anonymous" : `👤 Name: ${data.name || "N/
     async (c) => {
       try {
         const id = c.req.param("id");
+        const { organizationId } = getOrganizationContext(c);
 
-        const feedbackItem = await userDBPrismaClient.feedback.findUnique({
-          where: { id },
+        const feedbackItem = await prisma.feedback.findUnique({
+          where: { 
+            id,
+            orgId: organizationId
+          },
         });
 
         if (!feedbackItem) {
@@ -169,16 +180,20 @@ ${data.anonymous ? "🕵️‍♂️ Anonymous" : `👤 Name: ${data.name || "N/
       try {
         const id = c.req.param("id");
         const { status } = c.req.valid("json");
+        const { organizationId } = getOrganizationContext(c);
 
-        const existingFeedback = await userDBPrismaClient.feedback.findUnique({
-          where: { id },
+        const existingFeedback = await prisma.feedback.findUnique({
+          where: { 
+            id,
+            orgId: organizationId
+          },
         });
 
         if (!existingFeedback) {
           return c.json({ error: "Feedback not found" }, 404);
         }
 
-        const updatedFeedback = await userDBPrismaClient.feedback.update({
+        const updatedFeedback = await prisma.feedback.update({
           where: { id },
           data: { status },
         });
@@ -197,16 +212,25 @@ ${data.anonymous ? "🕵️‍♂️ Anonymous" : `👤 Name: ${data.name || "N/
     async (c) => {
       try {
         const id = c.req.param("id");
+        const { organizationId } = getOrganizationContext(c);
 
-        const existingFeedback = await userDBPrismaClient.feedback.findUnique({
-          where: { id },
+        const existingFeedback = await prisma.feedback.findUnique({
+          where: { 
+            id,
+            orgId: organizationId
+          },
         });
 
         if (!existingFeedback) {
           return c.json({ error: "Feedback not found" }, 404);
         }
 
-        await userDBPrismaClient.feedback.delete({ where: { id } });
+        await prisma.feedback.delete({ 
+          where: { 
+            id,
+            orgId: organizationId
+          } 
+        });
 
         return c.json({
           success: true,

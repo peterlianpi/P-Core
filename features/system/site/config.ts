@@ -25,8 +25,11 @@ function getSharedNavItems(pathname: string, hasOrg: boolean) {
       icon: GroupIcon,
       isActive: pathname.startsWith("/organization"),
       items: [
-        { title: "Organization", url: "/organization" },
-        { title: "Manage Member", url: "/organization/manage-member" },
+        { title: "Overview", url: "/organization" },
+        { title: "Manage Members", url: "/organization/manage-member" },
+        { title: "Invitations", url: "/organization/invite" },
+        { title: "Roles & Permissions", url: "/organization/roles" },
+        { title: "Settings", url: "/organization/settings" },
       ],
     });
   }

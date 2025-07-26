@@ -132,7 +132,7 @@ vi.mock('next-auth/react', () => ({
 
 // Mock Prisma clients
 vi.mock('@/lib/prisma-client/user-prisma-client', () => ({
-  userDBPrismaClient: {
+  prisma: {
     user: {
       findUnique: vi.fn(),
       findMany: vi.fn(),

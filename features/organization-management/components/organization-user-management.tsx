@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -27,7 +28,7 @@ type User = {
   image: string | null;
   organization: {
     id: string;
-    role: OrganizationUserRole;
+    role: OrganizationRole;
     status: string;
   }[];
 };
@@ -52,6 +53,11 @@ export default function OrganizationUserManagementPage() {
   >("members");
   const [orgMembers, setOrgMembers] = useState<User[]>([]);
   const currentUserRole = useCurrentMemberRole(users ?? [], selectedOrgId);
+  
+  // Get session to check if user is SUPERADMIN
+  const { data: session } = useSession();
+  const isSuperAdmin = session?.user?.role === "SUPERADMIN";
+  const canManageOrg = currentUserRole === "OWNER" || isSuperAdmin;
 
   // Filter users in selected org
   useEffect(() => {
@@ -63,12 +69,12 @@ export default function OrganizationUserManagementPage() {
       u.organization.some((org) => {
         const inOrg = org.id === selectedOrgId;
         if (!inOrg) return false;
-        return currentUserRole === "OWNER" ? true : org.status === "ACTIVE";
+        return canManageOrg ? true : org.status === "ACTIVE";
       })
     );
 
     setOrgMembers(filtered);
-  }, [currentUserRole, selectedOrgId, users]);
+  }, [canManageOrg, selectedOrgId, users]);
 
   return (
     <div className="p-4 w-full">
@@ -95,7 +101,7 @@ export default function OrganizationUserManagementPage() {
           Members
         </Button>
 
-        {currentUserRole === "OWNER" && (
+        {canManageOrg && (
           <>
             <Button
               variant={activeTab === "add" ? "default" : "outline"}

@@ -15,7 +15,7 @@ import { handleApiError } from "@/lib/utils/api-errors";
 
 // Import Route Modules
 // --- Public Routes ---
-import upload from "./upload";
+
 import uploadImage from "./upload-image";
 import org from "./org";
 import versionInfo from "./version";
@@ -75,7 +75,7 @@ app.onError((err, c) => {
 // --- Public Routes ---
 // These routes do not require authentication or organization context.
 app
-    .route("/upload", upload)
+ 
     .route("/upload-image", uploadImage)
     .route("/org", org)
     .route("/version", versionInfo)

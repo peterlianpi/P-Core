@@ -16,7 +16,7 @@ type Member = {
   image: string | null;
   organization: {
     id: string;
-    role: OrganizationUserRole;
+    role: OrganizationRole;
     status: string;
   }[];
 };

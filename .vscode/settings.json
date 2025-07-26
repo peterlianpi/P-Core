@@ -121,5 +121,6 @@
     "typescript": "html",
     "typescriptreact": "html"
   },
-  "shiftleft-core.slHomePath": "C:\\Users\\DELL\\.shiftleft"
+  "shiftleft-core.slHomePath": "C:\\Users\\DELL\\.shiftleft",
+  "codium.codeCompletion.enable": true
 }

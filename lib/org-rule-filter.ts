@@ -1,6 +1,6 @@
 import { Context } from "hono";
 import { currentUser } from "./auth";
-import { userDBPrismaClient } from "./prisma-client/user-prisma-client";
+import { prisma } from "./prisma-client/user-prisma-client";
 
 /**
  * Ensures that the authenticated user belongs to a specific organization
@@ -35,7 +35,7 @@ export const ensureUserInOrganization = async (
   const organizationId = orgId; // Convert to a number safely
 
   // Fetch the user's organization role from the userOrganization table
-  const userOrg = await userDBPrismaClient.userOrganization.findFirst({
+  const userOrg = await prisma.userOrganization.findFirst({
     where: { userId: user.id, organizationId },
     select: { role: true },
   });

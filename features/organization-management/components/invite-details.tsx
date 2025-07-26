@@ -11,7 +11,7 @@ type Props = {
     organizationName: string;
     expiresAt: string;
     accepted: boolean;
-    role: OrganizationUserRole | null;
+    role: OrganizationRole | null;
   };
   isLoggedIn: boolean;
   onAccept?: () => void;

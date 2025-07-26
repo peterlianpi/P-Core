@@ -28,6 +28,7 @@ export class TenantSecurityError extends Error {
 
 // Organization role hierarchy for permission checking
 const ROLE_HIERARCHY = {
+  SUPERADMIN: 6, // System-level superadmin access
   OWNER: 5,
   ADMIN: 4,
   MANAGER: 3,
@@ -38,6 +39,17 @@ const ROLE_HIERARCHY = {
 
 // Permission matrix based on roles
 const ROLE_PERMISSIONS = {
+  SUPERADMIN: [
+    "read:all",
+    "write:all",
+    "delete:all",
+    "manage:users",
+    "manage:organization",
+    "manage:billing",
+    "manage:system",
+    "read:dashboard",
+    "access:superadmin"
+  ],
   OWNER: [
     "read:all",
     "write:all", 
@@ -51,7 +63,8 @@ const ROLE_PERMISSIONS = {
     "write:all",
     "delete:most",
     "manage:users",
-    "view:analytics"
+    "view:analytics",
+    "read:dashboard"
   ],
   MANAGER: [
     "read:all",
@@ -116,6 +129,22 @@ export async function validateOrganizationAccess(
   organizationId: string
 ): Promise<OrganizationContext> {
   try {
+    // First check if user is a SUPERADMIN
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true }
+    });
+
+    // SUPERADMIN users have access to all organizations
+    if (user?.role === "SUPERADMIN") {
+      return {
+        organizationId,
+        userId,
+        role: "SUPERADMIN",
+        permissions: ROLE_PERMISSIONS.SUPERADMIN,
+      };
+    }
+
     // Query user's organization membership
     const userOrg = await prisma.userOrganization.findUnique({
       where: {
@@ -280,11 +309,46 @@ export function getOrganizationContext(c: Context): OrganizationContext {
 }
 
 /**
+ * Get organization context from Hono context (optional - returns null if not found)
+ */
+export function getOptionalOrganizationContext(c: Context): OrganizationContext | null {
+  const context = c.get("orgContext");
+  return context || null;
+}
+
+/**
  * Require specific permission for route access
  */
 export function requirePermission(permission: string) {
   return async (c: Context, next: () => Promise<void>) => {
     const orgContext = getOrganizationContext(c);
+    
+    if (!hasPermission(orgContext, permission)) {
+      return c.json(
+        { 
+          error: `Permission required: ${permission}`,
+          code: "INSUFFICIENT_PERMISSIONS" 
+        },
+        403
+      );
+    }
+
+    await next();
+  };
+}
+
+/**
+ * Optional permission check - allows access if no org context exists
+ */
+export function optionalPermission(permission: string) {
+  return async (c: Context, next: () => Promise<void>) => {
+    const orgContext = getOptionalOrganizationContext(c);
+    
+    // If no org context, allow access (for global operations)
+    if (!orgContext) {
+      await next();
+      return;
+    }
     
     if (!hasPermission(orgContext, permission)) {
       return c.json(
@@ -321,6 +385,38 @@ export function requireRole(minRole: string) {
   };
 }
 
+/**
+ * Require SUPERADMIN role for global/system routes
+ * Use for /api/superadmin/* endpoints
+ */
+export function requireSuperadmin() {
+  return async (c: Context, next: () => Promise<void>) => {
+    // Get authenticated user from session
+    const session = await auth();
+    if (!session?.user?.id) {
+      return c.json(
+        { error: "Authentication required", code: "AUTH_REQUIRED" },
+        401
+      );
+    }
+    // Fetch user role from DB
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { role: true }
+    });
+    if (user?.role !== "SUPERADMIN") {
+      // Log unauthorized attempt for auditing
+      console.warn(`Forbidden: User ${session.user.id} attempted superadmin access.`);
+      return c.json(
+        { error: "Forbidden: Superadmin access required", code: "SUPERADMIN_REQUIRED" },
+        403
+      );
+    }
+    // Attach user info for downstream handlers if needed
+    c.set("superadmin", true);
+    await next();
+  };
+}
 // Export types and utilities
 export type { OrganizationContext };
 export { ROLE_HIERARCHY, ROLE_PERMISSIONS };

@@ -37,7 +37,13 @@ export const DOMAIN_FEATURES: Record<string, DomainFeatureConfig> = {
     version: "1.0.0",
     requiredRole: "VIEWER",
     component: () => import("./organization-management"),
-    routes: ["/organization", "/organization/manage-member"],
+    routes: [
+      "/organization", 
+      "/organization/manage-member",
+      "/organization/invite",
+      "/organization/settings",
+      "/organization/roles"
+    ],
   },
   
   "school-management": {
@@ -51,7 +57,26 @@ export const DOMAIN_FEATURES: Record<string, DomainFeatureConfig> = {
     version: "1.0.0",
     requiredRole: "EDITOR",
     component: () => import("./school-management"),
-    routes: ["/school", "/school/students", "/school/courses"],
+    routes: [
+      "/school-management",
+      "/school-management/overview",
+      "/school-management/students",
+      "/school-management/teachers", 
+      "/school-management/courses",
+      "/school-management/courses/add",
+      "/school-management/courses/[id]",
+      "/school-management/schedule",
+      "/school-management/schedule/add",
+      "/school-management/schedule/[id]",
+      "/school-management/lesson-books",
+      "/school-management/lesson-books/add",
+      "/school-management/lesson-books/[id]",
+      "/school-management/transactions",
+      "/school-management/enrollments",
+      "/school-management/grades",
+      "/school-management/attendance",
+      "/school-management/reports"
+    ],
     integrations: ["organization-management"],
   },
   
@@ -66,7 +91,23 @@ export const DOMAIN_FEATURES: Record<string, DomainFeatureConfig> = {
     version: "1.0.0",
     requiredRole: "EDITOR",
     component: () => import("./church-management"),
-    routes: ["/church", "/church/members", "/church/choirs"],
+    routes: [
+      "/church",
+      "/church/members", 
+      "/church/members/add",
+      "/church/choirs",
+      "/church/families",
+      "/church/groups",
+      "/church/groups/manage",
+      "/members",
+      "/members/add", 
+      "/home",
+      "/home/add",
+      "/vengs",
+      "/vengs/add",
+      "/khawks", 
+      "/khawks/add"
+    ],
     integrations: ["organization-management"],
   },
   
@@ -81,7 +122,17 @@ export const DOMAIN_FEATURES: Record<string, DomainFeatureConfig> = {
     version: "1.0.0",
     requiredRole: "EDITOR",
     component: () => import("./library-management"),
-    routes: ["/library", "/library/books", "/library/loans"],
+    routes: [
+      "/library",
+      "/library/books",
+      "/library/books/add",
+      "/library/books/[id]",
+      "/library/loans",
+      "/library/loans/add",
+      "/library/loans/[id]",
+      "/library/inventory",
+      "/library/categories"
+    ],
     integrations: ["organization-management"],
   },
 };
@@ -98,7 +149,12 @@ export const SYSTEM_FEATURES: Record<string, SystemFeatureConfig> = {
     version: "1.0.0",
     requiredRole: "VIEWER",
     component: () => import("./system/dashboard"),
-    routes: ["/dashboard"],
+    routes: [
+      "/dashboard",
+      "/dashboard/stats",
+      "/dashboard/analytics", 
+      "/dashboard/activity"
+    ],
   },
   
   "site": {
@@ -111,7 +167,13 @@ export const SYSTEM_FEATURES: Record<string, SystemFeatureConfig> = {
     version: "1.0.0",
     requiredRole: "SUPER_ADMIN",
     component: () => import("./system/site"),
-    routes: ["/settings/site"],
+    routes: [
+      "/settings",
+      "/settings/profile",
+      "/settings/account", 
+      "/settings/notifications",
+      "/settings/site"
+    ],
   },
   
   "dynamic-components": {
@@ -135,6 +197,11 @@ export const SYSTEM_FEATURES: Record<string, SystemFeatureConfig> = {
     version: "1.0.0",
     requiredRole: "VIEWER",
     component: () => import("./system/feedback"),
+    routes: [
+      "/feedback",
+      "/feedback/submit",
+      "/feedback/admin"
+    ],
   },
   
   "image-upload": {
@@ -158,7 +225,33 @@ export const SYSTEM_FEATURES: Record<string, SystemFeatureConfig> = {
     version: "1.0.0",
     requiredRole: "SUPER_ADMIN",
     component: () => import("./system/version"),
-    routes: ["/admin/version"],
+    routes: [
+      "/admin/version",
+      "/superadmin",
+      "/superadmin/users",
+      "/superadmin/organizations",
+      "/superadmin/system"
+    ],
+  },
+
+  "authentication": {
+    id: "authentication",
+    name: "Authentication System",
+    description: "User authentication and authorization",
+    enabled: true,
+    category: "system",
+    critical: true,
+    version: "1.0.0",
+    routes: [
+      "/auth/login",
+      "/auth/register", 
+      "/auth/reset",
+      "/auth/new-password",
+      "/auth/new-verification",
+      "/auth/error",
+      "/auth/after-login",
+      "/accept"
+    ],
   },
 };
 

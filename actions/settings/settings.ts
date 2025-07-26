@@ -7,7 +7,6 @@ import { generateVerificationToken } from "@/lib/tokens";
 import { SettingsSchema } from "@/schemas";
 import * as z from "zod";
 import bcrypt from "bcryptjs";
-import { v2 as cloudinary } from "cloudinary";
 import { uploadImageSettings } from "@/data/upload-image-cloudinary";
 import { sendVerificationEmail } from "@/lib/mail/email-templates";
 import {
@@ -16,13 +15,7 @@ import {
   trackTwoFactorDisabled,
   trackTwoFactorEnabled,
 } from "../auth/track-system-activities";
-import { userDBPrismaClient } from "@/lib/db/client";
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+import { prisma } from "@/lib/db/client";
 
 // Update settings
 export const settings = async (values: z.infer<typeof SettingsSchema>) => {
@@ -53,7 +46,7 @@ export const settings = async (values: z.infer<typeof SettingsSchema>) => {
     }
 
     // Save the token and pending email in the database
-    await userDBPrismaClient.user.update({
+    await prisma.user.update({
       where: { id: dbUser.id },
       data: { email: values.email, emailVerified: null },
     });
@@ -93,7 +86,7 @@ export const settings = async (values: z.infer<typeof SettingsSchema>) => {
       if (typeof fileLink === "string") {
         link = fileLink; // Assign the successful file link
       } else if (fileLink && fileLink.error) {
-        return { error: fileLink.error }; // Return the error from uploadFileToFilebase
+        return { error: fileLink.error }; // Return the error from uploadImageSettings
       }
     } catch (error) {
       console.error("Error during file upload:", error); // Log the actual error for debugging
@@ -101,32 +94,49 @@ export const settings = async (values: z.infer<typeof SettingsSchema>) => {
     }
   }
 
-  // Telegram settings
+  // Telegram settings - Only if both values are provided
   if (telegramChatId && telegramBotToken) {
-    await userDBPrismaClient.telegramSetting.upsert({
-      where: { userId_role: { userId: dbUser.id, role: dbUser.role } }, // assumes composite unique
-      update: {
-        role: values.role,
-        chatId: telegramChatId,
-        botToken: telegramBotToken,
-      },
-      create: {
+    const scope = dbUser.role === "SUPERADMIN" ? "SUPERADMIN" : "USER";
+    
+    // Find existing setting for this user with no organization (global setting)
+    const existingSetting = await prisma.telegramSetting.findFirst({
+      where: {
         userId: dbUser.id,
-        role: dbUser.role,
-        scope: dbUser.role === "SUPERADMIN" ? "SUPERADMIN" : "USER",
-        chatId: telegramChatId,
-        botToken: telegramBotToken,
+        orgId: { equals: null }, // Explicitly check for null
+        scope: scope,
       },
     });
+
+    if (existingSetting) {
+      // Update existing setting
+      await prisma.telegramSetting.update({
+        where: { id: existingSetting.id },
+        data: {
+          chatId: telegramChatId,
+          botToken: telegramBotToken,
+          isActive: true,
+        },
+      });
+    } else {
+      // Create new setting (orgId will be null by default since it's optional)
+      await prisma.telegramSetting.create({
+        data: {
+          userId: dbUser.id,
+          scope: scope,
+          chatId: telegramChatId,
+          botToken: telegramBotToken,
+          isActive: true,
+        },
+      });
+    }
   }
 
   // Update the user in the database, including the image URL if provided
-  await userDBPrismaClient.user.update({
+  await prisma.user.update({
     where: { id: dbUser.id },
     data: {
       ...userValues,
-      defaultOrgId: values?.defaultOrgId,
-      image: link,
+      image: link || dbUser.image, // Keep existing image if no new image uploaded
     },
   });
 

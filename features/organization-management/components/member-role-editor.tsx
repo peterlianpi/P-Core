@@ -35,7 +35,7 @@ type Props = {
 
 const MemberRoleEditor = ({ members, selectedOrgId }: Props) => {
   const [roleEdits, setRoleEdits] = useState<
-    Record<string, OrganizationUserRole>
+    Record<string, OrganizationRole>
   >({});
   const currentUser = useCurrentUser();
   const currentUserRole = useCurrentMemberRole(members, selectedOrgId);
@@ -48,12 +48,12 @@ const MemberRoleEditor = ({ members, selectedOrgId }: Props) => {
     setRoleEdits({});
   }, [selectedOrgId]);
 
-  const handleChange = (userId: string, newRole: OrganizationUserRole) => {
+  const handleChange = (userId: string, newRole: OrganizationRole) => {
     setRoleEdits((prev) => ({ ...prev, [userId]: newRole }));
   };
 
   // Save edited roles
-  const handleSaveRoles = (roleEdits: Record<string, OrganizationUserRole>) => {
+  const handleSaveRoles = (roleEdits: Record<string, OrganizationRole>) => {
     if (!selectedOrgId || !currentUser?.id) return;
 
     changeMemberRole.mutate(
@@ -111,7 +111,7 @@ const MemberRoleEditor = ({ members, selectedOrgId }: Props) => {
                   disabled={!isEditable || currentUser?.id === m.id} // Disable if editing own role
                   value={currentRole}
                   onValueChange={(val) =>
-                    handleChange(m.id, val as OrganizationUserRole)
+                    handleChange(m.id, val as OrganizationRole)
                   }
                 >
                   <SelectTrigger className="w-24 p-2">

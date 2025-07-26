@@ -5,7 +5,7 @@ import { getUserById, getUserByEmail } from "./data/user";
 import { getTwoFactorConfirmationByUserId } from "./data/two-factor-confirmation";
 import { getAccountByUserId } from "./data/account";
 import { UserRole } from "@prisma/client";
-import { prisma } from "./lib/db/client";
+import { prisma } from "@/lib/db/client";
 import bcrypt from "bcryptjs";
 
 // Exporting NextAuth handlers to use for authentication in the application
@@ -48,7 +48,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
 
           // Use bcryptjs for password comparison
-          const passwordMatch = await bcrypt.compare(user.password as string, existingUser.password);
+          const passwordMatch = await bcrypt.compare(user.password, existingUser.password);
           if (!passwordMatch) {
             console.error("Password mismatch");
             return false;
@@ -73,6 +73,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           user.name = existingUser.name;
           user.email = existingUser.email;
           user.role = existingUser.role;
+          user.isTwoFactorEnabled = Boolean(existingUser.isTwoFactorEnabled);
+          user.defaultOrgId = existingUser.defaultOrgId ?? undefined;
 
           return true;
         } catch (error) {
@@ -81,9 +83,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
       }
 
-      // For existing user ID validation
-      if (!user.id) {
-        console.error("User ID is undefined.");
+      // For existing user ID validation (OAuth users)
+      if (!user.id || user.id === "temp") {
+        console.error("User ID is undefined or temporary.");
         return false;
       }
 
@@ -111,10 +113,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           });
         }
 
-        return true;
+        return true; // Allow sign-in if all checks pass
       } catch (error) {
-        console.error("Error during sign-in:", error);
-        return false;
+        console.error("Error during sign-in:", error); // Log errors during the sign-in process
+        return false; // Prevent sign-in on failure
       }
     },
 
@@ -132,7 +134,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           session.user.name = token.name;
           session.user.email = token.email as string;
           session.user.isOAuth = token.isOAuth as boolean;
-          session.user.defaultOrgId = token.defaultOrgId as string;
+          session.user.defaultOrgId = token.defaultOrgId as string | undefined;
           // Use cached image from token instead of fresh DB query
           session.user.image = token.image as string | null;
         }
@@ -173,7 +175,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             token.email = existingUser.email;
             token.role = existingUser.role; // Set user role
             token.isTwoFactorEnabled = existingUser.isTwoFactorEnabled; // Set 2FA status
-            token.defaultOrgId = existingUser.defaultOrgId; // Set default organization ID
+            token.defaultOrgId = existingUser.defaultOrgId || null; // Set default organization ID
             token.image = existingUser.image; // Cache user image to avoid DB queries in session
           }
         }

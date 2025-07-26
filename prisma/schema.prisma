@@ -50,15 +50,34 @@ model Session {
   @@schema("auth")
 }
 
+model Image {
+  id        String     @id @default(cuid())
+  publicId  String     @unique
+  url       String
+  folder    String
+  feature   String     // e.g. 'user-profile', 'org-logo', 'student-profile'
+  ownerId   String     // Entity ID - polymorphic reference
+  ownerType ImageOwner // Type of entity
+  orgId     String?    @map("org_id") // For tenant isolation
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([ownerId, ownerType])
+  @@index([orgId])
+  @@map("images")
+  @@schema("auth")
+}
+
 model User {
   id                    String                 @id @default(cuid())
   name                  String?
   email                 String                 @unique
   emailVerified         DateTime?              @map("email_verified")
-  image                 String?
+  image                 String?                // Store image URL directly
   password              String?
   role                  UserRole               @default(USER)
   isTwoFactorEnabled    Boolean                @default(false) @map("is_two_factor_enabled")
+  defaultOrgId          String?                @map("default_org_id") // User's default organization
   twoFactorConfirmation TwoFactorConfirmation?
   createdAt             DateTime               @default(now()) @map("created_at")
   updatedAt             DateTime               @updatedAt @map("updated_at")
@@ -70,6 +89,7 @@ model User {
   createdOrganizations Organization[]     @relation("OrganizationCreator")
   createdVersions      VersionInfo[]      @relation("VersionCreator")
   telegramSettings     TelegramSetting[]
+  defaultOrganization  Organization?      @relation("DefaultOrganization", fields: [defaultOrgId], references: [id], onDelete: SetNull)
 
   @@map("users")
   @@schema("auth")
@@ -133,8 +153,10 @@ model Organization {
 
   users            UserOrganization[] // Many-to-many with users
   updateLogs       UpdateLog[]
-  versions         VersionInfo[]      // Organization-specific versions
+  versions         VersionInfo[] // Organization-specific versions
   telegramSettings TelegramSetting[]
+  invites          OrganizationInvite[]
+  defaultUsers     User[]             @relation("DefaultOrganization") // Users who have this as default org
 
   @@map("organizations")
   @@schema("auth")
@@ -178,22 +200,61 @@ model UpdateLog {
   @@schema("auth")
 }
 
+model OrganizationInvite {
+  id             String                   @id @default(cuid())
+  invitedBy      String
+  email          String
+  organizationId String
+  role           OrganizationRole?        @default(MEMBER)
+  token          String                   @unique
+  status         OrganizationInviteStatus @default(PENDING)
+  expiresAt      DateTime
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([email, organizationId])
+  @@map("organization_invites")
+  @@schema("auth")
+}
+
+model Feedback {
+  id        String    @id @default(cuid())
+  name      String?
+  email     String?
+  phone     String?
+  message   String
+  anonymous Boolean   @default(false)
+  status    String    @default("Pending")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId String @map("org_id")
+
+  @@index([orgId])
+  @@map("feedback")
+  @@schema("domain")
+}
+
 model TelegramSetting {
-  id       String   @id @default(cuid())
-  userId   String   @map("user_id")
-  orgId    String?  @map("org_id")
-  chatId   String   @map("chat_id")
-  botToken String   @map("bot_token")
-  scope    TelegramScope @default(USER)
-  isActive Boolean  @default(true) @map("is_active")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id        String        @id @default(cuid())
+  userId    String        @map("user_id")
+  orgId     String?       @map("org_id")
+  chatId    String        @map("chat_id")
+  botToken  String        @map("bot_token")
+  scope     TelegramScope @default(USER)
+  isActive  Boolean       @default(true) @map("is_active")
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
 
   // Relations
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, scope])
+  @@unique([userId, orgId, scope])
   @@index([userId])
   @@index([orgId])
   @@map("telegram_settings")
@@ -207,7 +268,7 @@ model TelegramSetting {
 
 model Student {
   id          String    @id @default(cuid())
-  number      String?   @unique
+  number      String?
   rollNumber  String?   @map("roll_number")
   name        String
   email       String?
@@ -235,12 +296,14 @@ model Student {
   purchases Purchase[]
   bookLoans BookLoan[]
 
+  @@unique([number, orgId])
   @@unique([email, orgId])
   @@unique([phone, orgId])
   @@unique([rollNumber, orgId])
   @@index([orgId])
   @@index([isActive, orgId])
   @@index([isArchived, orgId])
+  @@index([orgId, name]) // Composite index for search
   @@map("students")
   @@schema("domain")
 }
@@ -399,18 +462,18 @@ model VersionInfo {
   releaseDate DateTime @map("release_date")
   isActive    Boolean  @default(false) @map("is_active")
   changelog   String?  @db.Text
-  
+
   // Timestamps
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  deletedAt   DateTime? // Added for soft-delete support
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? // Added for soft-delete support
 
   // Created by (SUPERADMIN only)
-  createdBy   String   @map("created_by")
+  createdBy     String @map("created_by")
   createdByUser User   @relation("VersionCreator", fields: [createdBy], references: [id])
 
   // Multi-tenancy field (optional for system-wide versions)
-  orgId       String?  @map("org_id")
+  orgId        String?       @map("org_id")
   organization Organization? @relation(fields: [orgId], references: [id])
 
   @@index([isActive])
@@ -422,60 +485,62 @@ model VersionInfo {
 
 // --- CHURCH MANAGEMENT MODELS (domain schema) ---
 model Member {
-  id        String   @id @default(cuid())
-  number    Int?
+  id        String    @id @default(cuid())
+  number    String?   // Changed to String for consistency
   name      String
   birthdate DateTime? @map("birth_date")
   gender    Gender?
   phone     String?
   email     String?
-  bloodType String?  @map("blood_type")
+  bloodType String?   @map("blood_type")
   image     String?
-  fbLink    String?  @map("fb_link")
-  isActive  Boolean  @default(true) @map("is_active")
-  
+  fbLink    String?   @map("fb_link")
+  isActive  Boolean   @default(true) @map("is_active")
+
   // Multi-tenancy field (CRITICAL for RLS)
-  orgId     String   @map("org_id")
-  
-  homeId    String?  @map("home_id")
-  home      Home?    @relation(fields: [homeId], references: [id])
-  roles     MemberRoleAssignment[]
-  familyFrom FamilyRelationship[] @relation("FamilyFrom")
-  familyTo   FamilyRelationship[] @relation("FamilyTo")
-  spouseId  String?  @map("spouse_id")
-  spouse    Member?  @relation("SpouseRelation", fields: [spouseId], references: [id])
-  spouseOf  Member[] @relation("SpouseRelation")
+  orgId String @map("org_id")
+
+  homeId           String?                @map("home_id")
+  home             Home?                  @relation(fields: [homeId], references: [id])
+  roles            MemberRoleAssignment[]
+  familyFrom       FamilyRelationship[]   @relation("FamilyFrom")
+  familyTo         FamilyRelationship[]   @relation("FamilyTo")
+  spouseId         String?                @map("spouse_id")
+  spouse           Member?                @relation("SpouseRelation", fields: [spouseId], references: [id])
+  spouseOf         Member[]               @relation("SpouseRelation")
   choirMemberships ChoirMember[]
-  bookLoans BookLoan[]
-  
+  bookLoans        BookLoan[]
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  @@unique([number, orgId])
   @@unique([email, orgId])
   @@unique([phone, orgId])
   @@index([orgId])
   @@index([isActive, orgId])
   @@index([homeId])
+  @@index([orgId, name]) // Composite index for search
   @@map("members")
   @@schema("domain")
 }
 
 model Home {
-  id         String   @id @default(cuid())
-  homeNumber String   @map("home_number")
+  id         String  @id @default(cuid())
+  homeNumber String  @map("home_number")
   address    String?
   latitude   Float?
   longitude  Float?
-  isActive   Boolean  @default(true) @map("is_active")
-  
+  isActive   Boolean @default(true) @map("is_active")
+
   // Multi-tenancy field (CRITICAL for RLS)
-  orgId      String   @map("org_id")
-  
-  vengId     String   @map("veng_id")
-  veng       Veng     @relation(fields: [vengId], references: [id])
-  members    Member[]
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  orgId String @map("org_id")
+
+  vengId    String   @map("veng_id")
+  veng      Veng     @relation(fields: [vengId], references: [id])
+  members   Member[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@unique([homeNumber, orgId])
   @@index([orgId])
@@ -485,13 +550,13 @@ model Home {
 }
 
 model Veng {
-  id        String   @id @default(cuid())
-  name      String
-  isActive  Boolean  @default(true) @map("is_active")
-  
+  id       String  @id @default(cuid())
+  name     String
+  isActive Boolean @default(true) @map("is_active")
+
   // Multi-tenancy field (CRITICAL for RLS)
-  orgId     String   @map("org_id")
-  
+  orgId String @map("org_id")
+
   khawkId   String   @map("khawk_id")
   khawk     Khawk    @relation(fields: [khawkId], references: [id])
   homes     Home[]
@@ -506,13 +571,13 @@ model Veng {
 }
 
 model Khawk {
-  id        String   @id @default(cuid())
-  name      String
-  isActive  Boolean  @default(true) @map("is_active")
-  
+  id       String  @id @default(cuid())
+  name     String
+  isActive Boolean @default(true) @map("is_active")
+
   // Multi-tenancy field (CRITICAL for RLS)
-  orgId     String   @map("org_id")
-  
+  orgId String @map("org_id")
+
   vengs     Veng[]
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -524,49 +589,55 @@ model Khawk {
 }
 
 model FamilyRelationship {
-  id     String @id @default(cuid())
-  fromId String @map("from_id")
-  toId   String @map("to_id")
-  typeId String @map("type_id")
-  from   Member           @relation("FamilyFrom", fields: [fromId], references: [id])
-  to     Member           @relation("FamilyTo", fields: [toId], references: [id])
-  type   RelationshipType @relation(fields: [typeId], references: [id])
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  
+  id        String           @id @default(cuid())
+  fromId    String           @map("from_id")
+  toId      String           @map("to_id")
+  typeId    String           @map("type_id")
+  from      Member           @relation("FamilyFrom", fields: [fromId], references: [id])
+  to        Member           @relation("FamilyTo", fields: [toId], references: [id])
+  type      RelationshipType @relation(fields: [typeId], references: [id])
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+
   @@unique([fromId, toId, typeId])
   @@map("family_relationships")
   @@schema("domain")
 }
 
 model RelationshipType {
-  id   String @id @default(cuid())
-  name String @unique
+  id            String               @id @default(cuid())
+  name          String
+  orgId         String?              @map("org_id") // Optional for global types
   relationships FamilyRelationship[]
-  
+
+  @@unique([name, orgId])
+  @@index([orgId])
   @@map("relationship_types")
   @@schema("domain")
 }
 
 model MemberRole {
-  id   String @id @default(cuid())
-  name String @unique
+  id      String                 @id @default(cuid())
+  name    String
+  orgId   String?                @map("org_id") // Optional for global roles
   members MemberRoleAssignment[]
-  
+
+  @@unique([name, orgId])
+  @@index([orgId])
   @@map("member_roles")
   @@schema("domain")
 }
 
 model MemberRoleAssignment {
-  id         String      @id @default(cuid())
-  memberId   String      @map("member_id")
-  roleId     String      @map("role_id")
-  member     Member      @relation(fields: [memberId], references: [id])
-  role       MemberRole  @relation(fields: [roleId], references: [id])
-  assignedAt DateTime    @default(now()) @map("assigned_at")
-  startedAt  DateTime?   @map("started_at")
-  endedAt    DateTime?   @map("ended_at")
-  
+  id         String     @id @default(cuid())
+  memberId   String     @map("member_id")
+  roleId     String     @map("role_id")
+  member     Member     @relation(fields: [memberId], references: [id])
+  role       MemberRole @relation(fields: [roleId], references: [id])
+  assignedAt DateTime   @default(now()) @map("assigned_at")
+  startedAt  DateTime?  @map("started_at")
+  endedAt    DateTime?  @map("ended_at")
+
   @@unique([memberId, roleId])
   @@map("member_role_assignments")
   @@schema("domain")
@@ -614,6 +685,16 @@ enum UserOrganizationStatus {
   @@schema("auth")
 }
 
+enum OrganizationInviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  CANCELLED
+
+  @@schema("auth")
+}
+
 enum LogType {
   INFO
   WARNING
@@ -627,6 +708,17 @@ enum TelegramScope {
   USER
   ORG
   SUPERADMIN
+
+  @@schema("auth")
+}
+
+enum ImageOwner {
+  USER
+  ORGANIZATION
+  STUDENT
+  MEMBER
+  BOOK
+  OTHER
 
   @@schema("auth")
 }
@@ -682,19 +774,19 @@ enum PaymentMethod {
 
 // --- CHOIR MANAGEMENT MODELS ---
 model Choir {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   name        String
-  description String?  @db.Text
-  isActive    Boolean  @default(true) @map("is_active")
-  
+  description String? @db.Text
+  isActive    Boolean @default(true) @map("is_active")
+
   // Multi-tenancy field (CRITICAL for RLS)
-  orgId       String   @map("org_id")
-  
-  members     ChoirMember[]
-  songs       Song[]
-  events      ChoirEvent[]
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  orgId String @map("org_id")
+
+  members   ChoirMember[]
+  songs     Song[]
+  events    ChoirEvent[]
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
 
   @@unique([name, orgId])
   @@index([orgId])
@@ -704,21 +796,21 @@ model Choir {
 }
 
 model ChoirMember {
-  id        String            @id @default(cuid())
-  choirId   String            @map("choir_id")
-  memberId  String            @map("member_id")
-  voice     String?           // Soprano, Alto, Tenor, Bass
-  status    ChoirMemberStatus @default(ACTIVE)
-  joinedAt  DateTime          @default(now()) @map("joined_at")
-  leftAt    DateTime?         @map("left_at")
-  
+  id       String            @id @default(cuid())
+  choirId  String            @map("choir_id")
+  memberId String            @map("member_id")
+  voice    VoicePart?
+  status   ChoirMemberStatus @default(ACTIVE)
+  joinedAt DateTime          @default(now()) @map("joined_at")
+  leftAt   DateTime?         @map("left_at")
+
   // Multi-tenancy field (CRITICAL for RLS)
-  orgId     String            @map("org_id")
-  
-  choir     Choir             @relation(fields: [choirId], references: [id], onDelete: Cascade)
-  member    Member            @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  createdAt DateTime          @default(now()) @map("created_at")
-  updatedAt DateTime          @updatedAt @map("updated_at")
+  orgId String @map("org_id")
+
+  choir     Choir    @relation(fields: [choirId], references: [id], onDelete: Cascade)
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@unique([choirId, memberId, orgId])
   @@index([orgId])
@@ -729,21 +821,21 @@ model ChoirMember {
 }
 
 model Song {
-  id          String   @id @default(cuid())
-  title       String
-  composer    String?
-  key         String?
-  tempo       String?
-  lyrics      String?  @db.Text
-  isActive    Boolean  @default(true) @map("is_active")
-  
+  id       String  @id @default(cuid())
+  title    String
+  composer String?
+  key      String?
+  tempo    String?
+  lyrics   String? @db.Text
+  isActive Boolean @default(true) @map("is_active")
+
   // Multi-tenancy field (CRITICAL for RLS)
-  orgId       String   @map("org_id")
-  
-  choirId     String   @map("choir_id")
-  choir       Choir    @relation(fields: [choirId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  orgId String @map("org_id")
+
+  choirId   String   @map("choir_id")
+  choir     Choir    @relation(fields: [choirId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([orgId])
   @@index([choirId])
@@ -752,19 +844,19 @@ model Song {
 }
 
 model ChoirEvent {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   title       String
-  description String?   @db.Text
-  eventDate   DateTime  @map("event_date")
+  description String?  @db.Text
+  eventDate   DateTime @map("event_date")
   location    String?
-  
+
   // Multi-tenancy field (CRITICAL for RLS)
-  orgId       String    @map("org_id")
-  
-  choirId     String    @map("choir_id")
-  choir       Choir     @relation(fields: [choirId], references: [id], onDelete: Cascade)
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  orgId String @map("org_id")
+
+  choirId   String   @map("choir_id")
+  choir     Choir    @relation(fields: [choirId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([orgId])
   @@index([choirId])
@@ -775,24 +867,27 @@ model ChoirEvent {
 
 // --- LIBRARY MANAGEMENT MODELS ---
 model Book {
-  id          String     @id @default(cuid())
+  id          String    @id @default(cuid())
   title       String
   author      String
   isbn        String?
   category    String?
   publisher   String?
-  publishedAt DateTime?  @map("published_at")
-  description String?    @db.Text
-  total       Int        @default(1)
-  available   Int        @default(1)
-  isActive    Boolean    @default(true) @map("is_active")
-  
+  publishedAt DateTime? @map("published_at")
+  description String?   @db.Text
+  total       Int       @default(1)
+  available   Int       @default(1)
+  isActive    Boolean   @default(true) @map("is_active")
+
+  // Add constraint: available <= total AND available >= 0
+  // This needs to be added in migration SQL
+
   // Multi-tenancy field (CRITICAL for RLS)
-  orgId       String     @map("org_id")
-  
-  loans       BookLoan[]
-  createdAt   DateTime   @default(now()) @map("created_at")
-  updatedAt   DateTime   @updatedAt @map("updated_at")
+  orgId String @map("org_id")
+
+  loans     BookLoan[]
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
 
   @@unique([isbn, orgId])
   @@index([orgId])
@@ -811,15 +906,15 @@ model BookLoan {
   returnDate DateTime?      @map("return_date")
   status     BookLoanStatus @default(ACTIVE)
   notes      String?        @db.Text
-  
+
   // Multi-tenancy field (CRITICAL for RLS)
-  orgId      String         @map("org_id")
-  
-  book       Book           @relation(fields: [bookId], references: [id], onDelete: Cascade)
-  member     Member?        @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  student    Student?       @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  createdAt  DateTime       @default(now()) @map("created_at")
-  updatedAt  DateTime       @updatedAt @map("updated_at")
+  orgId String @map("org_id")
+
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  member    Member?  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  student   Student? @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([orgId])
   @@index([bookId])
@@ -835,7 +930,7 @@ enum ChoirMemberStatus {
   ACTIVE
   INACTIVE
   SUSPENDED
-  
+
   @@schema("domain")
 }
 
@@ -844,6 +939,15 @@ enum BookLoanStatus {
   RETURNED
   OVERDUE
   LOST
-  
+
+  @@schema("domain")
+}
+
+enum VoicePart {
+  SOPRANO
+  ALTO
+  TENOR
+  BASS
+
   @@schema("domain")
 }

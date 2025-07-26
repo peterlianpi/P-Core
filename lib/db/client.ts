@@ -102,9 +102,6 @@ export const checkDatabaseHealth = async () => {
 // Export the singleton client as default
 export default prisma;
 
-// For backwards compatibility with existing code that uses userDBPrismaClient
-export const userDBPrismaClient = prisma;
-
 // Explicit type exports to avoid CommonJS warning
 export type { 
   PrismaClient,
@@ -113,20 +110,52 @@ export type {
   UserRole,
   Organization,
   OrganizationType,
+  OrganizationRole,
   UserOrganization,
-  OrganizationInvite,
+  UserOrganizationStatus,
   Student,
   Course,
+  StudentCourse,
+  StudentCourseStatus,
   Purchase,
   PurchaseStatus,
+  PaymentMethod,
   Member,
   Book,
   BookLoan,
+  BookLoanStatus,
   Choir,
   ChoirMember,
+  ChoirMemberStatus,
   Song,
-  Feedback,
+  VoicePart,
   TelegramSetting,
+  TelegramScope,
   UpdateLog,
-  LogType
+  LogType,
+  Image,
+  ImageOwner,
+  OrganizationInvite,
+  OrganizationInviteStatus,
+  Feedback,
+  Gender,
+  DayOfWeek,
+  VersionInfo,
+  Schedule,
+  LessonBook,
+  CourseStatusLog,
+  Home,
+  Veng,
+  Khawk,
+  FamilyRelationship,
+  RelationshipType,
+  MemberRole,
+  MemberRoleAssignment,
+  ChoirEvent,
+  Account,
+  Session,
+  VerificationToken,
+  PasswordResetToken,
+  TwoFactorToken,
+  TwoFactorConfirmation
 } from "@prisma/client";

@@ -3,8 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import Github from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import { LoginSchema } from "./schemas";
-// Note: Database operations moved to server-side auth.ts
-// This keeps auth.config.ts edge-runtime compatible
+import { UserRole } from "@prisma/client";
 
 export default {
   providers: [
@@ -18,19 +17,24 @@ export default {
     }),
     Credentials({
       async authorize(credentials) {
-        // Edge runtime compatible - validation only
-        // Actual authentication logic moved to server-side login action
+        // Edge-runtime compatible validation only
+        // Actual authentication happens in auth.ts signIn callback
         const validatedFields = LoginSchema.safeParse(credentials);
         if (!validatedFields.success) {
           return null;
         }
 
-        // Return credentials for server-side verification
-        // The actual user authentication happens in login server action
+        const { email, password } = validatedFields.data;
+        
+        // Return credentials for server-side verification in auth.ts
+        // This keeps auth.config.ts edge-runtime compatible
         return {
-          id: "temp",
-          email: validatedFields.data.email,
-          password: validatedFields.data.password,
+          id: "temp", // Temporary ID, will be replaced in auth.ts
+          email,
+          password,
+          // Add required fields from extended User interface
+          role: UserRole.USER, // Will be replaced in auth.ts
+          isTwoFactorEnabled: false, // Will be replaced in auth.ts
         };
       },
     }),

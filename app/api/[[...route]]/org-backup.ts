@@ -188,7 +188,7 @@ const org = new Hono()
         const { userId } = c.req.valid("query"); // You need to extract userId from query
 
         // Check if user is part of the organization
-        const userOrg = await userDBPrismaClient.userOrganization.findUnique({
+        const userOrg = await prisma.userOrganization.findUnique({
           where: {
             userId_organizationId: {
               userId,
@@ -203,7 +203,7 @@ const org = new Hono()
             403
           );
 
-        const organization = await userDBPrismaClient.organization.findUnique({
+        const organization = await prisma.organization.findUnique({
           where: { id: orgId },
         });
 
@@ -248,7 +248,7 @@ const org = new Hono()
         if (!parsed.success) return c.json({ error: "Invalid input" }, 400);
 
         // Check if the user is part of the organization
-        const userOrg = await userDBPrismaClient.userOrganization.findUnique({
+        const userOrg = await prisma.userOrganization.findUnique({
           where: {
             userId_organizationId: {
               userId,
@@ -263,7 +263,7 @@ const org = new Hono()
             403
           );
 
-        const updatedOrg = await userDBPrismaClient.organization.update({
+        const updatedOrg = await prisma.organization.update({
           where: { id: orgId },
           data: parsed.data,
         });
@@ -290,7 +290,7 @@ const org = new Hono()
         const { userId } = c.req.valid("query"); // Extract userId from query
 
         // Check if the user is part of the organization
-        const userOrg = await userDBPrismaClient.userOrganization.findUnique({
+        const userOrg = await prisma.userOrganization.findUnique({
           where: {
             userId_organizationId: {
               userId,
@@ -305,7 +305,7 @@ const org = new Hono()
             403
           );
 
-        await userDBPrismaClient.organization.delete({ where: { id: orgId } });
+        await prisma.organization.delete({ where: { id: orgId } });
         return c.json({ message: "Organization deleted" });
       } catch {
         return c.json({ error: "Failed to delete organization" }, 500);
@@ -330,7 +330,7 @@ const org = new Hono()
         const { userId, adminUserId } = c.req.valid("query"); // Assuming the user making the request is an admin or authorized user
 
         // Check if the admin user is part of the organization
-        const adminOrg = await userDBPrismaClient.userOrganization.findUnique({
+        const adminOrg = await prisma.userOrganization.findUnique({
           where: {
             userId_organizationId: {
               userId: adminUserId,
@@ -345,17 +345,17 @@ const org = new Hono()
             403
           );
 
-        const user = await userDBPrismaClient.user.findUnique({
+        const user = await prisma.user.findUnique({
           where: { id: userId },
         });
-        const organization = await userDBPrismaClient.organization.findUnique({
+        const organization = await prisma.organization.findUnique({
           where: { id: orgId },
         });
 
         if (!user || !organization)
           return c.json({ error: "User or Organization not found" }, 404);
 
-        await userDBPrismaClient.userOrganization.create({
+        await prisma.userOrganization.create({
           data: { userId, organizationId: orgId, role: "OWNER" }, // Default role for the added user
         });
 
@@ -402,7 +402,7 @@ const org = new Hono()
       const { updates } = c.req.valid("json");
 
       // Check permission
-      const adminRecord = await userDBPrismaClient.userOrganization.findUnique({
+      const adminRecord = await prisma.userOrganization.findUnique({
         where: {
           userId_organizationId: {
             userId: adminUserId,
@@ -420,7 +420,7 @@ const org = new Hono()
 
       // Loop and update roles
       const updatePromises = Object.entries(updates).map(([userId, role]) =>
-        userDBPrismaClient.userOrganization.update({
+        prisma.userOrganization.update({
           where: {
             userId_organizationId: {
               userId,
@@ -436,7 +436,7 @@ const org = new Hono()
       try {
         await Promise.all(updatePromises);
         // Log to UpdateLog table
-        await userDBPrismaClient.updateLog.create({
+        await prisma.updateLog.create({
           data: {
             name: "Role Update",
             message: `Updated roles: ${Object.entries(updates)
@@ -485,7 +485,7 @@ const org = new Hono()
 
         // 🔐 Step 1: Check if adminUserId is OWNER of org
         const adminOrgRole =
-          await userDBPrismaClient.userOrganization.findUnique({
+          await prisma.userOrganization.findUnique({
             where: {
               userId_organizationId: {
                 userId: adminUserId,
@@ -503,7 +503,7 @@ const org = new Hono()
         }
 
         // ✅ Step 2: Check if user is in organization
-        const userOrg = await userDBPrismaClient.userOrganization.findUnique({
+        const userOrg = await prisma.userOrganization.findUnique({
           where: {
             userId_organizationId: {
               userId,
@@ -520,7 +520,7 @@ const org = new Hono()
         }
 
         // ✅ Step 3: Soft-remove member
-        await userDBPrismaClient.userOrganization.update({
+        await prisma.userOrganization.update({
           where: {
             userId_organizationId: {
               userId,
