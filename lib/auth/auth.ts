@@ -150,13 +150,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     // PERFORMANCE OPTIMIZATION: Cache user data in JWT to avoid repeated DB queries
     // This callback runs less frequently (token refresh) vs session callback (every request)
     async jwt({ token, trigger }) {
+
+
       if (!token.sub) return token; // If no user ID in token, return the token as-is
 
       try {
         // Only fetch fresh data during initial login or explicit refresh
         // This prevents unnecessary DB queries on every token access
-        const shouldRefreshUserData = 
+        const shouldRefreshUserData =
           !token.name || // Initial login - no cached data
+          !token.role || // Role is not cached
+          !token.isTwoFactorEnabled || // 2FA status is not cached
+          !token.defaultOrgId || // Default organization ID is not cached
+          !token.image || // Image is not cached
+
           trigger === "update" || // Explicit refresh requested
           // Refresh if token is older than 15 minutes (900 seconds)
           (token.iat && Date.now() / 1000 - (token.iat as number) > 900);
@@ -192,7 +199,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
   // Session configuration: Use JWT (JSON Web Tokens) for session management
   // PERFORMANCE OPTIMIZATION: Reduce token refresh frequency to minimize DB queries
-  session: { 
+  session: {
     strategy: "jwt",
     maxAge: 3600, // 1 hour - shorter sessions for security
     updateAge: 900, // 15 minutes - refresh token every 15 minutes instead of default 24 hours

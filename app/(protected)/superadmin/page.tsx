@@ -26,6 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@/components/ui/progress";
 import { DataLoadingState } from "@/components/ui/modern-loading";
 import { ErrorBoundaryWrapper } from "@/components/error/error-boundary";
+import { OrganizationRole, UserRole } from "@prisma/client";
 
 interface ActivityLogItem {
   id: string;
@@ -59,11 +60,11 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: string;
+  role: UserRole;
   createdAt: string;
   isTwoFactorEnabled: boolean;
   organizations: {
-    role: string;
+    role: OrganizationRole;
     organization: {
       id: string;
       name: string;
@@ -104,7 +105,7 @@ const SuperadminDashboard = () => {
   const [orgTypeFilter, setOrgTypeFilter] = useState("");
 
   useEffect(() => {
-    if (session?.user?.role === "SUPERADMIN") {
+    if (session?.user?.role === UserRole.SUPERADMIN) {
       fetchSystemStats();
       fetchUsers();
       fetchOrganizations();
@@ -192,7 +193,7 @@ const SuperadminDashboard = () => {
   };
 
   if (loading) {
-    return <DataLoadingState />;
+    return <DataLoadingState isLoading={loading}  />;
   }
 
   return (

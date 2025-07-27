@@ -12,7 +12,7 @@ type Org = {
     logoImage?: string | undefined;
     description?: string | undefined;
     startedAt?: Date | null | undefined;
-    type?: "school" | "church" | "business" | "nonprofit" | undefined;
+    type?: "SCHOOL" | "TRAINING_CENTER" | "UNIVERSITY" | "CORPORATE" | "CHURCH" | "OTHER" | undefined
   };
   role?: string | undefined;
 };

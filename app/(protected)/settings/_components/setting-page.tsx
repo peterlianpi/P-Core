@@ -19,19 +19,29 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import ImageUpload from "@/features/system/image-upload/components/upload-image-show";
+import { UserRole } from "@prisma/client";
+import { useOrgData } from "@/features";
 
 type Organization = {
   organization: { id: string; name: string; };
 };
 type SettingsComponentPageProps = {
-  organizations?: Organization[];
+  telegram?: {
+    telegramChatId: string | undefined | null;
+    telegramBotToken: string | undefined | null;
+    isActive: boolean;
+  };
+  
 };
 
-const SettingsComponentPage = ({ organizations }: SettingsComponentPageProps) => {
+const SettingsComponentPage = ({ telegram }: SettingsComponentPageProps) => {
   const user = useCurrentUser();
+   const {organizations}=useOrgData()
   const { update } = useSession();
   const [isPending, startTransition] = useTransition();
 
+  console.log("My user : ",user)
+  
   const form = useForm<z.infer<typeof SettingsSchema>>({
     resolver: zodResolver(SettingsSchema),
     defaultValues: {
@@ -42,6 +52,11 @@ const SettingsComponentPage = ({ organizations }: SettingsComponentPageProps) =>
       isTwoFactorEnabled: user?.isTwoFactorEnabled || false,
       defaultOrgId: user?.defaultOrgId || "",
       image: user?.image || "",
+      telegramChatId: telegram?.telegramChatId || "",
+      telegramBotToken: telegram?.telegramBotToken || "",
+      // isActive: telegram?.isActive || false,
+      role: user?.role || UserRole.USER,
+
     },
   });
 
@@ -102,15 +117,15 @@ const SettingsComponentPage = ({ organizations }: SettingsComponentPageProps) =>
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input 
-                      {...field} 
-                      type="email" 
-                      placeholder="your.email@example.com" 
-                      disabled={user?.isOAuth || true} 
+                    <Input
+                      {...field}
+                      type="email"
+                      placeholder="your.email@example.com"
+                      disabled={user?.isOAuth || true}
                     />
                   </FormControl>
                   <FormDescription>
-                    {user?.isOAuth 
+                    {user?.isOAuth
                       ? "Your email is managed by your OAuth provider and cannot be changed here."
                       : "Email changes require additional verification (currently disabled)."
                     }
@@ -118,18 +133,18 @@ const SettingsComponentPage = ({ organizations }: SettingsComponentPageProps) =>
                 </FormItem>
               )}
             />
-            
+
             {/* User Role Display */}
             <div className="space-y-2">
               <FormLabel>Current Role</FormLabel>
               <div className="flex items-center space-x-2">
-                <Badge 
+                <Badge
                   variant={
-                    user?.role === "SUPERADMIN" ? "destructive" : 
-                    user?.role === "ADMIN" ? "default" : "secondary"
+                    user?.role === UserRole.SUPERADMIN ? "destructive" :
+                      user?.role === UserRole.ADMIN ? "default" : "secondary"
                   }
                 >
-                  {user?.role || 'USER'}
+                  {user?.role || UserRole.USER}
                 </Badge>
                 <span className="text-sm text-muted-foreground">
                   Your system role determines your access level
@@ -171,21 +186,21 @@ const SettingsComponentPage = ({ organizations }: SettingsComponentPageProps) =>
                   </FormItem>
                 )}
               />
-               <FormField
-                  control={form.control}
-                  name="isTwoFactorEnabled"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel>Two-Factor Authentication</FormLabel>
-                        <FormDescription>Enable 2FA for your account.</FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch checked={field.value} onCheckedChange={field.onChange} disabled={isPending} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+              <FormField
+                control={form.control}
+                name="isTwoFactorEnabled"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel>Two-Factor Authentication</FormLabel>
+                      <FormDescription>Enable 2FA for your account.</FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} disabled={isPending} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
             </CardContent>
           </Card>
         )}

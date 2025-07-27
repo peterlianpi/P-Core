@@ -1,4 +1,5 @@
 import { Context } from 'hono';
+import { ContentfulStatusCode } from 'hono/utils/http-status';
 import { ZodError } from 'zod';
 
 export class ApiError extends Error {
@@ -30,7 +31,7 @@ export function handleApiError(c: Context, error: unknown, defaultMessage?: stri
     return c.json({
       error: error.message,
       code: error.code || 'API_ERROR',
-    }, error.statusCode);
+    }, error.statusCode as ContentfulStatusCode);
   }
 
   if (error instanceof Error) {

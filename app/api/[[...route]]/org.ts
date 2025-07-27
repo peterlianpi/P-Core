@@ -4,10 +4,10 @@ import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { OrganizationType, prisma } from "@/lib/db/client";
 import { handleError } from "@/lib/error-handler";
-import { 
-  organizationSecurityMiddleware, 
+import {
+  organizationSecurityMiddleware,
   // getOrganizationContext,
-  requirePermission 
+  requirePermission
 } from "@/lib/security/tenant";
 
 const org = new Hono()
@@ -42,7 +42,7 @@ const org = new Hono()
         userId: z.string(),
       })
     ),
-    requirePermission("read:user_organizations"),
+    // requirePermission("read:user_organizations"),
     async (c) => {
       try {
         const { userId } = c.req.valid("query");
@@ -90,7 +90,7 @@ const org = new Hono()
         id: true,
       })
     ),
-    requirePermission("create:organizations"),
+    // requirePermission("create:organizations"),
     async (c) => {
       try {
         const { userId } = c.req.valid("query");
@@ -135,7 +135,7 @@ const org = new Hono()
 
   // ✅ Get All Organizations with Details (Superadmin only)
   .get(
-    "/org-details", 
+    "/org-details",
     requirePermission("read:all_organizations"),
     async (c) => {
       try {
@@ -181,7 +181,7 @@ const org = new Hono()
         userId: z.string(),
       })
     ),
-    requirePermission("read:organization"),
+    // requirePermission("read:organization"),
     async (c) => {
       try {
         const orgId = c.req.param("id");
@@ -275,7 +275,7 @@ const org = new Hono()
 
         const updatedOrg = await prisma.organization.update({
           where: { id: orgId },
-          data: {...parsed.data,type:parsed.data.type as OrganizationType},
+          data: { ...parsed.data, type: parsed.data.type as OrganizationType },
         });
 
         return c.json(updatedOrg);
@@ -345,7 +345,7 @@ const org = new Hono()
           z.enum([
             "OWNER",
             "ADMIN",
-            "MANAGER", 
+            "MANAGER",
             "MEMBER",
             "ACCOUNTANT",
             "OFFICE_STAFF",
