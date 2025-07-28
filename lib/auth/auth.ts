@@ -7,6 +7,7 @@ import { getAccountByUserId } from "@/data/account";
 import { UserRole } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import bcrypt from "bcryptjs";
+import { mapUserFieldsForAuth } from "./user-field-mapper";
 
 // Exporting NextAuth handlers to use for authentication in the application
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -128,15 +129,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         // Update session user details from the cached token data
         // All user data is now cached in JWT token during login/refresh
         if (token.sub && session.user) {
-          session.user.id = token.sub; // Set user ID from the token
-          session.user.role = token.role as UserRole; // Set user role from the token
-          session.user.isTwoFactorEnabled = token.isTwoFactorEnabled as boolean;
-          session.user.name = token.name;
-          session.user.email = token.email as string;
-          session.user.isOAuth = token.isOAuth as boolean;
-          session.user.defaultOrgId = token.defaultOrgId as string | undefined;
-          // Use cached image from token instead of fresh DB query
-          session.user.image = token.image as string | null;
+          // Use the mapping utility to keep user fields in sync
+          Object.assign(session.user, mapUserFieldsForAuth({
+            id: token.sub,
+            name: token.name,
+            email: token.email as string,
+            role: token.role as UserRole,
+            isTwoFactorEnabled: token.isTwoFactorEnabled as boolean,
+            defaultOrgId: token.defaultOrgId as string | undefined,
+            image: token.image as string | null,
+            isOAuth: token.isOAuth as boolean,
+          }));
         }
 
         return session; // Return the updated session object with cached data
@@ -176,14 +179,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             // Fetch user account details to check OAuth status
             const existingAccount = await getAccountByUserId(existingUser.id);
 
-            // Cache all user data in JWT token for session callback
-            token.isOAuth = !!existingAccount; // Set whether the user signed in via OAuth
-            token.name = existingUser.name;
-            token.email = existingUser.email;
-            token.role = existingUser.role; // Set user role
-            token.isTwoFactorEnabled = existingUser.isTwoFactorEnabled; // Set 2FA status
-            token.defaultOrgId = existingUser.defaultOrgId || null; // Set default organization ID
-            token.image = existingUser.image; // Cache user image to avoid DB queries in session
+            // Use the mapping utility to keep user fields in sync
+            const mapped = mapUserFieldsForAuth({
+              ...existingUser,
+              isOAuth: !!existingAccount,
+            });
+            Object.assign(token, mapped);
           }
         }
       } catch (error) {

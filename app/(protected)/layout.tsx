@@ -12,7 +12,6 @@ interface ProtectedLayoutProps {
 
 const ProtectedLayout = async ({ children }: ProtectedLayoutProps) => {
   const user = await currentUser();
-  
   const rawOrganizations = await getOrganizationsByUserId(user?.id);
   const allUsers = await getAllUsers();
 
@@ -29,7 +28,7 @@ const ProtectedLayout = async ({ children }: ProtectedLayoutProps) => {
   }));
 
   const organizations = rawOrganizations.data;
-
+ console.log("Organizations : ",organizations)
   
   return (
     <OrgDataProvider organizations={organizations} users={users ?? []}>

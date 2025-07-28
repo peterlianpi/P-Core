@@ -1,6 +1,6 @@
 // Import the authentication module
 
-import { auth } from "./auth/auth.edge";
+import { auth } from "./auth/auth";
 
 
 /**
@@ -10,8 +10,6 @@ import { auth } from "./auth/auth.edge";
 export const currentUser = async () => {
   // Retrieve the current authentication session
   const session = await auth()
-
-  console.log("Session 1: ", session)
 
   // Return the user object if the session exists, otherwise return undefined
   return session?.user;

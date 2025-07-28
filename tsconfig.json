@@ -27,5 +27,15 @@
     "assumeChangesOnlyAffectDirectDependencies": true
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "contexts/LoadingContext.js"],
-  "exclude": ["node_modules", "test/**/*", "scripts/myseed.ts"]
+  "exclude": [
+    "node_modules",
+    ".next",
+    "out",
+    "test",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "scripts/myseed.ts"
+  ]
 }

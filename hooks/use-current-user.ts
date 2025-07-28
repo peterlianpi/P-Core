@@ -8,6 +8,8 @@ import { useSession } from "next-auth/react";
 export const useCurrentUser = () => {
   const { data: session, status } = useSession(); // Destructure `data` to get session
 
+  console.log("Client session : ", session)
+
   if (status === "authenticated") {
     // Ensure session data is available before accessing the user object
     return session?.user;

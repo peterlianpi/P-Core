@@ -40,7 +40,7 @@ const SettingsComponentPage = ({ telegram }: SettingsComponentPageProps) => {
   const { update } = useSession();
   const [isPending, startTransition] = useTransition();
 
-  console.log("My user : ",user)
+   
   
   const form = useForm<z.infer<typeof SettingsSchema>>({
     resolver: zodResolver(SettingsSchema),
