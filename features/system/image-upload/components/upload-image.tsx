@@ -6,9 +6,14 @@ import { Input } from "@/components/ui/input";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { useUploadImage } from "../api/use-upload-image";
+import type { ImageOwnerType } from "@/lib/schemas/image-schemas";
 
+// Use the canonical ImageOwnerType for type safety and consistency
+// This should match the backend and shared schema (e.g., "USER", "MEMBER", etc.)
 type Props = {
-  type?: "user" | "member" | "material" | "team";
+  ownerId: string;
+  ownerType: ImageOwnerType; // Now required for type safety
+  feature: "profile" | "cover" | "gallery" | "thumbnail" | "logo"; // Required for image upload
   canEdit?: boolean;
   fileRef: any;
   isClient: boolean;
@@ -17,7 +22,9 @@ type Props = {
 };
 
 const CustomUploadImagePage = ({
-  type,
+  ownerId,
+  feature,
+  ownerType,
   canEdit,
   fileRef,
   isClient,
@@ -42,16 +49,21 @@ const CustomUploadImagePage = ({
         reader.onload = async () => {
           fileLink = reader.result as string;
 
+          // Log the payload before mutation
+          console.log("[FRONTEND] Uploading image with:", { imageData: fileLink, ownerType, ownerId, feature });
+          // Pass the required 'feature' property to the mutation
           uploadImageMutation.mutate(
-            { image: fileLink, type },
+            { imageData: fileLink, ownerType, ownerId, feature },
             {
-              onSuccess: (response: any) => {
-                const link = response?.link; // Assuming the backend returns { link: "URL" }
+              onSuccess: (response) => {
+                const link = response?.data?.url; // Assuming the backend returns { data: { url: "URL" } }
+                console.log("[FRONTEND] Upload success response:", response);
                 setImageUrl(link);
+                console.log("[FRONTEND] image link:", link);
                 toast.success("Image uploaded successfully!");
               },
               onError: (error) => {
-                console.error(error);
+                console.error("[FRONTEND] Upload error:", error);
                 toast.error("Error uploading image");
               },
             }
@@ -63,7 +75,7 @@ const CustomUploadImagePage = ({
     });
   };
   return (
-    <section className="md:col-span-1 space-y-2 flex flex-col items-center rounded-md">
+    <section className="w-full md:col-span-1 space-y-2 flex flex-col items-center rounded-md">
       <div className="w-24 h-24 border border-emerald-600 rounded-md overflow-hidden ">
         <img
           src={imageUrl ? imageUrl : "/image/profile.png"}
@@ -71,7 +83,7 @@ const CustomUploadImagePage = ({
           className="h-full w-full object-cover"
         />
       </div>
-      <div className="w-20">
+      <div className="w-56">
         <Input
           {...fileRef}
           disabled={isPending || !canEdit}

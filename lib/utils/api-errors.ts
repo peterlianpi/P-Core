@@ -24,6 +24,7 @@ export function handleApiError(c: Context, error: unknown, defaultMessage?: stri
       error: 'Validation failed',
       details: message,
       code: 'VALIDATION_ERROR',
+      statusCode: 400,
     }, 400);
   }
 
@@ -31,6 +32,7 @@ export function handleApiError(c: Context, error: unknown, defaultMessage?: stri
     return c.json({
       error: error.message,
       code: error.code || 'API_ERROR',
+      statusCode: error.statusCode || 500,
     }, error.statusCode as ContentfulStatusCode);
   }
 
@@ -41,6 +43,7 @@ export function handleApiError(c: Context, error: unknown, defaultMessage?: stri
       return c.json({
         error: message,
         code: 'DUPLICATE_RECORD',
+        statusCode: 400,
       }, 400);
     }
 
@@ -49,6 +52,7 @@ export function handleApiError(c: Context, error: unknown, defaultMessage?: stri
       return c.json({
         error: message,
         code: 'RELATED_RECORDS_EXIST',
+        statusCode: 400,
       }, 400);
     }
 
@@ -57,6 +61,7 @@ export function handleApiError(c: Context, error: unknown, defaultMessage?: stri
       return c.json({
         error: message,
         code: 'NOT_FOUND',
+        statusCode: 404,
       }, 404);
     }
 
@@ -65,6 +70,7 @@ export function handleApiError(c: Context, error: unknown, defaultMessage?: stri
       return c.json({
         error: error.message,
         code: 'INTERNAL_ERROR',
+        statusCode: 500,
         stack: error.stack,
       }, 500);
     }
@@ -75,6 +81,7 @@ export function handleApiError(c: Context, error: unknown, defaultMessage?: stri
   return c.json({
     error: message,
     code: 'INTERNAL_ERROR',
+    statusCode: 500,
   }, 500);
 }
 

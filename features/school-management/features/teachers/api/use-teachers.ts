@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { client } from "@/lib/hono";
+import { client } from "@/lib/api/hono-client";
 import { toast } from "sonner";
 
 // Types

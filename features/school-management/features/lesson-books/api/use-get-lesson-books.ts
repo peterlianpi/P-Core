@@ -1,5 +1,6 @@
+import client from "@/lib/api/hono-client";
 import { useQuery } from "@tanstack/react-query";
-import { client } from "@/lib/hono";
+
 
 export const useGetLessonBooks = ({ orgId }: { orgId: string }) => {
   const query = useQuery({

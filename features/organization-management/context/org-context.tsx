@@ -3,7 +3,7 @@
 
 import { createContext, useContext } from "react";
 import type { ReactNode } from "react";
-import type { OrganizationRole } from "@/lib/types/database";
+import type { OrganizationRole, OrganizationType } from "@/lib/types/database";
 
 type Org = {
   organization: {
@@ -12,7 +12,7 @@ type Org = {
     logoImage?: string | undefined;
     description?: string | undefined;
     startedAt?: Date | null | undefined;
-    type?: "SCHOOL" | "TRAINING_CENTER" | "UNIVERSITY" | "CORPORATE" | "CHURCH" | "OTHER" | undefined
+    type?: OrganizationType,
   };
   role?: string | undefined;
 };
