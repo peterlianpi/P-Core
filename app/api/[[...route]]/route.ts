@@ -31,6 +31,7 @@ import courseStatusLogs from "./courseStatusLogs";
 import schedules from "./schedules";
 import dashboard from "./dashboard";
 import superadmin from "./superadmin";
+import telegramSetting from './telegramSetting'
 
 const app = new Hono().basePath("/api");
 
@@ -78,6 +79,7 @@ const routes = app
     .route("/feedback", feedback)
     .route("/invite", invite)
     .route("/superadmin", superadmin)
+    .route("/telegram-setting", telegramSetting)
 
     // --- Protected Route Group ---
     // A single group for all routes that require the organization security middleware.

@@ -149,7 +149,7 @@ export function UserSettingsForm({ user, telegram }: UserSettingsFormProps) {
           </span>
         </div>
         {/* Tabs and Content (right on desktop, below on mobile) */}
-        <div className="flex-1 w-full h-[80vh] pr-4">
+        <div className="flex-1 w-full h-[80vh] md:pr-4">
           {/* Tabs for Desktop, Scroll for Mobile */}
           <div className="hidden h-fit md:flex border-b mb-6 overflow-x-auto overflow-y-hidden">
             {TABS.map(tab => (
