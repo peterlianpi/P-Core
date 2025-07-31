@@ -20,6 +20,7 @@ export async function getOrganizationsByUserId(userId: string | undefined) {
   const userOrganizations = await prisma.userOrganization.findMany({
     where: { userId },
     select: {
+      userId: true,
       role: true,
       organization: {
         select: {

@@ -115,8 +115,8 @@ export function NavMain({
       return false
     }
     
-    // Standard path-based matching
-    return pathname === url || pathname.startsWith(url + '/')
+    // Standard path-based matching (exact match only)
+    return pathname === url
   }
 
   return (
@@ -160,14 +160,13 @@ export function NavMain({
                     <SidebarMenuSub>
                       {item.items.map((subItem) => {
                         const isSubItemActive = isLinkActive(subItem.url)
-                        
                         return (
                           <SidebarMenuSubItem key={subItem.title}>
-                            <SidebarMenuSubButton 
+                            <SidebarMenuSubButton
                               asChild
                               isActive={isSubItemActive}
                             >
-                              <Link 
+                              <Link
                                 href={subItem.url}
                                 onClick={(e) => handleNavigation(subItem.url, e)}
                               >
