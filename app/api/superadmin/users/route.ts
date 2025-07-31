@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/db/client";
-import { UserRole } from "@prisma/client";
+// Use string literal for role to support Edge Runtime
 
 /**
  * GET /api/superadmin/users
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
       select: { role: true }
     });
 
-    if (user?.role !== UserRole.SUPERADMIN) {
+    if (user?.role !== "SUPERADMIN") {
       return NextResponse.json(
         { error: "Superadmin access required" },
         { status: 403 }
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
 
     // Add role filter
     if (role && role !== '') {
-      whereClause.role = role as UserRole;
+      whereClause.role = role;
     }
 
     // Fetch users with pagination and filtering
