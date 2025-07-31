@@ -39,7 +39,7 @@
     "setup:bun": "bun scripts/setup-bun.js",
     "prepare": "husky install",
     "pre-commit": "lint-staged",
-    "seed":"bun run /prisma/seed"
+    "seed": "bun run /prisma/seed"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",
@@ -123,6 +123,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-tailwindcss": "^3.18.2",
     "husky": "^9.1.7",
+    "jsdom": "^26.1.0",
     "lint-staged": "^16.1.2",
     "playwright": "^1.54.1",
     "postcss": "^8.5.6",

@@ -3,7 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import Github from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import { LoginSchema } from "@/lib/schemas";
-import { UserRole } from "@prisma/client";
+import { UserRole } from "./roles";
 
 export default {
   providers: [
