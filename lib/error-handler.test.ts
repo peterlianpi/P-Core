@@ -19,7 +19,8 @@ describe('error-handler', () => {
                 return undefined;
             }),
             json: vi.fn().mockImplementation((body: any, status: number) => {
-                return { body, status };
+                // Return a real Response object for compatibility with .json()
+                return new Response(JSON.stringify(body), { status });
             }),
             header: vi.fn()
         };
@@ -53,8 +54,7 @@ describe('error-handler', () => {
         it('should return sanitized error response with correct status and code', async () => {
             const error = new Error('Test error');
             const response = handleError(mockContext as Context, error, 400, 'TEST_ERROR', ErrorSeverity.HIGH);
-            expect(response).toHaveProperty('body');
-            const body = await response.body?.json?.();
+            const body = await response.json();
             expect(body).toHaveProperty('error');
             expect(body.error).toContain('Test error');
             expect(body.code).toBe('TEST_ERROR');
@@ -69,13 +69,10 @@ describe('error-handler', () => {
             process.env.NODE_ENV = 'development';
             const validationError = { issues: ['issue1', 'issue2'] };
             const response = handleValidationError(mockContext as Context, validationError);
-            expect(response.body).not.toBeNull();
-            if (response.body) {
-                const body = await response.body.json();
-                expect(body.code).toBe('VALIDATION_ERROR');
-                expect(body.details).toHaveProperty('validationErrors');
-                expect(body.details.validationErrors).toEqual(['issue1', 'issue2']);
-            }
+            const body = await response.json();
+            expect(body.code).toBe('VALIDATION_ERROR');
+            expect(body.details).toHaveProperty('validationErrors');
+            expect(body.details.validationErrors).toEqual(['issue1', 'issue2']);
             expect(response.status).toBe(400);
         });
 
@@ -83,20 +80,18 @@ describe('error-handler', () => {
             process.env.NODE_ENV = 'production';
             const validationError = { issues: ['issue1', 'issue2'] };
             const response = handleValidationError(mockContext as Context, validationError);
-            expect(response.body).not.toBeNull();
-            if (response.body) {
-                const body = await response.body.json();
-                expect(body.details).toBeUndefined();
-            }
+            const body = await response.json();
+            expect(body.details).toBeUndefined();
         });
     });
 
     describe('handleDatabaseError', () => {
-        it('should handle Prisma P2002 error correctly', () => {
+        it('should handle Prisma P2002 error correctly', async () => {
             process.env.NODE_ENV = 'production';
             const dbError = { code: 'P2002', message: 'Unique constraint failed' };
             const response = handleDatabaseError(mockContext as Context, dbError);
-            expect(response.body.code).toBe('DUPLICATE_ERROR');
+            const body = await response.json();
+            expect(body.code).toBe('DUPLICATE_ERROR');
             expect(response.status).toBe(409);
         });
 
@@ -104,12 +99,9 @@ describe('error-handler', () => {
             process.env.NODE_ENV = 'development';
             const dbError = { code: 'P2025', message: 'Record not found' };
             const response = handleDatabaseError(mockContext as Context, dbError);
-            expect(response.body).not.toBeNull();
-            if (response.body) {
-                const body = await response.body.json();
-                expect(body.details).toHaveProperty('prismaCode', 'P2025');
-                expect(body.details).toHaveProperty('prismaMessage', 'Record not found');
-            }
+            const body = await response.json();
+            expect(body.details).toHaveProperty('prismaCode', 'P2025');
+            expect(body.details).toHaveProperty('prismaMessage', 'Record not found');
         });
     });
 
