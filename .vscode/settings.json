@@ -6,7 +6,7 @@
   "typescript.preferences.useLabelDetailsInCompletionEntries": true,
   "typescript.suggest.enabled": true,
   "typescript.validate.enable": true,
-  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.updateImportsOnFileMove.enabled": "prompt",
   "typescript.suggest.completeFunctionCalls": true,
   "typescript.inlayHints.parameterNames.enabled": "all",
   "typescript.inlayHints.variableTypes.enabled": true,

@@ -13,7 +13,7 @@ registry = "https://registry.npmjs.org/"
 [install.lockfile]
 # Lockfile configuration
 save = true
-# print = "yarn"
+print = "yarn"
 
 [run]
 # Script execution settings

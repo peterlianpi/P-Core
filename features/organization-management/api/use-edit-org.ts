@@ -1,6 +1,6 @@
 import { InferRequestType, InferResponseType } from "hono";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import client from "@/lib/api/hono-client";
+import { client } from "@/lib/hono";
 
 type ResponseType = InferResponseType<(typeof client.api.org)[":id"]["$patch"]>;
 type RequestType = InferRequestType<

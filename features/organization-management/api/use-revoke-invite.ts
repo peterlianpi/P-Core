@@ -1,5 +1,5 @@
-import client from "@/lib/api/hono-client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { client } from "@/lib/hono";
 import { InferRequestType, InferResponseType } from "hono";
 
 type ResponseType = InferResponseType<typeof client.api.invite.$delete>;

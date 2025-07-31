@@ -144,6 +144,10 @@ function generateNavFromFeatures(
       isActive: pathname.startsWith("/superadmin"),
       items: [
         { title: "Dashboard", url: "/superadmin" },
+        { title: "Users", url: "/superadmin#users" },
+        { title: "Organizations", url: "/superadmin#organizations" },
+        { title: "Analytics", url: "/superadmin#analytics" },
+        { title: "System Health", url: "/superadmin#system" },
       ],
     });
   }

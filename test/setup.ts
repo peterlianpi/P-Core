@@ -27,18 +27,12 @@ afterEach(() => {
 // BROWSER API MOCKS
 // ============================================================================
 
-class MockIntersectionObserver {
-  root: Element | null = null;
-  rootMargin: string = '';
-  thresholds: ReadonlyArray<number> = [];
-  disconnect = vi.fn();
-  observe = vi.fn();
-  unobserve = vi.fn();
-  takeRecords = vi.fn();
-  constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) { }
-}
-
-global.IntersectionObserver = MockIntersectionObserver;
+// Mock IntersectionObserver
+global.IntersectionObserver = vi.fn(() => ({
+  disconnect: vi.fn(),
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+}));
 
 // Mock ResizeObserver
 global.ResizeObserver = vi.fn(() => ({
@@ -99,20 +93,14 @@ vi.mock('next/navigation', () => ({
 vi.mock('next/image', () => ({
   default: (props: any) => {
     // eslint-disable-next-line @next/next/no-img-element
-    return Object.create({
-      ...props,
-      alt: props.alt,
-    });
+    return <img {...props} alt={props.alt} />;
   },
 }));
 
 // Mock Next.js Link component
 vi.mock('next/link', () => ({
   default: ({ children, ...props }: any) => {
-    return Object.create({
-      ...props,
-      children,
-    });
+    return <a {...props}>{children}</a>;
   },
 }));
 
@@ -209,7 +197,7 @@ expect.extend({
 global.testHelpers = {
   // Wait for next tick
   waitForNextTick: () => new Promise(resolve => setTimeout(resolve, 0)),
-
+  
   // Create mock event
   createMockEvent: (overrides = {}) => ({
     preventDefault: vi.fn(),
@@ -237,7 +225,7 @@ console.warn = (...args: any[]) => {
       'Warning: ReactDOM.render is deprecated',
       'Warning: validateDOMNesting',
     ];
-
+    
     if (suppressPatterns.some(pattern => message.includes(pattern))) {
       return;
     }
@@ -253,7 +241,7 @@ console.error = (...args: any[]) => {
     const suppressPatterns = [
       'Error: Not implemented: HTMLCanvasElement.prototype.getContext',
     ];
-
+    
     if (suppressPatterns.some(pattern => message.includes(pattern))) {
       return;
     }

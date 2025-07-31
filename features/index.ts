@@ -28,17 +28,17 @@ export * from './school-management/features/courses/components/courses-table'
 export * from './school-management/features/schedule/components/schedules-table'
 export { schoolApi, queryKeys as schoolQueryKeys } from './school-management/lib/api-client'
 
-// // Church Management Features
-// export * from './church-management/features/members/api/use-create-member'
-// export * from './church-management/features/members/api/use-get-members'
-// export * from './church-management/features/choirs/api/use-get-choirs'
-// export * from './church-management/features/choirs/components/choir-card'
-// export { churchApi, queryKeys as churchQueryKeys } from './church-management/lib/api-client'
+// Church Management Features
+export * from './church-management/features/members/api/use-create-member'
+export * from './church-management/features/members/api/use-get-members'
+export * from './church-management/features/choirs/api/use-get-choirs'
+export * from './church-management/features/choirs/components/choir-card'
+export { churchApi, queryKeys as churchQueryKeys } from './church-management/lib/api-client'
 
-// // Library Management Features
-// export * from './library-management/features/books/api/use-get-books'
-// export * from './library-management/features/books/components/book-card'
-// export { libraryApi, queryKeys as libraryQueryKeys } from './library-management/lib/api-client'
+// Library Management Features
+export * from './library-management/features/books/api/use-get-books'
+export * from './library-management/features/books/components/book-card'
+export { libraryApi, queryKeys as libraryQueryKeys } from './library-management/lib/api-client'
 
 // =============================================================================
 // SYSTEM FEATURES - Infrastructure & Utilities
@@ -59,7 +59,7 @@ export * from './system/feedback'
 // =============================================================================
 
 // Re-export common types
-export type {
+export type { 
   DashboardStats,
   StudentWithCourses,
   CourseWithStudents,
