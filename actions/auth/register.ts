@@ -1,13 +1,13 @@
 "use server";
 
-import { RegisterSchema } from "@/schemas";
+import { RegisterSchema } from "@/lib/schemas";
 import * as z from "zod";
 import bcrypt from "bcryptjs";
 import { getUserByEmail } from "@/data/user";
 import { generateVerificationToken } from "../../lib/tokens";
 import { sendVerificationEmail } from "@/lib/mail/email-templates";
 import { trackRegister } from "./track-system-activities";
-import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
+import { prisma } from "@/lib/db/client";
 
 export const register = async (values: z.infer<typeof RegisterSchema>) => {
   const validatedFields = RegisterSchema.safeParse(values);
@@ -25,7 +25,7 @@ export const register = async (values: z.infer<typeof RegisterSchema>) => {
     return { error: "Email already in use!" };
   }
 
-  await userDBPrismaClient.user.create({
+  await prisma.user.create({
     data: {
       name,
       email,

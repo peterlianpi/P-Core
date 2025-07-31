@@ -1,6 +1,6 @@
 "use client";
 
-import AddNewTeam from "@/features/org/components/add-team-server";
+import AddNewTeam from "@/features/organization-management/components/add-team-server";
 import { useData } from "@/providers/data-provider";
 import React from "react";
 

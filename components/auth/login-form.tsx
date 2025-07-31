@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { CardWrapper } from "./card-wrapper";
 import { z } from "zod";
-import { LoginSchema } from "@/schemas";
+import { LoginSchema } from "@/lib/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
@@ -24,7 +24,7 @@ import { useSearchParams } from "next/navigation";
 import { getSession, useSession } from "next-auth/react";
 import Link from "next/link";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "../ui/input-otp";
-import { InviteTokenTracker } from "@/features/org/components/InviteTokenTracker";
+import { InviteTokenTracker } from "@/features/organization-management/components/InviteTokenTracker";
 
 export const LoginForm = () => {
   const searchParams = useSearchParams();

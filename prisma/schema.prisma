@@ -1,0 +1,1173 @@
+// P-Core Unified Database Schema
+// This consolidates the previous dual-database setup into a single PostgreSQL database
+// using schemas for logical separation while maintaining ACID transaction support.
+
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../node_modules/.prisma/client"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["auth", "domain"]
+}
+
+// ============================================================================
+// AUTH SCHEMA - Authentication, Authorization & Organization Management
+// ============================================================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+  @@schema("auth")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+  @@schema("auth")
+}
+
+model Image {
+  id        String     @id @default(cuid())
+  publicId  String     @unique
+  url       String
+  folder    String
+  feature   String // e.g. 'user-profile', 'org-logo', 'student-profile'
+  ownerId   String // Entity ID - polymorphic reference
+  ownerType ImageOwner // Type of entity
+  orgId     String?    @map("org_id") // For tenant isolation
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([ownerId, ownerType])
+  @@index([orgId])
+  @@map("images")
+  @@schema("auth")
+}
+
+model User {
+  id                    String                 @id @default(cuid())
+  name                  String?
+  email                 String                 @unique
+  emailVerified         DateTime?              @map("email_verified")
+  image                 String? // Store image URL directly
+  password              String?
+  role                  UserRole               @default(USER)
+  isTwoFactorEnabled    Boolean                @default(false) @map("is_two_factor_enabled")
+  defaultOrgId          String?                @map("default_org_id") // User's default organization
+  twoFactorConfirmation TwoFactorConfirmation?
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @updatedAt @map("updated_at")
+
+  // Relations
+  accounts             Account[]
+  sessions             Session[]
+  organizations        UserOrganization[] // Many-to-many with organizations
+  createdOrganizations Organization[]     @relation("OrganizationCreator")
+  createdVersions      VersionInfo[]      @relation("VersionCreator")
+  telegramSettings     TelegramSetting[]
+  defaultOrganization  Organization?      @relation("DefaultOrganization", fields: [defaultOrgId], references: [id], onDelete: SetNull)
+
+  // Library Management Relations
+  libraryStaff LibraryStaff[]
+
+  @@map("users")
+  @@schema("auth")
+}
+
+model VerificationToken {
+  id      String   @id @default(cuid())
+  email   String
+  token   String   @unique
+  expires DateTime
+
+  @@unique([email, token])
+  @@map("verification_tokens")
+  @@schema("auth")
+}
+
+model PasswordResetToken {
+  id      String   @id @default(cuid())
+  email   String
+  token   String   @unique
+  expires DateTime
+
+  @@unique([email, token])
+  @@map("password_reset_tokens")
+  @@schema("auth")
+}
+
+model TwoFactorToken {
+  id      String   @id @default(cuid())
+  email   String
+  token   String   @unique
+  expires DateTime
+
+  @@unique([email, token])
+  @@map("two_factor_tokens")
+  @@schema("auth")
+}
+
+model TwoFactorConfirmation {
+  id     String @id @default(cuid())
+  userId String @unique @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("two_factor_confirmations")
+  @@schema("auth")
+}
+
+model Organization {
+  id          String           @id @default(cuid())
+  name        String
+  description String?
+  logoImage   String?          @map("logo_image")
+  type        OrganizationType @default(SCHOOL)
+  startedAt   DateTime?        @map("started_at")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  // Relations
+  createdById String @map("created_by_id")
+  createdBy   User   @relation("OrganizationCreator", fields: [createdById], references: [id])
+
+  users            UserOrganization[] // Many-to-many with users
+  updateLogs       UpdateLog[]
+  versions         VersionInfo[] // Organization-specific versions
+  telegramSettings TelegramSetting[]
+  invites          OrganizationInvite[]
+  defaultUsers     User[]               @relation("DefaultOrganization") // Users who have this as default org
+
+  // Library Management Relations
+  libraries       Library[]
+  librarySections LibrarySection[]
+  libraryStaff    LibraryStaff[]
+  books           Book[]
+
+  @@map("organizations")
+  @@schema("auth")
+}
+
+model UserOrganization {
+  id             String                 @id @default(cuid())
+  userId         String                 @map("user_id")
+  organizationId String                 @map("organization_id")
+  role           OrganizationRole       @default(MEMBER)
+  status         UserOrganizationStatus @default(ACTIVE)
+  joinedAt       DateTime               @default(now()) @map("joined_at")
+  removedAt      DateTime?              @map("removed_at")
+
+  // Relations
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+  @@index([userId])
+  @@map("user_organizations")
+  @@schema("auth")
+}
+
+model UpdateLog {
+  id        String   @id @default(cuid())
+  name      String
+  message   String   @db.Text
+  type      LogType  @default(INFO)
+  updatedBy String   @map("updated_by")
+  orgId     String?  @map("org_id")
+  date      DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  organization Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("update_logs")
+  @@schema("auth")
+}
+
+model OrganizationInvite {
+  id             String                   @id @default(cuid())
+  invitedBy      String
+  email          String
+  organizationId String
+  role           OrganizationRole?        @default(MEMBER)
+  token          String                   @unique
+  status         OrganizationInviteStatus @default(PENDING)
+  expiresAt      DateTime
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([email, organizationId])
+  @@map("organization_invites")
+  @@schema("auth")
+}
+
+model Feedback {
+  id        String    @id @default(cuid())
+  name      String?
+  email     String?
+  phone     String?
+  message   String
+  anonymous Boolean   @default(false)
+  status    String    @default("Pending")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId String @map("org_id")
+
+  @@index([orgId])
+  @@map("feedback")
+  @@schema("domain")
+}
+
+model TelegramSetting {
+  id        String        @id @default(cuid())
+  userId    String        @map("user_id")
+  role      UserRole      @default(USER) // Role for the user in the organization, if applicable
+  orgId     String?       @map("org_id")
+  chatId    String        @map("chat_id")
+  botToken  String        @map("bot_token")
+  scope     TelegramScope @default(USER)
+  isActive  Boolean       @default(true) @map("is_active")
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, orgId, scope])
+  @@index([userId])
+  @@index([orgId])
+  @@map("telegram_settings")
+  @@schema("auth")
+}
+
+// ============================================================================
+// DOMAIN SCHEMA - Business Logic & Application Data
+// ============================================================================
+// NOTE: All domain tables include orgId for multi-tenancy and RLS policies
+
+model Student {
+  id          String    @id @default(cuid())
+  number      String?
+  rollNumber  String?   @map("roll_number")
+  name        String
+  email       String?
+  phone       String?
+  gender      Gender?
+  birthDate   DateTime? @map("birth_date")
+  address     String?   @db.Text
+  parentName  String?   @map("parent_name")
+  parentPhone String?   @map("parent_phone")
+  image       String?
+  notes       String?   @db.Text
+  isActive    Boolean   @default(true) @map("is_active")
+  isArchived  Boolean   @default(false) @map("is_archived")
+  isDeleted   Boolean   @default(false) @map("is_deleted")
+  isProspect  Boolean   @default(false) @map("is_prospect")
+  joinedAt    DateTime  @default(now()) @map("joined_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId String @map("org_id")
+
+  // Relations
+  courses   StudentCourse[]
+  purchases Purchase[]
+  bookLoans BookLoan[]
+
+  @@unique([number, orgId])
+  @@unique([email, orgId])
+  @@unique([phone, orgId])
+  @@unique([rollNumber, orgId])
+  @@index([orgId])
+  @@index([isActive, orgId])
+  @@index([isArchived, orgId])
+  @@index([orgId, name]) // Composite index for search
+  @@map("students")
+  @@schema("domain")
+}
+
+model Course {
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.Text
+  price       Decimal  @db.Decimal(10, 2) // Changed from Float to Decimal for money
+  duration    Int? // Duration in minutes
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId String @map("org_id")
+
+  // Relations
+  students    StudentCourse[]
+  lessonBooks LessonBook[]
+  schedules   Schedule[]
+  purchases   Purchase[]
+
+  @@unique([name, orgId])
+  @@index([orgId])
+  @@index([isActive, orgId])
+  @@map("courses")
+  @@schema("domain")
+}
+
+model StudentCourse {
+  id          String              @id @default(cuid())
+  studentId   String              @map("student_id")
+  courseId    String              @map("course_id")
+  status      StudentCourseStatus @default(ENROLLED)
+  enrolledAt  DateTime            @default(now()) @map("enrolled_at")
+  completedAt DateTime?           @map("completed_at")
+  grade       String?
+  notes       String?             @db.Text
+
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId String @map("org_id")
+
+  // Relations
+  student    Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course     Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  statusLogs CourseStatusLog[]
+
+  @@unique([studentId, courseId, orgId])
+  @@index([orgId])
+  @@index([studentId])
+  @@index([courseId])
+  @@map("student_courses")
+  @@schema("domain")
+}
+
+model CourseStatusLog {
+  id              String              @id @default(cuid())
+  studentCourseId String              @map("student_course_id")
+  status          StudentCourseStatus
+  changedAt       DateTime            @default(now()) @map("changed_at")
+  note            String?             @db.Text
+
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId String @map("org_id")
+
+  // Relations
+  studentCourse StudentCourse @relation(fields: [studentCourseId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([studentCourseId])
+  @@map("course_status_logs")
+  @@schema("domain")
+}
+
+model LessonBook {
+  id        String   @id @default(cuid())
+  title     String
+  author    String?
+  isbn      String?
+  price     Decimal  @db.Decimal(10, 2) // Changed from Float to Decimal for money
+  courseId  String   @map("course_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  isActive  Boolean  @default(true) @map("is_active")
+
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId String @map("org_id")
+
+  // Relations
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([courseId])
+  @@map("lesson_books")
+  @@schema("domain")
+}
+
+model Schedule {
+  id        String    @id @default(cuid())
+  title     String
+  courseId  String    @map("course_id")
+  startTime DateTime  @map("start_time")
+  endTime   DateTime  @map("end_time")
+  dayOfWeek DayOfWeek @map("day_of_week")
+  room      String?
+  notes     String?   @db.Text
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId String @map("org_id")
+
+  // Relations
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([courseId])
+  @@index([dayOfWeek, orgId])
+  @@map("schedules")
+  @@schema("domain")
+}
+
+model Purchase {
+  id        String         @id @default(cuid())
+  studentId String         @map("student_id")
+  courseId  String?        @map("course_id")
+  amount    Decimal        @db.Decimal(10, 2) // Changed from Float to Decimal for money
+  status    PurchaseStatus @default(PENDING)
+  method    PaymentMethod?
+  reference String? // Payment reference/transaction ID
+  notes     String?        @db.Text
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId String @map("org_id")
+
+  // Relations
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course  Course? @relation(fields: [courseId], references: [id])
+
+  @@index([orgId])
+  @@index([studentId])
+  @@index([status, orgId])
+  @@map("purchases")
+  @@schema("domain")
+}
+
+// Version Information Model (System Management)
+model VersionInfo {
+  id          String   @id @default(cuid())
+  version     String   @unique
+  name        String
+  description String?  @db.Text
+  releaseDate DateTime @map("release_date")
+  isActive    Boolean  @default(false) @map("is_active")
+  changelog   String?  @db.Text
+
+  // Timestamps
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? // Added for soft-delete support
+
+  // Created by (SUPERADMIN only)
+  createdBy     String @map("created_by")
+  createdByUser User   @relation("VersionCreator", fields: [createdBy], references: [id])
+
+  // Multi-tenancy field (optional for system-wide versions)
+  orgId        String?       @map("org_id")
+  organization Organization? @relation(fields: [orgId], references: [id])
+
+  @@index([isActive])
+  @@index([releaseDate])
+  @@index([orgId])
+  @@map("version_info")
+  @@schema("domain")
+}
+
+// --- CHURCH MANAGEMENT MODELS (domain schema) ---
+model Member {
+  id        String    @id @default(cuid())
+  number    String? // Changed to String for consistency
+  name      String
+  birthdate DateTime? @map("birth_date")
+  gender    Gender?
+  phone     String?
+  email     String?
+  bloodType String?   @map("blood_type")
+  image     String?
+  fbLink    String?   @map("fb_link")
+  isActive  Boolean   @default(true) @map("is_active")
+
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId String @map("org_id")
+
+  homeId           String?                @map("home_id")
+  home             Home?                  @relation(fields: [homeId], references: [id])
+  roles            MemberRoleAssignment[]
+  familyFrom       FamilyRelationship[]   @relation("FamilyFrom")
+  familyTo         FamilyRelationship[]   @relation("FamilyTo")
+  spouseId         String?                @map("spouse_id")
+  spouse           Member?                @relation("SpouseRelation", fields: [spouseId], references: [id])
+  spouseOf         Member[]               @relation("SpouseRelation")
+  choirMemberships ChoirMember[]
+  bookLoans        BookLoan[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([number, orgId])
+  @@unique([email, orgId])
+  @@unique([phone, orgId])
+  @@index([orgId])
+  @@index([isActive, orgId])
+  @@index([homeId])
+  @@index([orgId, name]) // Composite index for search
+  @@map("members")
+  @@schema("domain")
+}
+
+model Home {
+  id         String  @id @default(cuid())
+  homeNumber String  @map("home_number")
+  address    String?
+  latitude   Float?
+  longitude  Float?
+  isActive   Boolean @default(true) @map("is_active")
+
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId String @map("org_id")
+
+  vengId    String   @map("veng_id")
+  veng      Veng     @relation(fields: [vengId], references: [id])
+  members   Member[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([homeNumber, orgId])
+  @@index([orgId])
+  @@index([vengId])
+  @@map("homes")
+  @@schema("domain")
+}
+
+model Veng {
+  id       String  @id @default(cuid())
+  name     String
+  isActive Boolean @default(true) @map("is_active")
+
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId String @map("org_id")
+
+  khawkId   String   @map("khawk_id")
+  khawk     Khawk    @relation(fields: [khawkId], references: [id])
+  homes     Home[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([name, orgId])
+  @@index([orgId])
+  @@index([khawkId])
+  @@map("vengs")
+  @@schema("domain")
+}
+
+model Khawk {
+  id       String  @id @default(cuid())
+  name     String
+  isActive Boolean @default(true) @map("is_active")
+
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId String @map("org_id")
+
+  vengs     Veng[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([name, orgId])
+  @@index([orgId])
+  @@map("khawks")
+  @@schema("domain")
+}
+
+model FamilyRelationship {
+  id        String           @id @default(cuid())
+  fromId    String           @map("from_id")
+  toId      String           @map("to_id")
+  typeId    String           @map("type_id")
+  from      Member           @relation("FamilyFrom", fields: [fromId], references: [id])
+  to        Member           @relation("FamilyTo", fields: [toId], references: [id])
+  type      RelationshipType @relation(fields: [typeId], references: [id])
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+
+  @@unique([fromId, toId, typeId])
+  @@map("family_relationships")
+  @@schema("domain")
+}
+
+model RelationshipType {
+  id            String               @id @default(cuid())
+  name          String
+  orgId         String?              @map("org_id") // Optional for global types
+  relationships FamilyRelationship[]
+
+  @@unique([name, orgId])
+  @@index([orgId])
+  @@map("relationship_types")
+  @@schema("domain")
+}
+
+model MemberRole {
+  id      String                 @id @default(cuid())
+  name    String
+  orgId   String?                @map("org_id") // Optional for global roles
+  members MemberRoleAssignment[]
+
+  @@unique([name, orgId])
+  @@index([orgId])
+  @@map("member_roles")
+  @@schema("domain")
+}
+
+model MemberRoleAssignment {
+  id         String     @id @default(cuid())
+  memberId   String     @map("member_id")
+  roleId     String     @map("role_id")
+  member     Member     @relation(fields: [memberId], references: [id])
+  role       MemberRole @relation(fields: [roleId], references: [id])
+  assignedAt DateTime   @default(now()) @map("assigned_at")
+  startedAt  DateTime?  @map("started_at")
+  endedAt    DateTime?  @map("ended_at")
+
+  @@unique([memberId, roleId])
+  @@map("member_role_assignments")
+  @@schema("domain")
+}
+
+// ============================================================================
+// ENUMS - Shared across schemas
+// ============================================================================
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPERADMIN
+
+  @@schema("auth")
+}
+
+enum OrganizationType {
+  SCHOOL
+  TRAINING_CENTER
+  UNIVERSITY
+  CORPORATE
+  CHURCH
+  OTHER
+
+  @@schema("auth")
+}
+
+enum OrganizationRole {
+  VIEWER
+  STUDENT
+  MEMBER
+  CHOIR_MEMBER
+  VOLUNTEER
+  LIBRARY_ASSISTANT
+  TEACHER
+  CHOIR_LEADER
+  LIBRARIAN
+  OFFICE_STAFF
+  ACCOUNTANT
+  EDITOR
+  MANAGER
+  ADMIN
+  OWNER
+  PASTOR
+  SUPPORT
+  AUDITOR
+  DEVOPS
+  SYSTEM_MAINTAINER
+  SUPER_ADMIN
+
+  @@schema("auth")
+}
+
+enum UserOrganizationStatus {
+  ACTIVE
+  INACTIVE
+  REMOVED
+
+  @@schema("auth")
+}
+
+enum OrganizationInviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  CANCELLED
+
+  @@schema("auth")
+}
+
+enum LogType {
+  INFO
+  WARNING
+  ERROR
+  SUCCESS
+
+  @@schema("auth")
+}
+
+enum TelegramScope {
+  USER
+  ORG
+  SUPERADMIN
+
+  @@schema("auth")
+}
+
+enum ImageOwner {
+  USER
+  ORGANIZATION
+  STUDENT
+  MEMBER
+  BOOK
+  OTHER
+
+  @@schema("auth")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+
+  @@schema("domain")
+}
+
+enum StudentCourseStatus {
+  ENROLLED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  SUSPENDED
+
+  @@schema("domain")
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+
+  @@schema("domain")
+}
+
+enum PurchaseStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+  REFUNDED
+
+  @@schema("domain")
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  BANK_TRANSFER
+  MOBILE_PAYMENT
+  OTHER
+
+  @@schema("domain")
+}
+
+// --- CHOIR MANAGEMENT MODELS ---
+model Choir {
+  id          String  @id @default(cuid())
+  name        String
+  description String? @db.Text
+  isActive    Boolean @default(true) @map("is_active")
+
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId String @map("org_id")
+
+  members   ChoirMember[]
+  songs     Song[]
+  events    ChoirEvent[]
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  @@unique([name, orgId])
+  @@index([orgId])
+  @@index([isActive, orgId])
+  @@map("choirs")
+  @@schema("domain")
+}
+
+model ChoirMember {
+  id       String            @id @default(cuid())
+  choirId  String            @map("choir_id")
+  memberId String            @map("member_id")
+  voice    VoicePart?
+  status   ChoirMemberStatus @default(ACTIVE)
+  joinedAt DateTime          @default(now()) @map("joined_at")
+  leftAt   DateTime?         @map("left_at")
+
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId String @map("org_id")
+
+  choir     Choir    @relation(fields: [choirId], references: [id], onDelete: Cascade)
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([choirId, memberId, orgId])
+  @@index([orgId])
+  @@index([choirId])
+  @@index([memberId])
+  @@map("choir_members")
+  @@schema("domain")
+}
+
+model Song {
+  id       String  @id @default(cuid())
+  title    String
+  composer String?
+  key      String?
+  tempo    String?
+  lyrics   String? @db.Text
+  isActive Boolean @default(true) @map("is_active")
+
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId String @map("org_id")
+
+  choirId   String   @map("choir_id")
+  choir     Choir    @relation(fields: [choirId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([orgId])
+  @@index([choirId])
+  @@map("songs")
+  @@schema("domain")
+}
+
+model ChoirEvent {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  @db.Text
+  eventDate   DateTime @map("event_date")
+  location    String?
+
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId String @map("org_id")
+
+  choirId   String   @map("choir_id")
+  choir     Choir    @relation(fields: [choirId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([orgId])
+  @@index([choirId])
+  @@index([eventDate])
+  @@map("choir_events")
+  @@schema("domain")
+}
+
+// --- LIBRARY MANAGEMENT MODELS ---
+
+// Core Library Model
+model Library {
+  id          String  @id @default(cuid())
+  name        String  @db.VarChar(255)
+  code        String? @db.VarChar(50) // Library code/identifier
+  description String? @db.Text
+
+  // Location Information
+  address   String? @db.Text
+  city      String? @db.VarChar(100)
+  state     String? @db.VarChar(100)
+  zipCode   String? @map("zip_code") @db.VarChar(20)
+  country   String? @default("Myanmar") @db.VarChar(100)
+  latitude  Float?
+  longitude Float?
+
+  // Contact Information
+  phone   String? @db.VarChar(20)
+  email   String? @db.VarChar(255)
+  website String? @db.VarChar(255)
+
+  // Library Details
+  type      LibraryType @default(PUBLIC)
+  capacity  Int? // Total capacity (number of people)
+  floors    Int?        @default(1)
+  totalArea Float?      @map("total_area") // in square meters
+
+  // Operating Hours (JSON format for flexibility)
+  operatingHours Json? @map("operating_hours") @db.Json
+
+  // Library Rules and Policies
+  loanPeriod      Int?     @default(14) @map("loan_period") // Default loan period in days
+  maxRenewals     Int?     @default(2) @map("max_renewals")
+  finePerDay      Decimal? @map("fine_per_day") @db.Decimal(10, 2)
+  maxBooksPerUser Int?     @default(5) @map("max_books_per_user")
+
+  // Status and Management
+  isActive     Boolean @default(true) @map("is_active")
+  isMainBranch Boolean @default(false) @map("is_main_branch")
+
+  // Organization Relationship
+  orgId        String       @map("org_id")
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  // Relationships
+  books    Book[]
+  sections LibrarySection[]
+  staff    LibraryStaff[]
+
+  // Audit Fields
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@unique([orgId, code])
+  // Indexes for performance
+  @@index([orgId])
+  @@index([isActive])
+  @@index([code])
+  @@map("libraries")
+  @@schema("domain")
+}
+
+// Library Types Enum
+enum LibraryType {
+  PUBLIC // Public library
+  ACADEMIC // University/School library
+  SCHOOL // K-12 school library
+  SPECIAL // Special collections
+  PRIVATE // Private library
+  DIGITAL // Digital-only library
+  RESEARCH // Research library
+
+  @@schema("domain")
+}
+
+// Library Sections/Departments
+model LibrarySection {
+  id          String  @id @default(cuid())
+  name        String  @db.VarChar(255)
+  code        String? @db.VarChar(50)
+  description String? @db.Text
+  floor       Int?    @default(1)
+  capacity    Int? // Number of books this section can hold
+
+  // Library Relationship
+  libraryId String  @map("library_id")
+  library   Library @relation(fields: [libraryId], references: [id], onDelete: Cascade)
+
+  // Organization Relationship  
+  orgId        String       @map("org_id")
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  // Relationships
+  books Book[]
+
+  // Status
+  isActive Boolean @default(true) @map("is_active")
+
+  // Audit Fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([libraryId, code])
+  // Indexes
+  @@index([libraryId])
+  @@index([orgId])
+  @@index([isActive])
+  @@map("library_sections")
+  @@schema("domain")
+}
+
+// Library Staff Model
+model LibraryStaff {
+  id         String  @id @default(cuid())
+  employeeId String? @map("employee_id") @db.VarChar(50)
+
+  // Personal Information
+  firstName String  @map("first_name") @db.VarChar(100)
+  lastName  String  @map("last_name") @db.VarChar(100)
+  email     String  @db.VarChar(255)
+  phone     String? @db.VarChar(20)
+
+  // Employment Details
+  position   StaffPosition @default(LIBRARIAN)
+  department String?       @db.VarChar(100)
+  hireDate   DateTime      @map("hire_date")
+  salary     Decimal?      @db.Decimal(10, 2)
+
+  // Work Schedule
+  workSchedule Json? @map("work_schedule") @db.Json
+
+  // Access Permissions
+  permissions      Json?   @db.Json
+  canIssueBooks    Boolean @default(true) @map("can_issue_books")
+  canManageBooks   Boolean @default(false) @map("can_manage_books")
+  canManageMembers Boolean @default(false) @map("can_manage_members")
+
+  // Library Relationship
+  libraryId String  @map("library_id")
+  library   Library @relation(fields: [libraryId], references: [id], onDelete: Cascade)
+
+  // User Account Relationship (optional)
+  userId String? @map("user_id")
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Organization Relationship
+  orgId        String       @map("org_id")
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  // Status
+  isActive Boolean @default(true) @map("is_active")
+
+  // Audit Fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([orgId, employeeId])
+  @@unique([libraryId, email])
+  // Indexes
+  @@index([libraryId])
+  @@index([userId])
+  @@index([orgId])
+  @@index([email])
+  @@index([employeeId])
+  @@map("library_staff")
+  @@schema("domain")
+}
+
+// Staff Position Enum
+enum StaffPosition {
+  LIBRARIAN // Professional librarian
+  ASSISTANT_LIBRARIAN // Assistant librarian
+  LIBRARY_TECHNICIAN // Library technician
+  CLERK // Library clerk
+  MANAGER // Library manager
+  DIRECTOR // Library director
+  VOLUNTEER // Volunteer staff
+  STUDENT_ASSISTANT // Student worker
+
+  @@schema("domain")
+}
+
+model Book {
+  id          String    @id @default(cuid())
+  title       String
+  author      String
+  isbn        String?
+  category    String?
+  publisher   String?
+  publishedAt DateTime? @map("published_at")
+  description String?   @db.Text
+  total       Int       @default(1)
+  available   Int       @default(1)
+  isActive    Boolean   @default(true) @map("is_active")
+
+  // Add constraint: available <= total AND available >= 0
+  // This needs to be added in migration SQL
+
+  // Library relationships
+  libraryId String?  @map("library_id")
+  library   Library? @relation(fields: [libraryId], references: [id], onDelete: SetNull)
+
+  sectionId String?         @map("section_id")
+  section   LibrarySection? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId        String       @map("org_id")
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  loans     BookLoan[]
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  @@unique([isbn, orgId])
+  @@index([orgId])
+  @@index([libraryId])
+  @@index([sectionId])
+  @@index([isActive, orgId])
+  @@map("books")
+  @@schema("domain")
+}
+
+model BookLoan {
+  id         String         @id @default(cuid())
+  bookId     String         @map("book_id")
+  memberId   String         @map("member_id")
+  studentId  String?        @map("student_id")
+  loanDate   DateTime       @default(now()) @map("loan_date")
+  dueDate    DateTime       @map("due_date")
+  returnDate DateTime?      @map("return_date")
+  status     BookLoanStatus @default(ACTIVE)
+  notes      String?        @db.Text
+
+  // Multi-tenancy field (CRITICAL for RLS)
+  orgId String @map("org_id")
+
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  member    Member?  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  student   Student? @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([orgId])
+  @@index([bookId])
+  @@index([memberId])
+  @@index([studentId])
+  @@index([status, orgId])
+  @@map("book_loans")
+  @@schema("domain")
+}
+
+// --- ADDITIONAL ENUMS ---
+enum ChoirMemberStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+
+  @@schema("domain")
+}
+
+enum BookLoanStatus {
+  ACTIVE
+  RETURNED
+  OVERDUE
+  LOST
+
+  @@schema("domain")
+}
+
+enum VoicePart {
+  SOPRANO
+  ALTO
+  TENOR
+  BASS
+
+  @@schema("domain")
+}

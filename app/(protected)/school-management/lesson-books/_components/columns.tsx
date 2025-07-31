@@ -4,8 +4,8 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Actions } from "./actions";
-import { CenteredCell } from "@/helpers/format-table";
-import { CustomLessonBookData } from "@/features/school-management/types/schemas";
+ import { CustomLessonBookData } from "@/features/school-management/types/schemas";
+import { CenteredCell } from "@/lib/utils/format-table";
 
 // Define your columns for the DataTable
 export const columns: ColumnDef<CustomLessonBookData>[] = [
@@ -53,7 +53,6 @@ export const columns: ColumnDef<CustomLessonBookData>[] = [
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
             Price
-            <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         </CenteredCell>
       );
@@ -109,6 +108,9 @@ export const columns: ColumnDef<CustomLessonBookData>[] = [
           <XCircle className="h-4 w-4 text-red-500" />
         </CenteredCell>
       ),
+    meta: {
+      hidden: true,
+    },
   },
 
   {

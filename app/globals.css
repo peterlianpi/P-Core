@@ -2,15 +2,57 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 
+ * MODERN DESIGN SYSTEM: Enhanced CSS Variables & Utilities
+ * 
+ * This CSS provides:
+ * 1. Improved design tokens for consistency
+ * 2. Performance optimized global styles
+ * 3. Accessibility enhancements
+ * 4. Modern UI patterns and animations
+ * 5. Responsive design utilities
+ */
+
 html,
 body,
 :root {
   height: 100%;
+  /* Enhanced scrolling behavior */
+  scroll-behavior: smooth;
+  /* Better text rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* body {
-  font-family: Arial, Helvetica, sans-serif;
-} */
+/* Performance: Optimize font loading */
+body {
+  font-display: swap;
+}
+
+/* Accessibility: Focus management */
+*:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Modern scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
 
 @layer base {
   :root {
@@ -84,11 +126,89 @@ body,
   }
 }
 
+/* Custom utility classes for modern UI patterns */
+@layer components {
+  /* Gradient text utility */
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent;
+  }
+  
+  /* Glass morphism effect */
+  .glass {
+    @apply bg-background/80 backdrop-blur-md border border-border/50;
+  }
+  
+  /* Smooth animations */
+  .animate-in {
+    animation: animate-in 0.5s ease-out;
+  }
+  
+  /* Loading skeleton */
+  .skeleton {
+    @apply animate-pulse bg-muted;
+  }
+  
+  /* Modern card hover effect */
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+  }
+}
+
+/* Custom keyframes for modern animations */
+@keyframes animate-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Performance: Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 @layer base {
   * {
     @apply border-border;
   }
+  
   body {
     @apply bg-background text-foreground;
+    /* Ensure proper text rendering */
+    text-rendering: optimizeLegibility;
+  }
+  
+  /* Improved heading styles */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+  
+  /* Better link styles */
+  a {
+    @apply transition-colors duration-200;
+  }
+  
+  /* Enhanced button base styles */
+  button {
+    @apply transition-all duration-200;
+  }
+  
+  /* Better form controls */
+  input, textarea, select {
+    @apply transition-colors duration-200;
   }
 }

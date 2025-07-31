@@ -4,8 +4,8 @@ import {
   CourseFormData,
   courseFormSchema,
 } from "@/features/school-management/types/schemas";
-import { DynamicForm } from "@/features/dynamic-components/components/dynamic-form";
-import { useCourseFields } from "@/features/dynamic-components/schemas/course-field";
+import { DynamicForm } from "@/features/system/dynamic-components/components/dynamic-form";
+import { useCourseFields } from "@/features/system/dynamic-components/schemas/course-field";
 
 interface CourseFormProps {
   title: string;

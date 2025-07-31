@@ -1,7 +1,6 @@
 import { Resend } from "resend";
 
-// Use a fallback dummy key for build time to prevent errors
-const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy_build_key");
+const resend = new Resend(process.env.RESEND_API_KEY);
 const url = process.env.NEXT_PUBLIC_APP_URL;
 const myMail = "Security <no-reply@security.peterlianpi.xyz>";
 

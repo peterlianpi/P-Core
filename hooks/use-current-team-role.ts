@@ -1,4 +1,4 @@
-import { OrganizationUserRole } from "@/prisma-user-database/user-database-client-types";
+import { OrganizationRole } from "@prisma/client";
 import { useSession } from "next-auth/react";
 
 // Define the structure of a member and their organization roles
@@ -9,7 +9,7 @@ type Member = {
   image: string | null;
   organization: {
     id: string;
-    role: OrganizationUserRole;
+    role: OrganizationRole;
   }[];
 };
 
@@ -22,7 +22,7 @@ type Member = {
 export const useCurrentMemberRole = (
   members: Member[],
   selectedOrgId: string | null | undefined
-): OrganizationUserRole | undefined => {
+): OrganizationRole | undefined => {
   const { data: session } = useSession();
 
   if (!session?.user?.email || !selectedOrgId) return undefined;

@@ -1,14 +1,13 @@
-import NextAuth from "next-auth";
-import authConfig from "./auth.config";
+// EDGE RUNTIME FIX: Use edge-compatible auth configuration
+// This prevents Prisma client from being bundled in middleware
+import { auth } from "./lib/auth/auth.edge";
 import {
   apiAuthPrefix,
   authRoutes,
   DEFAULT_LOGIN_REDIRECT,
   publicRoutes,
-} from "./routes";
+} from "./lib/auth/routes";
 import { NextResponse } from "next/server";
-
-const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
   const { nextUrl } = req;
@@ -18,15 +17,21 @@ export default auth((req) => {
   const isPublicRoute = publicRoutes.includes(nextUrl.pathname);
   const isAuthRoute = authRoutes.includes(nextUrl.pathname);
 
+  // Note: Security headers are now consistently applied by Hono in the API layer.
+  // Removing them from middleware avoids duplication and potential conflicts.
+
   if (isApiAuthRoute) {
-    return NextResponse.next(); // Allow public route
+    return NextResponse.next();
   }
 
   if (isAuthRoute) {
     if (isLoggedIn) {
-      return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
+      // SECURITY FIX: Prevent redirect loops
+      if (nextUrl.pathname !== DEFAULT_LOGIN_REDIRECT) {
+        return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
+      }
     }
-    return NextResponse.next(); // Allow public route
+    return NextResponse.next();
   }
 
   if (!isLoggedIn && !isPublicRoute) {
@@ -40,7 +45,8 @@ export default auth((req) => {
       new URL(`/auth/login?callbackUrl=${encodedCallbackUrl}`, nextUrl)
     );
   }
-  return NextResponse.next(); // Allow public route
+  
+  return NextResponse.next();
 });
 
 // Optionally, don't invoke Middleware on some paths

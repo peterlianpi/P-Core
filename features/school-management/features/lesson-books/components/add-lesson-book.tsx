@@ -1,12 +1,12 @@
 "use client";
 
-import { LessonBookFormData } from "@/features/school-management/types/schemas";
 import { toast } from "sonner";
 import { useData } from "@/providers/data-provider";
 import { useCreateLessonBook } from "../api/use-create-lesson-book";
 import { useEffect, useState } from "react";
 import StudentFormSkeleton from "../../students-management/components/student-form-skeleton";
 import { LessonBookForm } from "./lesson-book-form";
+import { LessonBookFormData } from "@/features/school-management/types/schemas";
 
 export default function AddLessonBookFormPage() {
   // Fetching orgId from data provider

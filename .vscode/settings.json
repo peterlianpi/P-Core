@@ -1,20 +1,126 @@
 {
-  "WillLuke.nextjs.addTypesOnSave": true,
-  "WillLuke.nextjs.hasPrompted": true,
-  "nextjs.files.alias": "~", // The import alias for the files to be created. Example: "~", "@", "#", etc
-  "nextjs.files.extension": "tsx", // The extension of the files to be created. Example: "tsx"
-  "nextjs.files.showType": true, // Show the type of the file in the file name. Example: "home.component.tsx"
-  "nextjs.files.include": ["js", "jsx", "ts", "tsx"], // The file extensions to watch for changes. Example: "js", "jsx", "ts", "tsx"
-  "nextjs.files.exclude": [
-    "**/node_modules/**",
-    "**/dist/**",
-    "**/out/**",
-    "**/build/**",
-    "**/.*/**"
-  ], // The files to exclude from watching. Example: "**/node_modules/**", "**/dist/**", "**/out/**", "**/build/**", "**/.*/**"
-  "nextjs.files.watch": ["controllers", "components", "routers"], // The types of files to watch for changes. Example: "controllers", "components", "routers"
-  "nextjs.files.showPath": true, // Show the path of the file in the file name. Example: "home.component.tsx (pages/home)"
-  "nextjs.server.turbo": true, // Enable Turbo Mode for NextJS server (Only for NextJS 14 or later)
-  "nextjs.server.experimentalHttps": true,
-  "postman.settings.dotenv-detection-notification-visibility": false // Enable HTTPS for the NextJS server (Only for NextJS 14 or later)
+  // TypeScript Intelligence (Balanced Performance)
+  "typescript.preferences.includePackageJsonAutoImports": "on",
+  "typescript.suggest.autoImports": true,
+  "typescript.disableAutomaticTypeAcquisition": false,
+  "typescript.preferences.useLabelDetailsInCompletionEntries": true,
+  "typescript.suggest.enabled": true,
+  "typescript.validate.enable": true,
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.suggest.completeFunctionCalls": true,
+  "typescript.inlayHints.parameterNames.enabled": "all",
+  "typescript.inlayHints.variableTypes.enabled": true,
+  
+  // File Watching
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/.next/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/.cache/**": true,
+    "**/coverage/**": true,
+    "**/.nyc_output/**": true,
+    "**/logs/**": true,
+    "**/*.log": true
+  },
+  
+  // Search Exclusions
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/bower_components": true,
+    "**/*.code-search": true,
+    "**/.next": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.cache": true,
+    "**/coverage": true,
+    "**/.nyc_output": true,
+    "**/logs": true,
+    "**/*.log": true
+  },
+  
+  // Editor Intelligence & Auto-completion
+  "editor.semanticHighlighting.enabled": true,
+  "editor.suggest.snippetsPreventQuickSuggestions": false,
+  "editor.suggest.localityBonus": true,
+  "editor.wordBasedSuggestions": "matchingDocuments",
+  "editor.quickSuggestions": {
+    "other": "on",
+    "comments": "on",
+    "strings": "on"
+  },
+  "editor.suggestOnTriggerCharacters": true,
+  "editor.acceptSuggestionOnCommitCharacter": true,
+  "editor.acceptSuggestionOnEnter": "on",
+  "editor.tabCompletion": "on",
+  "editor.parameterHints.enabled": true,
+  "editor.codeLens": true,
+  
+  // Auto-closing & Auto-renaming
+  "editor.autoClosingBrackets": "always",
+  "editor.autoClosingQuotes": "always",
+  "editor.autoSurround": "languageDefined",
+  "editor.linkedEditing": true,
+  "html.autoClosingTags": true,
+  "javascript.autoClosingTags": true,
+  "typescript.autoClosingTags": true,
+  
+  // Git Performance
+  "git.enabled": true,
+  "git.autoRepositoryDetection": false,
+  "git.decorations.enabled": false,
+  "git.autoStash": false,
+  "git.autofetch": false,
+  
+  // ESLint Performance
+  "eslint.workingDirectories": ["./"],
+  "eslint.lintTask.enable": true,
+  "eslint.format.enable": false,
+  
+  // Prettier Performance
+  "prettier.requireConfig": true,
+  "prettier.useEditorConfig": false,
+  
+  // Extensions Performance
+  "extensions.autoUpdate": false,
+  "extensions.autoCheckUpdates": false,
+  
+  // Terminal Performance
+  "terminal.integrated.enablePersistentSessions": false,
+  "terminal.integrated.persistentSessionReviveProcess": "never",
+  
+  // P-Core Specific Settings
+  "conventionalCommits.scopes": [
+    "core",
+    "auth",
+    "dashboard", 
+    "org",
+    "school",
+    "user",
+    "settings",
+    "api",
+    "ui",
+    "db",
+    "config",
+    "docs",
+    "deps",
+    "build",
+    "test",
+    "perf",
+    "security",
+    "fix",
+    "refactor"
+  ],
+  "emmet.includeLanguages": {
+    "typescript": "html",
+    "typescriptreact": "html"
+  },
+  "tailwindCSS.includeLanguages": {
+    "typescript": "html",
+    "typescriptreact": "html"
+  },
+  "shiftleft-core.slHomePath": "C:\\Users\\DELL\\.shiftleft",
+  "codium.codeCompletion.enable": true
 }

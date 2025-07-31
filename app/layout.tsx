@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth/auth";
 import { SessionProvider } from "next-auth/react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Analytics } from "@vercel/analytics/react";

@@ -1,4 +1,4 @@
-import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
+import { prisma } from "@/lib/db/client";
 
 
 /**
@@ -13,7 +13,7 @@ import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
 export const getVerificationTokenByEmail = async (email: string) => {
   try {
     // Query the database to find the verification token by email.
-    const verificationToken = await userDBPrismaClient.verificationToken.findFirst({
+    const verificationToken = await prisma.verificationToken.findFirst({
       where: {
         email,
       },
@@ -40,7 +40,7 @@ export const getVerificationTokenByEmail = async (email: string) => {
 export const getVerificationTokenByToken = async (token: string) => {
   try {
     // Query the database to find the verification token by token.
-    const verificationToken = await userDBPrismaClient.verificationToken.findUnique({
+    const verificationToken = await prisma.verificationToken.findUnique({
       where: {
         token,
       },

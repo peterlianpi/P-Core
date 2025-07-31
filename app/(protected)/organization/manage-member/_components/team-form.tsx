@@ -18,9 +18,10 @@ import {
 } from "@/components/ui/form";
 import { DatePicker } from "@/components/date-picker";
 import { useEffect, useState } from "react";
-import { teamFormSchema } from "@/schemas";
+import { teamFormSchema } from "@/lib/schemas";
 import { useData } from "@/providers/data-provider";
-import CustomUploadImagePage from "@/features/image-upload/components/upload-image";
+import CustomUploadImagePage from "@/features/system/image-upload/components/upload-image";
+ 
 
 const apiSchema = teamFormSchema.omit({
   id: true,
@@ -92,6 +93,7 @@ export function TeamForm({
         >
           {/* Image Section */}
           <CustomUploadImagePage
+            type="team"
             isClient={isClient}
             imageUrl={imageUrl}
             setImageUrl={setImageUrl}

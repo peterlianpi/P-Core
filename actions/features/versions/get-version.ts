@@ -1,14 +1,22 @@
 "use server";
 
-
-import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
-import { Versions } from "@/schemas";
+import { prisma } from "@/lib/db/client";
+import { Versions } from "@/lib/schemas";
 
 export async function getVersionById(id: string) {
-  const version = await userDBPrismaClient.versionInfo.findUnique({
+  const version = await prisma.versionInfo.findUnique({
     where: { id },
+    select: {
+      id: true,
+      name: true,
+      version: true,
+      description: true,
+      createdAt: true,
+      updatedAt: true,
+      deletedAt: true,
+    },
   });
-  const result = Versions.safeParse(version);
+  const result = Versions.safeParse([version]); // Parse as an array of one
 
   if (!result.success) {
     throw new Error("Invalid data");
@@ -18,8 +26,17 @@ export async function getVersionById(id: string) {
 }
 
 export async function getAllVersions() {
-  const versions = await userDBPrismaClient.versionInfo.findMany({
+  const versions = await prisma.versionInfo.findMany({
     orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      name: true,
+      version: true,
+      description: true,
+      createdAt: true,
+      updatedAt: true,
+      deletedAt: true,
+    },
   });
 
   const result = Versions.safeParse(versions);

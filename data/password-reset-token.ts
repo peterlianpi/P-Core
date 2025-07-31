@@ -1,4 +1,4 @@
-import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
+import { prisma } from "@/lib/db/client";
 
 
 /**
@@ -13,7 +13,7 @@ import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
 export const getPasswordResetTokenByToken = async (token: string) => {
   try {
     // Query the database to find the password reset token by its value.
-    const passwordResetToken = await userDBPrismaClient.passwordResetToken.findUnique({
+    const passwordResetToken = await prisma.passwordResetToken.findUnique({
       where: { token },
     });
 
@@ -38,7 +38,7 @@ export const getPasswordResetTokenByToken = async (token: string) => {
 export const getPasswordResetTokenByEmail = async (email: string) => {
   try {
     // Query the database to find the first password reset token associated with the email.
-    const passwordResetToken = await userDBPrismaClient.passwordResetToken.findFirst({
+    const passwordResetToken = await prisma.passwordResetToken.findFirst({
       where: { email },
     });
 

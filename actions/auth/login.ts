@@ -1,6 +1,6 @@
 "use server";
 
-import { signIn } from "@/auth";
+import { signIn } from "@/lib/auth/auth";
 import { getTwoFactorConfirmationByUserId } from "@/data/two-factor-confirmation";
 import { getTwoFactorTokenByEmail } from "@/data/two-factor-token";
 import { getUserByEmail } from "@/data/user";
@@ -11,13 +11,14 @@ import {
 import {
   generateTwoFactorToken,
   generateVerificationToken,
+  verifyToken,
 } from "@/lib/tokens";
-import { DEFAULT_LOGIN_REDIRECT } from "@/routes";
-import { LoginSchema } from "@/schemas";
+import { DEFAULT_LOGIN_REDIRECT } from "@/lib/auth/routes";
+import { LoginSchema } from "@/lib/schemas";
 import { AuthError } from "next-auth";
 import * as z from "zod";
 import { trackLogin } from "./track-system-activities";
-import { userDBPrismaClient } from "@/lib/prisma-client/user-prisma-client";
+import { prisma } from "@/lib/db/client";
 
 export const login = async (
   values: z.infer<typeof LoginSchema>,
@@ -57,7 +58,9 @@ export const login = async (
         return { error: "Invalid code!" };
       }
 
-      if (twoFactorToken.token !== code) {
+      // SECURITY: Use hash verification instead of plain text comparison
+      // This protects against database compromise attacks
+      if (!verifyToken(code, twoFactorToken.token)) {
         return { error: "Invalid code!" };
       }
 
@@ -67,7 +70,7 @@ export const login = async (
         return { error: "Code expired!" };
       }
 
-      await userDBPrismaClient.twoFactorToken.delete({
+      await prisma.twoFactorToken.delete({
         where: { id: twoFactorToken.id },
       });
 
@@ -76,12 +79,12 @@ export const login = async (
       );
 
       if (existingConfirmation) {
-        await userDBPrismaClient.twoFactorConfirmation.delete({
+        await prisma.twoFactorConfirmation.delete({
           where: { id: existingConfirmation.id },
         });
       }
 
-      await userDBPrismaClient.twoFactorConfirmation.create({
+      await prisma.twoFactorConfirmation.create({
         data: {
           userId: existingUser.id,
         },

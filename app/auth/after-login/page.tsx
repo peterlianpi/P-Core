@@ -5,9 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { useAcceptMember } from "@/features/org/api/use-accept-member";
-import { useInvite } from "@/features/org/hooks/use-invite";
-import { InviteDialog } from "@/features/org/components/invite-dialog";
+import { useAcceptMember } from "@/features/organization-management/api/use-accept-member";
+import { useInvite } from "@/features/organization-management/hooks/use-invite";
+import { InviteDialog } from "@/features/organization-management/components/invite-dialog";
 
 const AfterLoginPage = () => {
   const router = useRouter();
