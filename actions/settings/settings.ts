@@ -7,7 +7,6 @@ import { generateVerificationToken } from "@/lib/tokens";
 import { SettingsSchema } from "@/lib/schemas";
 import * as z from "zod";
 import bcrypt from "bcryptjs";
-import { uploadImageSettings } from "@/data/upload-image-cloudinary";
 import { sendVerificationEmail } from "@/lib/mail/email-templates";
 import {
   trackEmailChange,
@@ -22,6 +21,7 @@ export const settings = async (values: z.infer<typeof SettingsSchema>) => {
   const user = await currentUser();
   // Destructure values to separate Telegram fields
   const { telegramChatId, telegramBotToken, ...userValues } = values;
+
 
   if (!user) {
     return { error: "Unauthorized" };
@@ -77,27 +77,11 @@ export const settings = async (values: z.infer<typeof SettingsSchema>) => {
     await trackPasswordChange({ value: user.email ?? "Unknown" });
   }
 
-  // Handle the image upload if there is an image file
-  let link = "";
-  if (values.image) {
-    try {
-      const fileLink = await uploadImageSettings(values.image);
-
-      if (typeof fileLink === "string") {
-        link = fileLink; // Assign the successful file link
-      } else if (fileLink && fileLink.error) {
-        return { error: fileLink.error }; // Return the error from uploadImageSettings
-      }
-    } catch (error) {
-      console.error("Error during file upload:", error); // Log the actual error for debugging
-      return { error: "Error uploading image." };
-    }
-  }
 
   // Telegram settings - Only if both values are provided
   if (telegramChatId && telegramBotToken) {
     const scope = dbUser.role === "SUPERADMIN" ? "SUPERADMIN" : "USER";
-    
+
     // Find existing setting for this user with no organization (global setting)
     const existingSetting = await prisma.telegramSetting.findFirst({
       where: {
@@ -136,7 +120,7 @@ export const settings = async (values: z.infer<typeof SettingsSchema>) => {
     where: { id: dbUser.id },
     data: {
       ...userValues,
-      image: link || dbUser.image, // Keep existing image if no new image uploaded
+      // image: values.image, // Only update if provided
     },
   });
 

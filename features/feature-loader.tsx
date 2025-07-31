@@ -1,11 +1,11 @@
 "use client";
 
-import { Suspense, lazy, useMemo } from "react";
-import { useUser } from "@/hooks/use-current-user";
+import React, { Suspense, lazy, useMemo } from "react";
 import { featureRegistry, hasFeaturePermission } from "./feature-registry";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 interface FeatureLoaderProps {
   featureId: string;
@@ -25,7 +25,7 @@ export function FeatureGuard({
   children: React.ReactNode;
   fallback?: React.ReactNode;
 }) {
-  const user = useUser();
+  const user = useCurrentUser();
   
   // Check if feature is enabled
   if (!featureRegistry.isEnabled(featureId)) {
@@ -55,7 +55,7 @@ export function FeatureLoader({
   errorFallback,
   className 
 }: FeatureLoaderProps) {
-  const user = useUser();
+  const user = useCurrentUser();
   
   // Create lazy component with error boundary
   const LazyFeature = useMemo(() => {
@@ -184,7 +184,7 @@ class ErrorBoundary extends React.Component<
 
 // Utility hooks
 export function useFeature(featureId: string) {
-  const user = useUser();
+  const user = useCurrentUser();
   
   return {
     isEnabled: featureRegistry.isEnabled(featureId),

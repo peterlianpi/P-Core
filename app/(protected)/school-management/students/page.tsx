@@ -1,6 +1,6 @@
-import { StudentsTable } from "@/features/school-management/features/students-management/components/students-table"
-import { Suspense } from "react"
+ import { Suspense } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
+import StudentsTable from "@/features/school-management/features/students-management/components/students-table"
 
 export default function StudentsPage() {
   return (

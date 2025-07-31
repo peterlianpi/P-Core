@@ -15,6 +15,7 @@
  */
 
 import { Context } from "hono";
+import { ContentfulStatusCode } from "hono/utils/http-status";
 
 /**
  * Standard error response format
@@ -47,9 +48,13 @@ enum ErrorSeverity {
  * @param error - Original error object
  * @returns Sanitized error message safe for client consumption
  */
-function sanitizeErrorMessage(error: any): string {
-  const message = error?.message || 'An unexpected error occurred';
-  
+function sanitizeErrorMessage(error: unknown): string {
+  let message = 'An unexpected error occurred';
+
+  if (typeof error === 'object' && error !== null && 'message' in error && typeof (error as any).message === 'string') {
+    message = (error as any).message;
+  }
+
   // Remove sensitive patterns that could reveal system information
   const sanitizedMessage = message
     // Remove file paths that could reveal system structure
@@ -76,7 +81,7 @@ function sanitizeErrorMessage(error: any): string {
  * @param context - Request context for additional info
  * @param severity - Error severity level
  */
-function logError(error: any, context?: any, severity: ErrorSeverity = ErrorSeverity.MEDIUM) {
+function logError(error: unknown, context?: any, severity: ErrorSeverity = ErrorSeverity.MEDIUM) {
   const timestamp = new Date().toISOString();
   const requestId = context?.get?.('requestId') || 'unknown';
   const userId = context?.get?.('validatedUser')?.userId || 'anonymous';
@@ -84,7 +89,15 @@ function logError(error: any, context?: any, severity: ErrorSeverity = ErrorSeve
   const method = context?.req?.method || 'unknown';
   const url = context?.req?.url || 'unknown';
   const userAgent = context?.req?.header?.('user-agent') || 'unknown';
-  
+
+  // Helper function to safely get error properties
+  function getErrorProperty<T extends string>(prop: T, defaultValue: string): string {
+    if (typeof error === 'object' && error !== null && prop in error && typeof (error as any)[prop] === 'string') {
+      return (error as any)[prop];
+    }
+    return defaultValue;
+  }
+
   // Create structured log entry for monitoring systems
   const logEntry = {
     timestamp,
@@ -96,10 +109,10 @@ function logError(error: any, context?: any, severity: ErrorSeverity = ErrorSeve
     url,
     userAgent,
     error: {
-      message: error?.message || 'Unknown error',
-      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
-      code: error?.code || 'UNKNOWN_ERROR',
-      name: error?.name || 'Error'
+      message: getErrorProperty('message', 'Unknown error'),
+      stack: process.env.NODE_ENV === 'development' && typeof error === 'object' && error !== null && 'stack' in error ? (error as any).stack : undefined,
+      code: getErrorProperty('code', 'UNKNOWN_ERROR'),
+      name: getErrorProperty('name', 'Error')
     }
   };
 
@@ -118,7 +131,7 @@ function logError(error: any, context?: any, severity: ErrorSeverity = ErrorSeve
       console.info('ℹ️  LOW SEVERITY ERROR:', JSON.stringify(logEntry, null, 2));
       break;
   }
-  
+
   // TODO: Send critical errors to monitoring service (Sentry, DataDog, etc.)
   if (severity === ErrorSeverity.CRITICAL) {
     // await sendToMonitoringService(logEntry);
@@ -147,7 +160,7 @@ export function handleError(
 ) {
   // Log error with context for monitoring
   logError(error, c, severity);
-  
+
   // Create sanitized error response
   const errorResponse: ErrorResponse = {
     error: sanitizeErrorMessage(error),
@@ -161,7 +174,7 @@ export function handleError(
     } : undefined
   };
 
-  return c.json(errorResponse, statusCode);
+  return c.json(errorResponse, statusCode as ContentfulStatusCode);
 }
 
 /**
@@ -174,19 +187,28 @@ export function handleError(
  * @param validationError - Zod or other validation error
  * @returns JSON validation error response
  */
+interface ValidationErrorWithIssues {
+  issues?: unknown;
+  details?: unknown;
+}
+
 export function handleValidationError(c: Context, validationError: unknown) {
   const errorMessage = 'Validation failed: Please check your input data';
-  
+
   logError(validationError, c, ErrorSeverity.LOW);
-  
+
+  const hasIssues = (err: unknown): err is ValidationErrorWithIssues => {
+    return typeof err === 'object' && err !== null && ('issues' in err || 'details' in err);
+  };
+
   const errorResponse: ErrorResponse = {
     error: errorMessage,
     code: 'VALIDATION_ERROR',
     timestamp: new Date().toISOString(),
     requestId: c.get('requestId') || undefined,
     // Include validation details in development
-    details: process.env.NODE_ENV === 'development' ? {
-      validationErrors: validationError?.issues || validationError?.details
+    details: process.env.NODE_ENV === 'development' && hasIssues(validationError) ? {
+      validationErrors: (validationError as ValidationErrorWithIssues).issues || (validationError as ValidationErrorWithIssues).details
     } : undefined
   };
 
@@ -205,9 +227,9 @@ export function handleValidationError(c: Context, validationError: unknown) {
  */
 export function handleAuthorizationError(c: Context, message?: string) {
   const errorMessage = message || 'Access denied: Insufficient permissions';
-  
+
   logError(new Error(errorMessage), c, ErrorSeverity.HIGH);
-  
+
   const errorResponse: ErrorResponse = {
     error: errorMessage,
     code: 'AUTHORIZATION_ERROR',
@@ -229,14 +251,14 @@ export function handleAuthorizationError(c: Context, message?: string) {
  */
 export function handleRateLimitError(c: Context, retryAfter?: number) {
   const errorMessage = 'Too many requests: Please slow down and try again later';
-  
+
   logError(new Error(errorMessage), c, ErrorSeverity.MEDIUM);
-  
+
   // Set retry-after header if provided
   if (retryAfter) {
     c.header('Retry-After', retryAfter.toString());
   }
-  
+
   const errorResponse: ErrorResponse = {
     error: errorMessage,
     code: 'RATE_LIMIT_ERROR',
@@ -257,13 +279,18 @@ export function handleRateLimitError(c: Context, retryAfter?: number) {
  * @param dbError - Database error object
  * @returns JSON database error response
  */
+interface PrismaError {
+  code?: string;
+  message?: string;
+}
+
 export function handleDatabaseError(c: Context, dbError: unknown) {
   let errorMessage = 'Database operation failed';
   let errorCode = 'DATABASE_ERROR';
   let statusCode = 500;
-  
+
   // Handle specific Prisma error types
-  const prismaError = dbError as { code?: string };
+  const prismaError = dbError as PrismaError;
   if (prismaError?.code === 'P2002') {
     errorMessage = 'A record with this information already exists';
     errorCode = 'DUPLICATE_ERROR';
@@ -277,22 +304,26 @@ export function handleDatabaseError(c: Context, dbError: unknown) {
     errorCode = 'CONSTRAINT_ERROR';
     statusCode = 400;
   }
-  
+
   logError(dbError, c, ErrorSeverity.HIGH);
-  
+
+  const hasPrismaProps = (err: unknown): err is PrismaError => {
+    return typeof err === 'object' && err !== null && ('code' in err || 'message' in err);
+  };
+
   const errorResponse: ErrorResponse = {
     error: errorMessage,
     code: errorCode,
     timestamp: new Date().toISOString(),
     requestId: c.get('requestId') || undefined,
     // Include Prisma error details in development
-    details: process.env.NODE_ENV === 'development' ? {
-      prismaCode: dbError?.code,
-      prismaMessage: dbError?.message
+    details: process.env.NODE_ENV === 'development' && hasPrismaProps(dbError) ? {
+      prismaCode: (dbError as PrismaError).code,
+      prismaMessage: (dbError as PrismaError).message
     } : undefined
   };
 
-  return c.json(errorResponse, statusCode);
+  return c.json(errorResponse, statusCode as ContentfulStatusCode);
 }
 
 // Export error severity enum for use in other modules

@@ -22,17 +22,30 @@ import {
 import { DatePicker } from "@/components/date-picker";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label"; // <-- import Label here
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ZodType } from "zod";
 import React, { useEffect, useState, useTransition } from "react";
-import { FieldConfig } from "../types/field-config";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import CustomUploadImagePage from "@/features/system/image-upload/components/upload-image";
 import { Switch } from "@/components/ui/switch";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { ImageOwnerType } from "@/lib/schemas/image-schemas";
+
+// Improved FieldConfig type
+export interface FieldConfig {
+  name: string;
+  label: string;
+  type: string;
+  required?: boolean;
+  placeholder?: string;
+  options?: Array<string | { value: string; label: string }>;
+  helperText?: string;
+}
 
 type Props<T extends FieldValues> = {
   id?: string;
-  imageType?: "user" | "member" | "material" | "team" | undefined; // Specify the type of image being uploaded
+  imageType?: ImageOwnerType;
   title?: string;
   schema: ZodType<T>;
   fields: FieldConfig[];
@@ -56,10 +69,10 @@ export function DynamicForm<T extends FieldValues>({
   const [imageUrl, setImageUrl] = useState(
     defaultValues?.image || defaultValues?.coverImage || null
   );
+  const [showPassword, setShowPassword] = useState(false);
 
-  // Initialize FileReader only on the client side
   useEffect(() => {
-    setIsClient(true); // Ensures code only runs on the client side
+    setIsClient(true);
   }, []);
 
   const form = useForm<T>({
@@ -79,12 +92,12 @@ export function DynamicForm<T extends FieldValues>({
         isArchived: values.status === "ARCHIVED",
         isProspect: values.status === "PROSPECT",
       });
-      form.reset(); // Reset form fields after successful submission
+      form.reset();
     });
   };
 
   return (
-    <Card>
+    <Card className="w-full h-full">
       <CardHeader className="font-semibold text-lg">
         {title || "Dynamic Form"}
       </CardHeader>
@@ -94,12 +107,14 @@ export function DynamicForm<T extends FieldValues>({
             onSubmit={form.handleSubmit(handleSubmit, (error) => {
               console.error("Form submission error:", error);
             })}
-            className="space-y-6 max-w-2xl"
+            className="space-y-6 max-w-2xl mx-auto"
           >
             {/* Image Section */}
             {imageType && (
               <CustomUploadImagePage
-                type={imageType}
+              ownerId={id??''}
+                ownerType={imageType?? "OTHER"}
+              feature={imageType?.toUpperCase() === "USER" ? "profile" : "cover"}
                 canEdit={true}
                 isClient={isClient}
                 imageUrl={imageUrl}
@@ -108,7 +123,7 @@ export function DynamicForm<T extends FieldValues>({
               />
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Dynamic Fields */}
               {fields.map((f) => (
                 <FormField
@@ -117,7 +132,10 @@ export function DynamicForm<T extends FieldValues>({
                   name={f.name as Path<T>}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{f.label}</FormLabel>
+                      <FormLabel>
+                        {f.label}
+                        {f.required && <span className="text-red-500 ml-1">*</span>}
+                      </FormLabel>
                       <FormControl>
                         {f.type === "text" ||
                         f.type === "email" ||
@@ -125,12 +143,32 @@ export function DynamicForm<T extends FieldValues>({
                           <Input
                             type={f.type}
                             placeholder={f.placeholder}
+                            aria-required={f.required}
                             {...field}
                             disabled={isPending}
                           />
+                        ) : f.type === "password" ? (
+                          <div className="relative">
+                            <Input
+                              type={showPassword ? "text" : "password"}
+                              placeholder={f.placeholder}
+                              aria-required={f.required}
+                              {...field}
+                              disabled={isPending}
+                            />
+                            <button
+                              type="button"
+                              tabIndex={-1}
+                              className="absolute right-2 top-2 text-muted-foreground"
+                              onClick={() => setShowPassword((v) => !v)}
+                            >
+                              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                          </div>
                         ) : f.type === "textarea" ? (
                           <Textarea
                             placeholder={f.placeholder}
+                            aria-required={f.required}
                             {...field}
                             disabled={isPending}
                           />
@@ -157,6 +195,23 @@ export function DynamicForm<T extends FieldValues>({
                               })}
                             </SelectContent>
                           </Select>
+                        ) : f.type === "radio" ? (
+                          <RadioGroup
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            className="flex flex-col gap-2"
+                          >
+                            {f.options?.map((opt) => {
+                              const value = typeof opt === "string" ? opt : opt.value;
+                              const label = typeof opt === "string" ? opt : opt.label;
+                              return (
+                                <div key={value} className="flex items-center gap-2">
+                                  <RadioGroupItem value={value} id={`${field.name}-${value}`} />
+                                  <Label htmlFor={`${field.name}-${value}`}>{label}</Label>
+                                </div>
+                              );
+                            })}
+                          </RadioGroup>
                         ) : f.type === "date" ? (
                           <DatePicker
                             value={field.value}
@@ -235,7 +290,9 @@ export function DynamicForm<T extends FieldValues>({
                           </div>
                         ) : null}
                       </FormControl>
-
+                      {f.helperText && (
+                        <div className="text-xs text-muted-foreground mt-1">{f.helperText}</div>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -244,26 +301,11 @@ export function DynamicForm<T extends FieldValues>({
             </div>
 
             {/* Submit Button */}
-            <div className="grid grid-cols-1 md:grid-cols-4  gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Button type="submit" className="w-full" disabled={isPending}>
+                {isPending && <Loader2 className="animate-spin mr-2 h-4 w-4 inline" />}
                 {id ? `Update ${submitLabel}` : `Add ${submitLabel}`}
               </Button>
-              {/* {ConfirmDialog && (
-                <ConfirmDialog>
-                  {!!id && (
-                    <Button
-                      type="button"
-                      disabled={disabled || isPending}
-                      // onClick={onDelete}
-                      className="w-full"
-                      variant="outline"
-                    >
-                      <Trash className="size-4 mr-2" />
-                      Delete student
-                    </Button>
-                  )}
-                </ConfirmDialog>
-              )} */}
             </div>
           </form>
         </Form>

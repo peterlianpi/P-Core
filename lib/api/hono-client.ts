@@ -26,7 +26,7 @@ export class APIClientError extends Error {
 // Client configuration
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-  (typeof window !== "undefined" ? `${window.location.origin}/api` : "/api");
+  (typeof window !== "undefined" ? `${window.location.origin}` : "");
 
 // Create the typed Hono client
 export const client = hc<AppType>(API_BASE_URL, {

@@ -5,7 +5,7 @@
  * Follows the features/school-management/students/api/ pattern for organization
  */
 
-import { studentsApi } from '@/lib/hono-client'
+import { studentsApi } from '@/lib/api/hono-client'
 
 // ============================================================================
 // TYPES

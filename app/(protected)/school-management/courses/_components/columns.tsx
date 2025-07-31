@@ -4,8 +4,8 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Actions } from "./actions";
-import { CenteredCell } from "@/helpers/format-table";
-import { CustomCourseFormData } from "@/features/school-management/types/schemas";
+ import { CustomCourseFormData } from "@/features/school-management/types/schemas";
+import { CenteredCell } from "@/lib/utils/format-table";
 
 // Define your columns for the DataTable
 export const columns: ColumnDef<CustomCourseFormData>[] = [

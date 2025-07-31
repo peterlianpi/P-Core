@@ -1,12 +1,12 @@
 // Modern client-side image upload hook using the new standardized API
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type { 
-  ImageUploadInput, 
-  ImageDeleteInput, 
+import type {
+  ImageUploadInput,
+  ImageDeleteInput,
   ImageListInput,
   ImageOwnerType,
-  ImageFeature 
+  ImageFeature
 } from "@/lib/schemas/image-schemas";
 
 // API functions for image operations
@@ -27,7 +27,7 @@ async function uploadImage(data: ImageUploadInput) {
 
 async function deleteImage(data: ImageDeleteInput) {
   const response = await fetch("/api/upload-image", {
-    method: "DELETE", 
+    method: "DELETE",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
@@ -42,7 +42,7 @@ async function deleteImage(data: ImageDeleteInput) {
 
 async function fetchImages(params: ImageListInput) {
   const queryParams = new URLSearchParams();
-  
+
   if (params.ownerType) queryParams.set("ownerType", params.ownerType);
   if (params.ownerId) queryParams.set("ownerId", params.ownerId);
   if (params.feature) queryParams.set("feature", params.feature);
@@ -79,7 +79,7 @@ export const imageKeys = {
   all: ["images"] as const,
   lists: () => [...imageKeys.all, "list"] as const,
   list: (params: Partial<ImageListInput>) => [...imageKeys.lists(), params] as const,
-  entity: (ownerType: ImageOwnerType, ownerId: string) => 
+  entity: (ownerType: ImageOwnerType, ownerId: string) =>
     [...imageKeys.all, "entity", ownerType, ownerId] as const,
 };
 
@@ -91,11 +91,11 @@ export function useImageUpload() {
     mutationFn: uploadImage,
     onSuccess: (data, variables) => {
       // Invalidate relevant queries
-      queryClient.invalidateQueries({ 
-        queryKey: imageKeys.entity(variables.ownerType, variables.ownerId) 
+      queryClient.invalidateQueries({
+        queryKey: imageKeys.entity(variables.ownerType, variables.ownerId)
       });
       queryClient.invalidateQueries({ queryKey: imageKeys.lists() });
-      
+
       toast.success("Image uploaded successfully");
     },
     onError: (error) => {
@@ -126,10 +126,10 @@ export function useImageUpdate() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ imageId, imageData, feature }: { 
-      imageId: string; 
-      imageData: string; 
-      feature?: string; 
+    mutationFn: ({ imageId, imageData, feature }: {
+      imageId: string;
+      imageData: string;
+      feature?: string;
     }) => updateImage(imageId, imageData, feature),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: imageKeys.all });
@@ -173,9 +173,9 @@ export function usePrimaryImage(
   feature: ImageFeature = "profile"
 ) {
   const { data, ...rest } = useEntityImages(ownerType, ownerId, feature);
-  
+
   const primaryImage = data?.success ? data.data[0] : null;
-  
+
   return {
     data: primaryImage,
     imageUrl: primaryImage?.url || null,
@@ -187,7 +187,7 @@ export function usePrimaryImage(
 export function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    
+
     reader.onload = () => {
       if (typeof reader.result === 'string') {
         resolve(reader.result);
@@ -195,7 +195,7 @@ export function fileToBase64(file: File): Promise<string> {
         reject(new Error('Failed to convert file to base64'));
       }
     };
-    
+
     reader.onerror = () => reject(new Error('Failed to read file'));
     reader.readAsDataURL(file);
   });

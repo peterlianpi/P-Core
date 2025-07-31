@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { client } from "@/lib/hono";
+import client from "@/lib/api/hono-client";
 
 export const useGetOrg = () => {
   const query = useQuery({
