@@ -43,7 +43,7 @@
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",
     "@hono/zod-validator": "^0.4.3",
-    "@hookform/resolvers": "^3.10.0",
+    "@hookform/resolvers": "^5.2.1",
     "@paralleldrive/cuid2": "^2.2.2",
     "@prisma/client": "^6.12.0",
     "@radix-ui/react-accordion": "^1.2.11",
@@ -92,12 +92,12 @@
     "react-spinners": "^0.17.0",
     "recharts": "^2.15.4",
     "resend": "^4.7.0",
-    "sonner": "^1.7.4",
+    "sonner": "^2.0.6",
     "tailwind-merge": "^2.6.0",
     "tailwind-scrollbar-hide": "^4.0.0",
     "tailwindcss-animate": "^1.0.7",
     "uuid": "^11.1.0",
-    "zod": "^3.25.76",
+    "zod": "^4.0.13",
     "zustand": "^5.0.6"
   },
   "devDependencies": {
