@@ -1,8 +1,9 @@
 // Email template generators for all mail types (provider-agnostic)
 
-const url = process.env.NEXT_PUBLIC_APP_URL;
-const systemName = "P-Core System";
-const systemYear = "2025";
+import { mailConfig } from "./mail-config";
+const url = mailConfig.appUrl;
+const systemName = mailConfig.systemName;
+const systemYear = mailConfig.systemYear;
 const footer = `<footer style="text-align:center;font-size:12px;color:#888;margin-top:32px;">© ${systemYear} ${systemName}. All rights reserved.</footer>`;
 
 const baseStyles = `background:#f9fafb;padding:0;margin:0;min-width:100vw;min-height:100vh;`;
@@ -79,6 +80,32 @@ export function inviteTemplate(link: string) {
           <h2 style="${headingStyles}">You're Invited!</h2>
           <p style="margin-bottom:18px;">Hi,</p>
           <p style="margin-bottom:18px;">You've been invited to join <b>P-Core System</b>. Click the button below to accept your invitation:</p>
+          <div style="text-align:center;">
+            <a href="${link}" style="${buttonStyles}">Accept Invitation</a>
+          </div>
+          <p style="color:#666;margin-top:18px;">If you did not expect this invitation, you can ignore this email.</p>
+          ${footer}
+        </div>
+      </body>
+    `
+  };
+}
+
+// --- SAMPLE: Organization-specific invite template ---
+/**
+ * Generates an organization invite email template.
+ * @param link - The invitation link
+ * @param orgName - The organization name
+ */
+export function orgInviteTemplate(link: string, orgName: string) {
+  return {
+    subject: `You're Invited to Join ${orgName}!`,
+    html: `
+      <body style="${baseStyles}">
+        <div style="${cardStyles}">
+          <h2 style="${headingStyles}">You're Invited to ${orgName}!</h2>
+          <p style="margin-bottom:18px;">Hi,</p>
+          <p style="margin-bottom:18px;">You've been invited to join <b>${orgName}</b>. Click the button below to accept your invitation:</p>
           <div style="text-align:center;">
             <a href="${link}" style="${buttonStyles}">Accept Invitation</a>
           </div>

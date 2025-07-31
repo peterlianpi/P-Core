@@ -42,12 +42,28 @@ export const login = async (
       existingUser.email
     );
 
-    await sendVerificationEmail(
-      verificationToken.email,
-      verificationToken.token
-    );
-
-    return { success: "Confirmation email sent!" };
+    try {
+      // Edge support: Use Resend if available, otherwise fallback to SMTP
+      // sendVerificationEmail uses Resend (Edge-compatible)
+      // sendMailSMTP uses SMTP (Node.js only)
+      if (typeof process !== 'undefined' && process.env.NEXT_RUNTIME === 'edge') {
+        // Edge runtime: use Resend
+        await sendVerificationEmail(
+          verificationToken.email,
+          verificationToken.token
+        );
+        console.log("[Edge] Verification email sent via Resend to", verificationToken.email);
+      } else {
+        // Node.js runtime: use SMTP
+        const { sendMailSMTP } = await import("@/lib/mail/mail");
+        await sendMailSMTP("confirm", verificationToken.email, { token: verificationToken.token });
+        console.log("[Node] Verification email sent via SMTP to", verificationToken.email);
+      }
+      return { success: "Confirmation email sent!" };
+    } catch (err) {
+      console.error("Failed to send verification email:", err);
+      return { error: "Failed to send verification email" };
+    }
   }
 
   if (existingUser.isTwoFactorEnabled && existingUser.email) {

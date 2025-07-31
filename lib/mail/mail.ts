@@ -7,17 +7,17 @@ import {
   verificationTemplate,
   inviteTemplate
 } from "./email-templates";
+import { mailConfig } from "./mail-config";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const domain = process.env.NEXT_PUBLIC_APP_URL;
-const myMail = "Security <no-reply@security.peterlianpi.xyz>";
+const myMail = mailConfig.from;
 
-// SMTP config (generic, matches .env)
-const smtpUser = process.env.SMTP_USER;
-const smtpPass = process.env.SMTP_PASS;
-const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
-const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 465;
-const smtpFrom = process.env.MAIL_FROM || smtpUser;
+// SMTP config (from centralized config)
+const smtpUser = mailConfig.user;
+const smtpPass = mailConfig.pass;
+const smtpHost = mailConfig.host;
+const smtpPort = mailConfig.port;
+const smtpFrom = mailConfig.from;
 
 // --- RESEND PROVIDER FUNCTIONS ---
 export const sendTwoFactorTokenEmail = async (email: string, token: string) => {
@@ -41,11 +41,12 @@ export const sendInviteEmail = async (email: string, link: string) => {
 };
 
 // --- SMTP (GMAIL) PROVIDER FUNCTION ---
-export type MailType = 'reset' | 'confirm' | 'invite' | '2fa' | 'custom';
+export type MailType = 'reset' | 'confirm' | 'invite' | '2fa' | 'custom' | 'org-invite';
 
 interface MailOptions {
   token?: string;
   link?: string;
+  orgName?: string; // For org-invite
   subject?: string; // For custom mail type
   body?: string;    // For custom mail type
 }
@@ -93,6 +94,12 @@ export async function sendMailSMTP(type: MailType, to: string, options: MailOpti
     case 'custom': {
       subject = options.subject || 'P-Core Test Email';
       html = options.body || '<p>This is a test email.</p>';
+      break;
+    }
+    case 'org-invite': {
+      const tpl = orgInviteTemplate(options.link!, options.orgName!);
+      subject = tpl.subject;
+      html = tpl.html;
       break;
     }
     default:
