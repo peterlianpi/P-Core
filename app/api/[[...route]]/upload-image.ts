@@ -4,7 +4,7 @@ import { v2 as cloudinary } from "cloudinary";
 import { z } from "zod";
 import { prisma } from "@/lib/db/client";
 import { getOptionalOrganizationContext, optionalPermission } from "@/lib/security/tenant";
-import {
+import { 
   ImageUploadSchema,
   ImageDeleteSchema,
   ImageListSchema
@@ -21,7 +21,7 @@ cloudinary.config({
 const getCloudinaryFolder = (ownerType: string, feature: string = "profile", orgId?: string) => {
   const baseFolder = "p-core";
   const orgFolder = orgId ? `org-${orgId}` : "global";
-
+  
   switch (ownerType.toLowerCase()) {
     case "user":
       return `${baseFolder}/${orgFolder}/users/${feature}`;
@@ -60,70 +60,32 @@ const app = new Hono()
       try {
         const { imageData, ownerType, ownerId, feature } = c.req.valid("json");
         const orgContext = getOptionalOrganizationContext(c);
-        // --- BEGIN: Detailed Debug Logging ---
-        console.log("[BACKEND] Upload-image handler hit");
-        // Normalize ownerType for robust comparison
-        const normalizedOwnerType = ownerType.trim().toUpperCase();
-        console.log("[BACKEND] ownerType (normalized):", normalizedOwnerType);
-        console.log("[BACKEND] orgContext?.organizationId:", orgContext?.organizationId);
-        const orgRequiredTypes = [
-          "MEMBER", "STUDENT", "BOOK", "COURSE", "LESSON", "SCHEDULE", "ORGANIZATION"
-        ];
-        console.log("[BACKEND] orgRequiredTypes:", orgRequiredTypes);
-        console.log(
-          "[BACKEND] orgId required check:",
-          orgRequiredTypes.includes(normalizedOwnerType) && !orgContext?.organizationId
-        );
-        // --- END: Detailed Debug Logging ---
-
-        // Only require orgId for org-scoped resources (not for USER profile uploads)
-        if (orgRequiredTypes.includes(normalizedOwnerType) && !orgContext?.organizationId) {
-          return c.json({ error: "Organization ID is required" }, 400);
-        }
-
-        // Debug log to help trace the error
-        console.log("[DEBUG] Incoming upload payload", {
-          ownerType,
-          ownerId,
-          feature,
-          orgId: orgContext?.organizationId
-        });
-
-        // Log upload request
-        console.log("[UPLOAD] Request", {
-          ownerType,
-          ownerId,
-          feature,
-          orgId: orgContext?.organizationId,
-        });
 
         // Generate folder and public ID
         const folder = getCloudinaryFolder(ownerType, feature, orgContext?.organizationId);
         const publicId = generatePublicId(ownerType, ownerId, feature);
-        console.log(`[UPLOAD] Using folder: ${folder}, publicId: ${publicId}`);
 
         // Ensure Cloudinary folder exists (create if needed)
         try {
           // Create nested folder structure step by step
           const folderParts = folder.split('/');
           let currentPath = '';
-
+          
           for (const part of folderParts) {
-            currentPath = currentPath ? `${currentPath}/${part}` : part;
-            try {
-              await cloudinary.api.create_folder(currentPath);
-              console.log(`[UPLOAD] Created folder: ${currentPath}`);
-            } catch (folderError: unknown) {
-              // Folder might already exist - that's fine
-              const errorMessage = folderError instanceof Error ? folderError.message : String(folderError);
-              if (!errorMessage.includes('already exists') && !errorMessage.includes('Bad Request')) {
-                console.warn(`[UPLOAD] Could not create folder ${currentPath}:`, errorMessage);
-              }
-            }
+          currentPath = currentPath ? `${currentPath}/${part}` : part;
+          try {
+            await cloudinary.api.create_folder(currentPath);
+          } catch (folderError: unknown) {
+            // Folder might already exist - that's fine
+            const errorMessage = folderError instanceof Error ? folderError.message : String(folderError);
+            if (!errorMessage.includes('already exists') && !errorMessage.includes('Bad Request')) {
+            console.warn(`Could not create folder ${currentPath}:`, errorMessage);
           }
-        } catch (error: unknown) {
+          }
+          }
+          } catch (error: unknown) {
           const errorMessage = error instanceof Error ? error.message : String(error);
-          console.warn(`[UPLOAD] Failed to create folder structure for ${folder}:`, errorMessage);
+        console.warn(`Failed to create folder structure for ${folder}:`, errorMessage);
         }
 
         // Upload to Cloudinary
@@ -136,10 +98,6 @@ const app = new Hono()
             { quality: "auto" }, // Auto quality
             { fetch_format: "auto" } // Auto format (WebP, etc.)
           ]
-        });
-        console.log("[UPLOAD] Cloudinary upload result", {
-          publicId: cloudinaryResult.public_id,
-          url: cloudinaryResult.secure_url,
         });
 
         // Save image record to database
@@ -154,53 +112,6 @@ const app = new Hono()
             orgId: orgContext?.organizationId || null,
           }
         });
-        console.log("[UPLOAD] Saved image record", {
-          id: imageRecord.id,
-          url: imageRecord.url,
-          publicId: imageRecord.publicId,
-          feature: imageRecord.feature,
-        });
-
-
-        // // After saving the image record, update the relevant entity's image/logo field
-        // if (ownerType === "USER" && ownerId && imageRecord.url) {
-        //   // Update user's profile image
-        //   await prisma.user.update({
-        //     where: { id: ownerId },
-        //     data: { image: imageRecord.url }
-        //   });
-        // }
-
-        // if (ownerType === "ORGANIZATION" && ownerId && imageRecord.url) {
-        //   // Update organization's logo image (change to 'image' if that's your schema)
-        //   await prisma.organization.update({
-        //     where: { id: ownerId },
-        //     data: { logoImage: imageRecord.url }
-        //   });
-        // }
-
-        // if (ownerType === "STUDENT" && ownerId && imageRecord.url) {
-        //   // Update student's profile image
-        //   await prisma.student.update({
-        //     where: { id: ownerId },
-        //     data: { image: imageRecord.url }
-        //   });
-        // }
-
-        // if (ownerType === "MEMBER" && ownerId && imageRecord.url) {
-        //   // Update member's profile image
-        //   await prisma.member.update({
-        //     where: { id: ownerId },
-        //     data: { image: imageRecord.url }
-        //   });
-        // }
-
-        // // For OTHER, handle as needed or log for future extension
-        // if (ownerType === "OTHER" && ownerId && imageRecord.url) {
-        //   // No direct table update; log or handle custom logic
-        //   console.log(`[UPLOAD] No direct table update for ownerType OTHER (ownerId: ${ownerId})`);
-        // }
-
 
         return c.json({
           success: true,
@@ -213,10 +124,10 @@ const app = new Hono()
         }, 201);
 
       } catch (error) {
-        console.error("[UPLOAD] Image upload error:", error);
-        return c.json({
+        console.error("Image upload error:", error);
+        return c.json({ 
           success: false,
-          error: "Failed to upload image"
+          error: "Failed to upload image" 
         }, 500);
       }
     }
@@ -232,16 +143,8 @@ const app = new Hono()
         const { ownerType, ownerId, feature } = c.req.valid("query");
         const orgContext = getOptionalOrganizationContext(c);
 
-        // Log get images request
-        console.log("[GET] Images request", {
-          ownerType,
-          ownerId,
-          feature,
-          orgId: orgContext?.organizationId,
-        });
-
         const where: Record<string, unknown> = {};
-
+        
         // Only filter by org if we have org context
         if (orgContext?.organizationId) {
           where.orgId = orgContext.organizationId;
@@ -265,18 +168,16 @@ const app = new Hono()
           }
         });
 
-        console.log(`[GET] Found ${images.length} images`, where);
-
         return c.json({
           success: true,
           data: images
         });
 
       } catch (error) {
-        console.error("[GET] Get images error:", error);
-        return c.json({
+        console.error("Get images error:", error);
+        return c.json({ 
           success: false,
-          error: "Failed to fetch images"
+          error: "Failed to fetch images" 
         }, 500);
       }
     }
@@ -292,44 +193,35 @@ const app = new Hono()
         const { imageId } = c.req.valid("json");
         const orgContext = getOptionalOrganizationContext(c);
 
-        // Log delete request
-        console.log("[DELETE] Image request", {
-          imageId,
-          orgId: orgContext?.organizationId,
-        });
-
         // Find image record
         const where: Record<string, unknown> = { id: imageId };
         if (orgContext?.organizationId) {
           where.orgId = orgContext.organizationId;
         }
-
+        
         const imageRecord = await prisma.image.findFirst({
           where
         });
 
         if (!imageRecord) {
-          console.warn("[DELETE] Image not found", where);
-          return c.json({
+          return c.json({ 
             success: false,
-            error: "Image not found"
+            error: "Image not found" 
           }, 404);
         }
 
         // Delete from Cloudinary
         const cloudinaryResult = await cloudinary.uploader.destroy(imageRecord.publicId);
+
         if (cloudinaryResult.result !== "ok") {
-          console.warn("[DELETE] Cloudinary deletion failed:", cloudinaryResult);
+          console.warn("Cloudinary deletion failed:", cloudinaryResult);
           // Continue with database deletion even if Cloudinary fails
-        } else {
-          console.log("[DELETE] Cloudinary image deleted", imageRecord.publicId);
         }
 
         // Delete from database
         await prisma.image.delete({
           where: { id: imageId }
         });
-        console.log("[DELETE] Deleted image record from DB", imageId);
 
         return c.json({
           success: true,
@@ -337,10 +229,10 @@ const app = new Hono()
         });
 
       } catch (error) {
-        console.error("[DELETE] Image deletion error:", error);
-        return c.json({
+        console.error("Image deletion error:", error);
+        return c.json({ 
           success: false,
-          error: "Failed to delete image"
+          error: "Failed to delete image" 
         }, 500);
       }
     }
@@ -350,7 +242,7 @@ const app = new Hono()
   .put(
     "/:imageId",
     zValidator("param", z.object({ imageId: z.string() })),
-    zValidator("json", z.object({
+    zValidator("json", z.object({ 
       imageData: z.string().min(1, "Image data is required"),
       feature: z.string().optional()
     })),
@@ -360,39 +252,29 @@ const app = new Hono()
         const { imageData, feature } = c.req.valid("json");
         const orgContext = getOptionalOrganizationContext(c);
 
-        // Log update request
-        console.log("[UPDATE] Image request", {
-          imageId,
-          feature,
-          orgId: orgContext?.organizationId,
-        });
-
         // Find existing image
         const where: Record<string, unknown> = { id: imageId };
         if (orgContext?.organizationId) {
           where.orgId = orgContext.organizationId;
         }
-
+        
         const existingImage = await prisma.image.findFirst({
           where
         });
 
         if (!existingImage) {
-          console.warn("[UPDATE] Image not found", where);
-          return c.json({
+          return c.json({ 
             success: false,
-            error: "Image not found"
+            error: "Image not found" 
           }, 404);
         }
 
         // Delete old image from Cloudinary
         await cloudinary.uploader.destroy(existingImage.publicId);
-        console.log("[UPDATE] Deleted old Cloudinary image", existingImage.publicId);
 
         // Upload new image
         const folder = getCloudinaryFolder(existingImage.ownerType, feature || existingImage.feature);
         const publicId = generatePublicId(existingImage.ownerType, existingImage.ownerId, feature || existingImage.feature);
-        console.log(`[UPDATE] Using folder: ${folder}, publicId: ${publicId}`);
 
         const cloudinaryResult = await cloudinary.uploader.upload(imageData, {
           folder,
@@ -404,10 +286,6 @@ const app = new Hono()
             { fetch_format: "auto" }
           ]
         });
-        console.log("[UPDATE] Cloudinary upload result", {
-          publicId: cloudinaryResult.public_id,
-          url: cloudinaryResult.secure_url,
-        });
 
         // Update database record
         const updatedImage = await prisma.image.update({
@@ -418,12 +296,6 @@ const app = new Hono()
             folder,
             ...(feature && { feature }),
           }
-        });
-        console.log("[UPDATE] Updated image record in DB", {
-          id: updatedImage.id,
-          url: updatedImage.url,
-          publicId: updatedImage.publicId,
-          feature: updatedImage.feature,
         });
 
         return c.json({
@@ -437,10 +309,10 @@ const app = new Hono()
         });
 
       } catch (error) {
-        console.error("[UPDATE] Image update error:", error);
-        return c.json({
+        console.error("Image update error:", error);
+        return c.json({ 
           success: false,
-          error: "Failed to update image"
+          error: "Failed to update image" 
         }, 500);
       }
     }

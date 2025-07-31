@@ -1,6 +1,6 @@
 import { InferRequestType, InferResponseType } from "hono";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import client, { apiUtils } from "@/lib/api/hono-client";
+import { client } from "@/lib/hono";
 
 type ResponseType = InferResponseType<typeof client.api.courses.$post>;
 type RequestType = InferRequestType<typeof client.api.courses.$post>["json"];
@@ -17,8 +17,15 @@ export const useCreateCourse = ({ orgId }: { orgId: string }) => {
         json,
       });
 
-      // Use the unified error handling and parsing utilities
-      return await apiUtils.safeParseResponse(response);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          (errorData as ErrorResponse)?.error || "Unknown error occurred"
+        );
+      }
+
+      const data = await response.json();
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["course", { orgId }] });

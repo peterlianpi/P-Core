@@ -28,8 +28,7 @@ const ProtectedLayout = async ({ children }: ProtectedLayoutProps) => {
   }));
 
   const organizations = rawOrganizations.data;
- console.log("Organizations : ",organizations)
-  
+
   return (
     <OrgDataProvider organizations={organizations} users={users ?? []}>
       <SelectedOrgProvider>

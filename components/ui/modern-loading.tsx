@@ -288,7 +288,7 @@ interface DataLoadingStateProps {
   isLoading: boolean;
   error?: string | null;
   isEmpty?: boolean;
-  children?: React.ReactNode;
+  children: React.ReactNode;
   loadingSkeleton?: React.ReactNode;
   emptyState?: React.ReactNode;
   errorState?: React.ReactNode;

@@ -9,12 +9,8 @@ import { ApiError, handleApiError, handleError } from "@/lib/utils/api-errors";
 import { OrganizationsAPISchema } from "@/lib/schemas";
 import { OrganizationType } from "@prisma/client";
 
-
-const context = '' as any;
-
 export async function getOrganizationsByUserId(userId: string | undefined) {
   if (!userId) {
-
     return { data: [] };
   }
   const userOrganizations = await prisma.userOrganization.findMany({
@@ -33,7 +29,6 @@ export async function getOrganizationsByUserId(userId: string | undefined) {
       },
     },
   });
-
 
   const result = OrganizationsAPISchema.safeParse(userOrganizations);
   if (!result.success) {
@@ -58,7 +53,7 @@ export async function createOrganization(userId: string, values: CreateOrganizat
     if (existingOrg) {
       throw new ApiError("An organization with this name already exists.", 409);
     }
-
+    
     // 3. Use a transaction for atomic creation of organization and user link.
     const newOrganization = await prisma.$transaction(async (tx) => {
       const organization = await tx.organization.create({
@@ -85,9 +80,9 @@ export async function createOrganization(userId: string, values: CreateOrganizat
 
     revalidatePath("/organization");
     return { success: true, data: newOrganization };
-
+    
   } catch (error) {
-    return handleApiError(context, error, "Failed to create organization");
+    return handleApiError(null, error, "Failed to create organization");
   }
 }
 

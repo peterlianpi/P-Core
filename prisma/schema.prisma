@@ -251,7 +251,6 @@ model Feedback {
 model TelegramSetting {
   id        String        @id @default(cuid())
   userId    String        @map("user_id")
-  role      UserRole      @default(USER) // Role for the user in the organization, if applicable
   orgId     String?       @map("org_id")
   chatId    String        @map("chat_id")
   botToken  String        @map("bot_token")
@@ -678,27 +677,12 @@ enum OrganizationType {
 }
 
 enum OrganizationRole {
-  VIEWER
-  STUDENT
-  MEMBER
-  CHOIR_MEMBER
-  VOLUNTEER
-  LIBRARY_ASSISTANT
-  TEACHER
-  CHOIR_LEADER
-  LIBRARIAN
-  OFFICE_STAFF
-  ACCOUNTANT
-  EDITOR
-  MANAGER
-  ADMIN
   OWNER
-  PASTOR
-  SUPPORT
-  AUDITOR
-  DEVOPS
-  SYSTEM_MAINTAINER
-  SUPER_ADMIN
+  ADMIN
+  MANAGER
+  MEMBER
+  ACCOUNTANT
+  OFFICE_STAFF
 
   @@schema("auth")
 }

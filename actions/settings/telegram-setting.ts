@@ -1,21 +1,21 @@
 "use server";
 
 import { prisma } from "@/lib/db/client";
-import { TelegramScope, UserRole } from "@prisma/client";
+import { TelegramScope } from "@prisma/client";
 
 export const getTelegramSetting = async ({
   userId,
-  role = UserRole.USER,
+  scope = "USER",
 }: {
   userId: string;
-  role: UserRole;
+  scope?: TelegramScope;
 }) => {
   try {
     const result = await prisma.telegramSetting.findFirst({
-      where: {
-        userId: userId,
-        role: role,
-        isActive: true
+      where: { 
+        userId: userId, 
+        scope: scope,
+        isActive: true 
       },
     });
 
@@ -37,9 +37,9 @@ export const getTelegramSetting = async ({
 export const getTelegramSettings = async ({ userId }: { userId: string }) => {
   try {
     const result = await prisma.telegramSetting.findMany({
-      where: {
+      where: { 
         userId: userId,
-        isActive: true
+        isActive: true 
       },
       orderBy: { createdAt: 'desc' }
     });

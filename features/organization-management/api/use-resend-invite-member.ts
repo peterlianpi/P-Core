@@ -3,7 +3,7 @@ import {
   // InferResponseType 
 } from "hono";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import client from "@/lib/api/hono-client";
+import { client } from "@/lib/hono";
 import { InviteSuccessResponse } from "../helper/organization-type";
 
 // type ResponseType = InferResponseType<typeof client.api.invite.$post>;
