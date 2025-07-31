@@ -7,7 +7,7 @@ import { getUserByEmail } from "@/data/user";
 import {
   sendTwoFactorTokenEmail,
   sendVerificationEmail,
-} from "@/lib/mail/email-templates";
+} from "@/lib/mail/mail";
 import {
   generateTwoFactorToken,
   generateVerificationToken,

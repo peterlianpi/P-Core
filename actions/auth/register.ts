@@ -5,7 +5,7 @@ import * as z from "zod";
 import bcrypt from "bcryptjs";
 import { getUserByEmail } from "@/data/user";
 import { generateVerificationToken } from "../../lib/tokens";
-import { sendVerificationEmail } from "@/lib/mail/email-templates";
+import { sendVerificationEmail } from "@/lib/mail/mail";
 import { trackRegister } from "./track-system-activities";
 import { prisma } from "@/lib/db/client";
 

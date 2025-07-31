@@ -1,59 +1,108 @@
-// Import the Resend module to handle email sending
+// Unified mail sending logic for Resend and SMTP (Gmail), using shared templates
 import { Resend } from "resend";
+import nodemailer from "nodemailer";
+import {
+  twoFactorTemplate,
+  passwordResetTemplate,
+  verificationTemplate,
+  inviteTemplate
+} from "./email-templates";
 
-// Initialize Resend with the API key from environment variables
 const resend = new Resend(process.env.RESEND_API_KEY);
-
-// Get the domain from environment variables for constructing links
 const domain = process.env.NEXT_PUBLIC_APP_URL;
-
-// Define the sender email address in a format suitable for email headers
 const myMail = "Security <no-reply@security.peterlianpi.xyz>";
 
-/**
- * Sends a Two-Factor Authentication (2FA) token email to the specified recipient.
- * @param email - The recipient's email address.
- * @param token - The 2FA token to be included in the email.
- */
+// SMTP config (generic, matches .env)
+const smtpUser = process.env.SMTP_USER;
+const smtpPass = process.env.SMTP_PASS;
+const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
+const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 465;
+const smtpFrom = process.env.MAIL_FROM || smtpUser;
+
+// --- RESEND PROVIDER FUNCTIONS ---
 export const sendTwoFactorTokenEmail = async (email: string, token: string) => {
-  await resend.emails.send({
-    from: myMail, // Sender's email
-    to: email, // Recipient's email
-    subject: "2FA Code", // Email subject
-    html: `<p>Your 2FA code is: ${token}</p>`, // Email content in HTML format
-  });
+  const { subject, html } = twoFactorTemplate(token);
+  await resend.emails.send({ from: myMail, to: email, subject, html });
 };
 
-/**
- * Sends a password reset email with a reset link to the specified recipient.
- * @param email - The recipient's email address.
- * @param token - The token to generate the password reset link.
- */
 export const sendPasswordResetEmail = async (email: string, token: string) => {
-  // Construct the password reset link
-  const resetLink = `${domain}/auth/new-password?token=${token}`;
-
-  await resend.emails.send({
-    from: myMail, // Sender's email
-    to: email, // Recipient's email
-    subject: "Reset Your Password", // Email subject
-    html: `<p>Click <a href="${resetLink}">here</a> to reset your password.</p>`, // Email content in HTML format
-  });
+  const { subject, html } = passwordResetTemplate(token);
+  await resend.emails.send({ from: myMail, to: email, subject, html });
 };
+
+export const sendVerificationEmail = async (email: string, token: string) => {
+  const { subject, html } = verificationTemplate(token);
+  await resend.emails.send({ from: myMail, to: email, subject, html });
+};
+
+export const sendInviteEmail = async (email: string, link: string) => {
+  const { subject, html } = inviteTemplate(link);
+  await resend.emails.send({ from: myMail, to: email, subject, html });
+};
+
+// --- SMTP (GMAIL) PROVIDER FUNCTION ---
+export type MailType = 'reset' | 'confirm' | 'invite' | '2fa' | 'custom';
+
+interface MailOptions {
+  token?: string;
+  link?: string;
+  subject?: string; // For custom mail type
+  body?: string;    // For custom mail type
+}
 
 /**
- * Sends an email verification email with a confirmation link to the specified recipient.
- * @param email - The recipient's email address.
- * @param token - The token to generate the email verification link.
+ * Sends an email using Gmail SMTP for various purposes (reset, confirm, invite, 2fa).
+ * Uses the same templates as Resend for consistency.
  */
-export const sendVerificationEmail = async (email: string, token: string) => {
-  // Construct the email verification link
-  const confirmLink = `${domain}/auth/new-verification?token=${token}`;
-
-  await resend.emails.send({
-    from: myMail, // Sender's email
-    to: email, // Recipient's email
-    subject: "Confirm Your Email", // Email subject
-    html: `<p>Click <a href="${confirmLink}">here</a> to confirm your email.</p>`, // Email content in HTML format
+export async function sendMailSMTP(type: MailType, to: string, options: MailOptions = {}) {
+  const transporter = nodemailer.createTransport({
+    host: smtpHost,
+    port: smtpPort,
+    secure: smtpPort === 465, // true for 465, false for other ports
+    auth: { user: smtpUser, pass: smtpPass },
   });
-};
+
+  let subject = '';
+  let html = '';
+
+  switch (type) {
+    case 'reset': {
+      const tpl = passwordResetTemplate(options.token!);
+      subject = tpl.subject;
+      html = tpl.html;
+      break;
+    }
+    case 'confirm': {
+      const tpl = verificationTemplate(options.token!);
+      subject = tpl.subject;
+      html = tpl.html;
+      break;
+    }
+    case 'invite': {
+      const tpl = inviteTemplate(options.link!);
+      subject = tpl.subject;
+      html = tpl.html;
+      break;
+    }
+    case '2fa': {
+      const tpl = twoFactorTemplate(options.token!);
+      subject = tpl.subject;
+      html = tpl.html;
+      break;
+    }
+    case 'custom': {
+      subject = options.subject || 'P-Core Test Email';
+      html = options.body || '<p>This is a test email.</p>';
+      break;
+    }
+    default:
+      throw new Error('Unknown mail type');
+  }
+
+  await transporter.sendMail({
+    from: smtpFrom,
+    to,
+    subject,
+    html,
+  });
+}

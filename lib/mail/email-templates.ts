@@ -1,84 +1,91 @@
-import { Resend } from "resend";
+// Email template generators for all mail types (provider-agnostic)
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const url = process.env.NEXT_PUBLIC_APP_URL;
-const myMail = "Security <no-reply@security.peterlianpi.xyz>";
+const systemName = "P-Core System";
+const systemYear = "2025";
+const footer = `<footer style="text-align:center;font-size:12px;color:#888;margin-top:32px;">© ${systemYear} ${systemName}. All rights reserved.</footer>`;
 
-/**
- * Sends a Two-Factor Authentication (2FA) token email to the specified recipient.
- * @param email - The recipient's email address.
- * @param token - The 2FA token to be included in the email.
- */
-export const sendTwoFactorTokenEmail = async (email: string, token: string) => {
-  await resend.emails.send({
-    from: myMail, // Sender's email
-    to: email, // Recipient's email
-    subject: "2FA Code", // Email subject
+const baseStyles = `background:#f9fafb;padding:0;margin:0;min-width:100vw;min-height:100vh;`;
+const cardStyles = `background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.07);max-width:420px;margin:40px auto;padding:32px 24px;font-family:Inter,Arial,sans-serif;color:#222;line-height:1.7;`;
+const headingStyles = `margin:0 0 16px 0;font-size:1.5rem;font-weight:600;letter-spacing:-0.5px;color:#2563eb;text-align:center;`;
+const buttonStyles = `display:inline-block;background:#2563eb;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:500;font-size:1rem;margin:24px 0;transition:background 0.2s;`;
+
+export function twoFactorTemplate(token: string) {
+  return {
+    subject: "Your 2FA Code",
     html: `
-      <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; border-radius: 8px;">
-        <h2 style="text-align: center; color: #4CAF50;">Your 2FA Code</h2>
-        <p>Hi,</p>
-        <p>Your 2FA code is: <strong>${token}</strong></p>
-        <p>This code will expire in 10 minutes. If you did not make this request, you can safely ignore this email.</p>
-        <hr style="border: none; border-top: 1px solid #ddd;" />
-        <p style="text-align: center; font-size: 12px; color: #666;">© 2025 Next Auth. All rights reserved.</p>
-      </div>
-    `, // Email content in HTML format
-  });
-};
+      <body style="${baseStyles}">
+        <div style="${cardStyles}">
+          <h2 style="${headingStyles}">Two-Factor Authentication</h2>
+          <p style="margin-bottom:18px;">Hi,</p>
+          <p style="font-size:1.1rem;margin-bottom:18px;">Your 2FA code is:</p>
+          <div style="font-size:2rem;font-weight:700;letter-spacing:4px;background:#f1f5f9;padding:16px 0;border-radius:8px;text-align:center;margin-bottom:18px;">${token}</div>
+          <p style="color:#666;">This code will expire in 10 minutes. If you did not request this, you can ignore this email.</p>
+          ${footer}
+        </div>
+      </body>
+    `
+  };
+}
 
-/**
- * Sends a password reset email with a reset link to the specified recipient.
- * @param email - The recipient's email address.
- * @param token - The token to generate the password reset link.
- */
-export const sendPasswordResetEmail = async (email: string, token: string) => {
+export function passwordResetTemplate(token: string) {
   const resetLink = `${url}/auth/reset-password?token=${token}`;
-
-  await resend.emails.send({
-    from: myMail, // Sender's email
-    to: email, // Recipient's email
-    subject: "Reset Your Password", // Email subject
+  return {
+    subject: "Reset Your Password",
     html: `
-      <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; border-radius: 8px;">
-        <h2 style="text-align: center; color: #FF5733;">Reset Your Password</h2>
-        <p>Hi,</p>
-        <p>We received a request to reset the password for your account. Please click the button below to set a new password:</p>
-        <div style="text-align: center; margin: 20px 0;">
-          <a href="${resetLink}" style="background-color: #FF5733; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Reset Password</a>
+      <body style="${baseStyles}">
+        <div style="${cardStyles}">
+          <h2 style="${headingStyles}">Reset Your Password</h2>
+          <p style="margin-bottom:18px;">Hi,</p>
+          <p style="margin-bottom:18px;">We received a request to reset your password. Click the button below to set a new password:</p>
+          <div style="text-align:center;">
+            <a href="${resetLink}" style="${buttonStyles}">Reset Password</a>
+          </div>
+          <p style="color:#666;margin-top:18px;">This link will expire in 24 hours. If you did not request this, you can ignore this email.</p>
+          ${footer}
         </div>
-        <p>This link will expire in 24 hours. If you did not make this request, you can safely ignore this email.</p>
-        <hr style="border: none; border-top: 1px solid #ddd;" />
-        <p style="text-align: center; font-size: 12px; color: #666;">© 2025 Next Auth. All rights reserved.</p>
-      </div>
-    `, // Email content in HTML format
-  });
-};
+      </body>
+    `
+  };
+}
 
-/**
- * Sends an email verification email with a confirmation link to the specified recipient.
- * @param email - The recipient's email address.
- * @param token - The token to generate the email verification link.
- */
-export const sendVerificationEmail = async (email: string, token: string) => {
+export function verificationTemplate(token: string) {
   const confirmLink = `${url}/auth/new-verification?token=${token}`;
-
-  await resend.emails.send({
-    from: myMail, // Sender's email
-    to: email, // Recipient's email
-    subject: "Confirm Your Email", // Email subject
+  return {
+    subject: "Confirm Your Email",
     html: `
-      <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; border-radius: 8px;">
-        <h2 style="text-align: center; color: #4CAF50;">Confirm Your Email</h2>
-        <p>Hi,</p>
-        <p>We received a request to confirm your email address for your account. Please click the button below to complete the process:</p>
-        <div style="text-align: center; margin: 20px 0;">
-          <a href="${confirmLink}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Confirm Email</a>
+      <body style="${baseStyles}">
+        <div style="${cardStyles}">
+          <h2 style="${headingStyles}">Confirm Your Email</h2>
+          <p style="margin-bottom:18px;">Hi,</p>
+          <p style="margin-bottom:18px;">Please click the button below to confirm your email address:</p>
+          <div style="text-align:center;">
+            <a href="${confirmLink}" style="${buttonStyles}">Confirm Email</a>
+          </div>
+          <p style="color:#666;margin-top:18px;">This link will expire in 24 hours. If you did not request this, you can ignore this email.</p>
+          ${footer}
         </div>
-        <p>This link will expire in 24 hours. If you did not make this request, you can safely ignore this email.</p>
-        <hr style="border: none; border-top: 1px solid #ddd;" />
-        <p style="text-align: center; font-size: 12px; color: #666;">© 2025 Next Auth. All rights reserved.</p>
-      </div>
-    `, // Email content in HTML format
-  });
-};
+      </body>
+    `
+  };
+}
+
+export function inviteTemplate(link: string) {
+  return {
+    subject: "You're Invited to Join P-Core System!",
+    html: `
+      <body style="${baseStyles}">
+        <div style="${cardStyles}">
+          <h2 style="${headingStyles}">You're Invited!</h2>
+          <p style="margin-bottom:18px;">Hi,</p>
+          <p style="margin-bottom:18px;">You've been invited to join <b>P-Core System</b>. Click the button below to accept your invitation:</p>
+          <div style="text-align:center;">
+            <a href="${link}" style="${buttonStyles}">Accept Invitation</a>
+          </div>
+          <p style="color:#666;margin-top:18px;">If you did not expect this invitation, you can ignore this email.</p>
+          ${footer}
+        </div>
+      </body>
+    `
+  };
+}
