@@ -1,7 +1,7 @@
 // Feature Registry System
 // Enables/disables features dynamically and manages feature dependencies
 
-import { OrganizationRole } from "@prisma/client";
+import { OrganizationRole } from "@/shared/types/organization-role";
 
 export interface FeatureConfig {
   id: string;

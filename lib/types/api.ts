@@ -1,5 +1,9 @@
 // API Types for P-Core System
-import { UserRole, OrganizationRole, UserOrganizationStatus, LogType, OrganizationType } from "@prisma/client";
+import { UserRole } from "@/shared/types/user-role";
+import { OrganizationRole } from "@/shared/types/organization-role";
+import { UserOrganizationStatus } from "@/shared/types/user-organization-status";
+import { LogType } from "@/shared/types/log-type";
+import { OrganizationType } from "@/shared/types/organization-type";
 
 // Base API Response Types
 export interface ApiResponse<T = unknown> {

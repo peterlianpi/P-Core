@@ -5,7 +5,8 @@ import {
   twoFactorTemplate,
   passwordResetTemplate,
   verificationTemplate,
-  inviteTemplate
+  inviteTemplate,
+  orgInviteTemplate
 } from "./email-templates";
 import { mailConfig } from "./mail-config";
 

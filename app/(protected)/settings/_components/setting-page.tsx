@@ -19,29 +19,27 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import ImageUpload from "@/features/system/image-upload/components/upload-image-show";
-import { UserRole } from "@prisma/client";
+import { UserRole } from "@/shared/types/user-role";
 import { useOrgData } from "@/features";
 
-type Organization = {
-  organization: { id: string; name: string; };
-};
+
 type SettingsComponentPageProps = {
   telegram?: {
     telegramChatId: string | undefined | null;
     telegramBotToken: string | undefined | null;
     isActive: boolean;
   };
-  
+
 };
 
 const SettingsComponentPage = ({ telegram }: SettingsComponentPageProps) => {
   const user = useCurrentUser();
-   const {organizations}=useOrgData()
+  const { organizations } = useOrgData()
   const { update } = useSession();
   const [isPending, startTransition] = useTransition();
 
-   
-  
+
+
   const form = useForm<z.infer<typeof SettingsSchema>>({
     resolver: zodResolver(SettingsSchema),
     defaultValues: {

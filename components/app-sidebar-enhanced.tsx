@@ -53,7 +53,8 @@ import {
   hasFeaturePermission,
   type FeatureConfig 
 } from "@/features/feature-registry";
-import { OrganizationRole, UserRole } from "@prisma/client";
+import { OrganizationRole } from "@/shared/types/organization-role";
+import { UserRole } from "@/shared/types/user-role";
 
 type Organizations = {
   organization: {

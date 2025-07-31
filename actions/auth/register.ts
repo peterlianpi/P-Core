@@ -33,8 +33,20 @@ export const register = async (values: z.infer<typeof RegisterSchema>) => {
     },
   });
 
-  const verificationToken = await generateVerificationToken(email);
-  // TODO: Send verification token email
+  // Delete any old tokens for this email
+  await prisma.verificationToken.deleteMany({ where: { email } });
+
+  // Generate a new token value
+  const tokenValue = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  const verificationToken = await prisma.verificationToken.create({
+    data: {
+      email,
+      token: tokenValue,
+      expires: new Date(Date.now() + 1000 * 60 * 10), // 10 min expiry
+    },
+  });
+
+  // Send the email using the token just saved
   await sendVerificationEmail(verificationToken.email, verificationToken.token);
 
   await trackRegister({ value: email });
