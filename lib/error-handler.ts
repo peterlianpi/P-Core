@@ -48,7 +48,7 @@ enum ErrorSeverity {
  * @param error - Original error object
  * @returns Sanitized error message safe for client consumption
  */
-function sanitizeErrorMessage(error: unknown): string {
+export function sanitizeErrorMessage(error: unknown): string {
   let message = 'An unexpected error occurred';
 
   if (typeof error === 'object' && error !== null && 'message' in error && typeof (error as any).message === 'string') {
