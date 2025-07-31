@@ -7,7 +7,7 @@ import { generateVerificationToken } from "@/lib/tokens";
 import { SettingsSchema } from "@/lib/schemas";
 import * as z from "zod";
 import bcrypt from "bcryptjs";
-import { sendVerificationEmail } from "@/lib/mail/email-templates";
+import { sendVerificationEmail } from "@/lib/mail/mail";
 import {
   trackEmailChange,
   trackPasswordChange,
