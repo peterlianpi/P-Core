@@ -38,7 +38,8 @@
     "perf:tips": "bun scripts/performance-monitor.js",
     "setup:bun": "bun scripts/setup-bun.js",
     "prepare": "husky install",
-    "pre-commit": "lint-staged"
+    "pre-commit": "lint-staged",
+    "seed":"bun run /prisma/seed"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",
