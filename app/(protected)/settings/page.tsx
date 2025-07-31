@@ -1,7 +1,7 @@
 import { currentUser } from "@/lib/auth";
 import { getTelegramSetting } from "@/actions/settings/telegram-setting";
 import { UserProfileSettings } from "@/features/system/settings/components/settings-profile-form";
- 
+
 const SettingsPage = async () => {
   const user = await currentUser();
   if (!user || !user.id) return null; // or a loading spinner
@@ -13,10 +13,10 @@ const SettingsPage = async () => {
 
   const normalizedTelegram = telegramSetting
     ? {
-        telegramChatId: telegramSetting.telegramChatId ?? undefined,
-        telegramBotToken: telegramSetting.telegramBotToken ?? undefined,
-        isActive: telegramSetting.isActive,
-      }
+      telegramChatId: telegramSetting.telegramChatId ?? undefined,
+      telegramBotToken: telegramSetting.telegramBotToken ?? undefined,
+      isActive: telegramSetting.isActive,
+    }
     : undefined;
 
   // Fetch organizations (assuming you have a function or hook for this)
@@ -28,7 +28,7 @@ const SettingsPage = async () => {
 
   return (
     <UserProfileSettings
-      user={user}
+      user={{ ...user, name: user.name ?? undefined, email:user.email??undefined, image:user.image??undefined }}
       telegram={normalizedTelegram}
     />
   );

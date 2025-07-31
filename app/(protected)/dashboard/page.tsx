@@ -21,9 +21,9 @@
 import React from "react";
 import { Suspense, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { 
-  Users, 
-  GraduationCap, 
+import {
+  Users,
+  GraduationCap,
   TrendingUp,
   Activity,
   BarChart3,
@@ -40,11 +40,12 @@ import { CardSkeleton } from "@/components/ui/modern-loading";
 import { ErrorBoundaryWrapper } from "@/components/error/error-boundary";
 
 import { useSession } from "next-auth/react";
-import { organizationsApi } from "@/lib/hono-client";
 import DashboardStats from "@/components/dashboard/dashboard-stats";
 import RecentActivity from "@/components/dashboard/recent-activity";
 import QuickActions from "@/components/dashboard/quick-actions";
 import AnalyticsCharts from "@/components/dashboard/analytics-charts";
+import { useOrgData } from "@/features";
+import { useData } from "@/providers/data-provider";
 
 // Animation variants
 const containerVariants = {
@@ -77,29 +78,31 @@ interface OrganizationWithRole {
 
 const DashboardPage = () => {
   const { data: session } = useSession();
-  const [organizations, setOrganizations] = useState<OrganizationWithRole[]>([]);
+  const { organizations } = useOrgData()
   const [loading, setLoading] = useState(true);
+  const {orgId}=useData()
 
-  useEffect(() => {
-    const fetchOrganizations = async () => {
-      try {
-        if (session?.user?.id) {
-          const result = await organizationsApi.getByUserId() as { data: OrganizationWithRole[] };
-          setOrganizations(result.data || []);
-        }
-      } catch (error) {
-        console.error('Error fetching organizations:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchOrganizations = async () => {
+  //     try {
+  //       if (session?.user?.id) {
+  //         const result = await organizationsApi.getByUserId() as { data: OrganizationWithRole[] };
+  //         setOrganizations(result.data || []);
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching organizations:', error);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
 
-    fetchOrganizations();
-  }, [session?.user?.id]);
+  //   fetchOrganizations();
+  // }, [session?.user?.id]);
 
   // Get current organization context
-  const currentOrgId = session?.user?.defaultOrgId;
-  const currentOrg = organizations.find((org) => org.organization.id === currentOrgId);
+  // const currentOrgId = session?.user?.defaultOrgId;
+  
+  const currentOrg = organizations.find((org) => org.organization.id === orgId);
   const orgType = currentOrg?.organization?.type;
   const userRole = currentOrg?.role;
 
@@ -129,15 +132,24 @@ const DashboardPage = () => {
               Welcome back, {session?.user?.name}! Here&apos;s what&apos;s happening in your organization.
             </p>
           </div>
-          
+
           <div className="flex items-center space-x-2 mt-4 sm:mt-0">
             {currentOrg && (
               <Badge variant="outline" className="text-sm">
-                {orgType === 'school' && '🎓 School Management'}
-                {orgType === 'church' && '⛪ Church Management'}
-                {orgType === 'business' && '🏢 Business Management'}
-                {orgType === 'nonprofit' && '🤝 Non-Profit Management'}
+                {/*
+                  Display a badge label and icon based on the organization type.
+                  Supported types: SCHOOL, TRAINING_CENTER, UNIVERSITY, CORPORATE, CHURCH, OTHER
+                */}
+                {orgType === 'SCHOOL' && '🎓 School Management'}
+                {orgType === 'TRAINING_CENTER' && '🏫 Training Center Management'}
+                {orgType === 'UNIVERSITY' && '🎓 University Management'}
+                {orgType === 'CORPORATE' && '🏢 Corporate Management'}
+                {orgType === 'CHURCH' && '⛪ Church Management'}
+                {orgType === 'OTHER' && '🏷️ Other Organization'}
+                {/* Fallback for missing or unknown orgType */}
                 {!orgType && '🏢 Organization Management'}
+                {/* If orgType is set but not recognized, show a generic label */}
+                {orgType && !['SCHOOL','TRAINING_CENTER','UNIVERSITY','CORPORATE','CHURCH','OTHER'].includes(orgType) && '🏢 Organization Management'}
               </Badge>
             )}
             <Badge variant="secondary">
@@ -193,7 +205,7 @@ const DashboardPage = () => {
                       <AnalyticsCharts orgType={orgType} />
                     </Suspense>
                   </div>
-                  
+
                   {/* Side Panel */}
                   <div className="space-y-6">
                     <Suspense fallback={<CardSkeleton />}>
@@ -275,7 +287,7 @@ const PerformanceMetrics = ({ orgType }: { orgType?: string }) => (
             </div>
           </>
         )}
-        
+
         {/* Default metrics for other org types */}
         {orgType !== 'school' && (
           <>
@@ -320,7 +332,7 @@ const TrendAnalysis = ({ orgType }: { orgType?: string }) => (
           </div>
           <span className="text-green-600 font-semibold">+12.5%</span>
         </div>
-        
+
         <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-blue-600" />
@@ -328,7 +340,7 @@ const TrendAnalysis = ({ orgType }: { orgType?: string }) => (
           </div>
           <span className="text-blue-600 font-semibold">+8.3%</span>
         </div>
-        
+
         {orgType === 'school' && (
           <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
             <div className="flex items-center gap-2">
@@ -365,7 +377,7 @@ const ActivityFeed = ({ orgType }: { orgType?: string }) => (
             <span className="text-xs text-muted-foreground">2 hours ago</span>
           </div>
         </div>
-        
+
         <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
           <div className="h-2 w-2 bg-blue-500 rounded-full mt-2" />
           <div className="flex-1">
@@ -374,7 +386,7 @@ const ActivityFeed = ({ orgType }: { orgType?: string }) => (
             <span className="text-xs text-muted-foreground">5 hours ago</span>
           </div>
         </div>
-        
+
         <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
           <div className="h-2 w-2 bg-purple-500 rounded-full mt-2" />
           <div className="flex-1">

@@ -6,6 +6,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useOrgData } from "./organization-management";
+import { useData } from "@/providers/data-provider";
 
 interface FeatureLoaderProps {
   featureId: string;
@@ -15,25 +17,47 @@ interface FeatureLoaderProps {
   className?: string;
 }
 
+import { OrganizationRole } from "@/shared/types/organization-role";
+// Utility to get the user's org role for the current org context
+function useCurrentOrgRole() {
+  const user = useCurrentUser();
+  const {orgId}=useData()
+  const { organizations } = useOrgData();
+
+  // Find the user's membership in the current org
+  const orgMembership = organizations?.find(
+    (org) => org.organization.id === orgId && org.userId === user?.id
+  );
+
+  // Map string role to enum if needed
+  const roleString = orgMembership?.role;
+  const orgRole = roleString && typeof roleString === "string"
+    ? OrganizationRole[roleString as keyof typeof OrganizationRole]
+    : undefined;
+
+  // Return the org role, or undefined if not found
+  return orgRole;
+}
+
 // Feature permission wrapper
-export function FeatureGuard({ 
-  featureId, 
-  children, 
-  fallback = null 
+export function FeatureGuard({
+  featureId,
+  children,
+  fallback = null,
 }: {
   featureId: string;
   children: React.ReactNode;
   fallback?: React.ReactNode;
 }) {
-  const user = useCurrentUser();
-  
+  const orgRole = useCurrentOrgRole();
+
   // Check if feature is enabled
   if (!featureRegistry.isEnabled(featureId)) {
     return <>{fallback}</>;
   }
-  
+
   // Check user permissions
-  if (user && !hasFeaturePermission(featureId, user.role)) {
+  if (orgRole && !hasFeaturePermission(featureId, orgRole)) {
     return (
       <Alert className="m-4">
         <AlertCircle className="h-4 w-4" />
@@ -43,26 +67,26 @@ export function FeatureGuard({
       </Alert>
     );
   }
-  
+
   return <>{children}</>;
 }
 
 // Dynamic feature loader
-export function FeatureLoader({ 
-  featureId, 
+export function FeatureLoader({
+  featureId,
   children,
   fallback,
   errorFallback,
-  className 
+  className,
 }: FeatureLoaderProps) {
-  const user = useCurrentUser();
-  
+  const orgRole = useCurrentOrgRole();
+
   // Create lazy component with error boundary
   const LazyFeature = useMemo(() => {
     if (!featureRegistry.isEnabled(featureId)) {
       return null;
     }
-    
+
     return lazy(async () => {
       try {
         const feature = await featureRegistry.loadFeature(featureId);
@@ -73,14 +97,14 @@ export function FeatureLoader({
       }
     });
   }, [featureId]);
-  
+
   // Feature not enabled
   if (!LazyFeature) {
     return fallback ? <>{fallback}</> : null;
   }
-  
+
   // Permission check
-  if (user && !hasFeaturePermission(featureId, user.role)) {
+  if (orgRole && !hasFeaturePermission(featureId, orgRole)) {
     return (
       <Alert className={className}>
         <AlertCircle className="h-4 w-4" />
@@ -90,7 +114,7 @@ export function FeatureLoader({
       </Alert>
     );
   }
-  
+
   const defaultFallback = (
     <div className={className}>
       <Skeleton className="h-8 w-full mb-4" />
@@ -98,7 +122,7 @@ export function FeatureLoader({
       <Skeleton className="h-8 w-1/2" />
     </div>
   );
-  
+
   const defaultErrorFallback = (
     <Alert className={className}>
       <AlertCircle className="h-4 w-4" />
@@ -107,7 +131,7 @@ export function FeatureLoader({
       </AlertDescription>
     </Alert>
   );
-  
+
   return (
     <Suspense fallback={fallback || defaultFallback}>
       <ErrorBoundary fallback={errorFallback || defaultErrorFallback}>
@@ -119,17 +143,19 @@ export function FeatureLoader({
 }
 
 // Feature list component
-export function EnabledFeaturesList({ 
-  category 
-}: { 
-  category?: "domain" | "system" 
+export function EnabledFeaturesList({
+  category,
+}: {
+  category?: "domain" | "system";
 }) {
   const enabledFeatures = featureRegistry.getEnabledFeatures(category);
-  
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">
-        {category ? `${category.charAt(0).toUpperCase() + category.slice(1)} Features` : 'All Features'}
+        {category
+          ? `${category.charAt(0).toUpperCase() + category.slice(1)} Features`
+          : "All Features"}
       </h3>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {enabledFeatures.map((feature) => (
@@ -164,31 +190,31 @@ class ErrorBoundary extends React.Component<
     super(props);
     this.state = { hasError: false };
   }
-  
+
   static getDerivedStateFromError() {
     return { hasError: true };
   }
-  
+
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Feature loading error:', error, errorInfo);
+    console.error("Feature loading error:", error, errorInfo);
   }
-  
+
   render() {
     if (this.state.hasError) {
       return this.props.fallback;
     }
-    
+
     return this.props.children;
   }
 }
 
 // Utility hooks
 export function useFeature(featureId: string) {
-  const user = useCurrentUser();
-  
+  const orgRole = useCurrentOrgRole();
+
   return {
     isEnabled: featureRegistry.isEnabled(featureId),
-    hasPermission: user ? hasFeaturePermission(featureId, user.role) : false,
+    hasPermission: orgRole ? hasFeaturePermission(featureId, orgRole) : false,
     feature: featureRegistry.getFeature(featureId),
     load: () => featureRegistry.loadFeature(featureId),
   };

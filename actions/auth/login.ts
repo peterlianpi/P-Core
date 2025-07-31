@@ -38,9 +38,18 @@ export const login = async (
   }
 
   if (!existingUser.emailVerified) {
-    const verificationToken = await generateVerificationToken(
-      existingUser.email
-    );
+    // Delete any old tokens for this email
+    await prisma.verificationToken.deleteMany({ where: { email: existingUser.email } });
+
+    // Generate a new token value
+    const tokenValue = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    const verificationToken = await prisma.verificationToken.create({
+      data: {
+        email: existingUser.email,
+        token: tokenValue,
+        expires: new Date(Date.now() + 1000 * 60 * 10), // 10 min expiry
+      },
+    });
 
     try {
       // Edge support: Use Resend if available, otherwise fallback to SMTP

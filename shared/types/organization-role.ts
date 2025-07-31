@@ -1,0 +1,25 @@
+// Shared OrganizationRole enum for use in both client and server code
+// Keep this in sync with the Prisma schema
+export enum OrganizationRole {
+  VIEWER = "VIEWER",
+  STUDENT = "STUDENT",
+  MEMBER = "MEMBER",
+  CHOIR_MEMBER = "CHOIR_MEMBER",
+  VOLUNTEER = "VOLUNTEER",
+  LIBRARY_ASSISTANT = "LIBRARY_ASSISTANT",
+  TEACHER = "TEACHER",
+  CHOIR_LEADER = "CHOIR_LEADER",
+  LIBRARIAN = "LIBRARIAN",
+  OFFICE_STAFF = "OFFICE_STAFF",
+  ACCOUNTANT = "ACCOUNTANT",
+  EDITOR = "EDITOR",
+  MANAGER = "MANAGER",
+  ADMIN = "ADMIN",
+  OWNER = "OWNER",
+  PASTOR = "PASTOR",
+  SUPPORT = "SUPPORT",
+  AUDITOR = "AUDITOR",
+  DEVOPS = "DEVOPS",
+  SYSTEM_MAINTAINER = "SYSTEM_MAINTAINER",
+  SUPER_ADMIN = "SUPER_ADMIN"
+}

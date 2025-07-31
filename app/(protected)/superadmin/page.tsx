@@ -46,7 +46,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
-import { OrganizationRole, UserRole } from "@prisma/client";
+import { OrganizationRole } from "@/shared/types/organization-role";
+import { UserRole } from "@/shared/types/user-role";
 
 // Types
 interface ActivityLogItem {

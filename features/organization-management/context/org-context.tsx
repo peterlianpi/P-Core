@@ -15,6 +15,7 @@ type Org = {
     type?: OrganizationType,
   };
   role?: string | undefined;
+  userId?:string|undefined;
 };
 
 type User = {

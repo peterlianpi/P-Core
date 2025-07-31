@@ -38,11 +38,6 @@ interface UserProfile {
   defaultOrgId?: string
 }
 
-interface Organization {
-  id: string
-  name: string
-}
-
 interface TelegramSetting {
   telegramChatId?: string
   telegramBotToken?: string
@@ -51,7 +46,6 @@ interface TelegramSetting {
 
 interface UserProfileSettingsProps {
   user: UserProfile
-  organizations: Organization[]
   telegram?: TelegramSetting
 }
 
@@ -138,7 +132,7 @@ export function UserProfileSettings({ user, telegram }: UserProfileSettingsProps
     <div className="md:hidden">
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
         <SheetTrigger asChild>
-          <Button variant="outline" size="sm" className="mb-4 bg-transparent">
+          <Button variant="outline" size="sm" className="bg-transparent">
             <Menu className="h-4 w-4 mr-2" />
             {currentTab?.label}
           </Button>
@@ -176,6 +170,7 @@ export function UserProfileSettings({ user, telegram }: UserProfileSettingsProps
         currentTab={currentTab}
         getRoleBadgeVariant={getRoleBadgeVariant}
       />
+      
       <div className="container mx-auto px-4 py-4 md:py-8 max-w-4xl">
         {/* Desktop Profile Header */}
         <DesktopProfileHeader
@@ -194,6 +189,7 @@ export function UserProfileSettings({ user, telegram }: UserProfileSettingsProps
             />
           )}
         />
+        <MobileNavigation />
         {/* Settings Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           {/* Desktop Tabs */}

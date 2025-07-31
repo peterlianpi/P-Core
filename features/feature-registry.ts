@@ -1,7 +1,7 @@
 // Feature Registry System
 // Enables/disables features dynamically and manages feature dependencies
 
-import { OrganizationRole } from "@prisma/client";
+import { OrganizationRole } from "@/shared/types/organization-role";
 
 export interface FeatureConfig {
   id: string;
@@ -37,7 +37,7 @@ export const DOMAIN_FEATURES: Record<string, DomainFeatureConfig> = {
     category: "domain",
     orgSpecific: true,
     version: "1.0.0",
-    requiredRole: "VIEWER",
+    requiredRole: OrganizationRole.VIEWER,
     component: () => import("./organization-management"),
     routes: [
       "/organization",
@@ -57,7 +57,7 @@ export const DOMAIN_FEATURES: Record<string, DomainFeatureConfig> = {
     category: "domain",
     orgSpecific: true,
     version: "1.0.0",
-    requiredRole: "EDITOR",
+    requiredRole: OrganizationRole.EDITOR,
     component: () => import("./school-management"),
     routes: [
       "/school-management",
@@ -81,8 +81,6 @@ export const DOMAIN_FEATURES: Record<string, DomainFeatureConfig> = {
     ],
     integrations: ["organization-management"],
   },
-
-
 };
 
 // System Features Registry
@@ -95,7 +93,7 @@ export const SYSTEM_FEATURES: Record<string, SystemFeatureConfig> = {
     category: "system",
     critical: true,
     version: "1.0.0",
-    requiredRole: "VIEWER",
+    requiredRole: OrganizationRole.VIEWER,
     component: () => import("./system/dashboard"),
     routes: [
       "/dashboard",
@@ -113,7 +111,7 @@ export const SYSTEM_FEATURES: Record<string, SystemFeatureConfig> = {
     category: "system",
     critical: true,
     version: "1.0.0",
-    requiredRole: "SUPER_ADMIN",
+    requiredRole: OrganizationRole.SUPER_ADMIN,
     component: () => import("./system/site"),
     routes: [
       "/settings",
@@ -143,7 +141,7 @@ export const SYSTEM_FEATURES: Record<string, SystemFeatureConfig> = {
     category: "system",
     critical: false,
     version: "1.0.0",
-    requiredRole: "VIEWER",
+    requiredRole: OrganizationRole.VIEWER,
     component: () => import("./system/feedback"),
     routes: [
       "/feedback",
@@ -171,7 +169,7 @@ export const SYSTEM_FEATURES: Record<string, SystemFeatureConfig> = {
     category: "system",
     critical: true,
     version: "1.0.0",
-    requiredRole: "SUPER_ADMIN",
+    requiredRole: OrganizationRole.SUPER_ADMIN,
     component: () => import("./system/version"),
     routes: [
       "/admin/version",
@@ -332,27 +330,27 @@ export class FeatureRegistry {
 
     // Expanded role hierarchy for all current and future features
     const roleHierarchy: OrganizationRole[] = [
-      "VIEWER",
-      "STUDENT",
-      "MEMBER",
-      "CHOIR_MEMBER",
-      "VOLUNTEER",
-      "LIBRARY_ASSISTANT",
-      "TEACHER",
-      "CHOIR_LEADER",
-      "LIBRARIAN",
-      "OFFICE_STAFF",
-      "ACCOUNTANT",
-      "EDITOR",
-      "MANAGER",
-      "ADMIN",
-      "OWNER",
-      "PASTOR",
-      "SUPPORT",
-      "AUDITOR",
-      "DEVOPS",
-      "SYSTEM_MAINTAINER",
-      "SUPER_ADMIN"
+      OrganizationRole.VIEWER,
+      OrganizationRole.STUDENT,
+      OrganizationRole.MEMBER,
+      OrganizationRole.CHOIR_MEMBER,
+      OrganizationRole.VOLUNTEER,
+      OrganizationRole.LIBRARY_ASSISTANT,
+      OrganizationRole.TEACHER,
+      OrganizationRole.CHOIR_LEADER,
+      OrganizationRole.LIBRARIAN,
+      OrganizationRole.OFFICE_STAFF,
+      OrganizationRole.ACCOUNTANT,
+      OrganizationRole.EDITOR,
+      OrganizationRole.MANAGER,
+      OrganizationRole.ADMIN,
+      OrganizationRole.OWNER,
+      OrganizationRole.PASTOR,
+      OrganizationRole.SUPPORT,
+      OrganizationRole.AUDITOR,
+      OrganizationRole.DEVOPS,
+      OrganizationRole.SYSTEM_MAINTAINER,
+      OrganizationRole.SUPER_ADMIN
     ];
     const requiredIndex = roleHierarchy.indexOf(feature.requiredRole);
     const userIndex = roleHierarchy.indexOf(userRole);

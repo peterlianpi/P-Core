@@ -53,7 +53,8 @@ import {
   hasFeaturePermission,
   type FeatureConfig 
 } from "@/features/feature-registry";
-import { OrganizationRole, UserRole } from "@prisma/client";
+import { OrganizationRole } from "@/shared/types/organization-role";
+import { UserRole } from "@/shared/types/user-role";
 
 type Organizations = {
   organization: {
@@ -67,7 +68,6 @@ type Organizations = {
   role?: string;
 };
 
-// Feature to icon mapping
 const FEATURE_ICONS = {
   "organization-management": Building2,
   "school-management": GraduationCap,
@@ -81,9 +81,9 @@ const FEATURE_ICONS = {
   "image-upload": Palette,
 } as const;
 
-// Generate navigation items from enabled features
 function generateNavFromFeatures(
   enabledFeatures: FeatureConfig[],
+  orgRole: OrganizationRole,
   userRole: UserRole,
   pathname: string,
   orgType?: string
@@ -95,17 +95,16 @@ function generateNavFromFeatures(
 
   // Add domain features based on organization type
   for (const feature of domainFeatures) {
-    if (!hasFeaturePermission(feature.id, userRole)) continue;
+    if (!hasFeaturePermission(feature.id, orgRole)) continue;
 
     const icon = FEATURE_ICONS[feature.id as keyof typeof FEATURE_ICONS] || Settings;
-    
     // Skip features that don't match organization type
     if (feature.id === "school-management" && orgType !== "school") continue;
     if (feature.id === "church-management" && orgType !== "church") continue;
     if (feature.id === "library-management" && !["school", "public"].includes(orgType || "")) continue;
 
     const baseUrl = getFeatureBaseUrl(feature.id);
-    const subItems = getFeatureSubItems(feature.id, userRole, orgType);
+    const subItems = getFeatureSubItems(feature.id, orgRole, orgType);
 
     // Always add organization-management even if no subitems
     if (feature.id === "organization-management" || subItems.length > 0) {
@@ -122,11 +121,10 @@ function generateNavFromFeatures(
   // Add system features (limited access)
   const systemNavItems = [];
   for (const feature of systemFeatures) {
-    if (!hasFeaturePermission(feature.id, userRole)) continue;
+    if (!hasFeaturePermission(feature.id, orgRole)) continue;
     if (feature.id === "dashboard") continue; // Dashboard is handled separately
 
     const icon = FEATURE_ICONS[feature.id as keyof typeof FEATURE_ICONS] || Settings;
-    
     systemNavItems.push({
       title: feature.name,
       url: getFeatureBaseUrl(feature.id),
@@ -135,7 +133,7 @@ function generateNavFromFeatures(
     });
   }
 
-  // Add superadmin section (SUPERADMIN only)
+  // Add superadmin section (system-level, not org-level)
   if (userRole === UserRole.SUPERADMIN) {
     navItems.push({
       title: "System Admin",
@@ -148,7 +146,7 @@ function generateNavFromFeatures(
     });
   }
 
-  // Add settings section
+  // Always add settings section
   navItems.push({
     title: "Settings",
     url: "/settings",
@@ -181,9 +179,14 @@ function getFeatureBaseUrl(featureId: string): string {
   }
 }
 
-function getFeatureSubItems(featureId: string, userRole: UserRole, orgType?: string): Array<{title: string, url: string}> {
-  const isAdmin = ["SUPERADMIN", "ADMIN"].includes(userRole);
-  const isEditor = ["SUPERADMIN", "ADMIN", "EDITOR"].includes(userRole);
+function getFeatureSubItems(featureId: string, orgRole: OrganizationRole, orgType?: string): Array<{title: string, url: string}> {
+  const isAdmin = [OrganizationRole.SUPER_ADMIN, OrganizationRole.ADMIN, OrganizationRole.OWNER].includes(orgRole);
+  const isEditor = [
+    OrganizationRole.SUPER_ADMIN,
+    OrganizationRole.ADMIN,
+    OrganizationRole.EDITOR,
+    OrganizationRole.OWNER
+  ].includes(orgRole);
 
   switch (featureId) {
     case "organization-management":
@@ -191,7 +194,6 @@ function getFeatureSubItems(featureId: string, userRole: UserRole, orgType?: str
         { title: "Overview", url: "/organization" },
         ...(isAdmin ? [{ title: "Manage Members", url: "/organization/manage-member" }] : []),
       ];
-
     case "school-management":
       return [
         { title: "Overview", url: "/school/overview" },
@@ -209,7 +211,6 @@ function getFeatureSubItems(featureId: string, userRole: UserRole, orgType?: str
           { title: "Reports", url: "/school/reports" },
         ] : []),
       ];
-
     case "church-management":
       return [
         { title: "Members", url: "/church/members" },
@@ -223,7 +224,6 @@ function getFeatureSubItems(featureId: string, userRole: UserRole, orgType?: str
           { title: "Manage Groups", url: "/church/groups/manage" },
         ] : []),
       ];
-
     case "library-management":
       return [
         { title: "Books", url: "/library/books" },
@@ -236,7 +236,6 @@ function getFeatureSubItems(featureId: string, userRole: UserRole, orgType?: str
           { title: "Reports", url: "/library/reports" },
         ] : []),
       ];
-
     default:
       return [];
   }
@@ -259,11 +258,13 @@ export function AppSidebarEnhanced({
   // Current organization context
   const currentOrg = organizations.find((org) => org.organization.id === orgId);
   const orgType = currentOrg?.organization?.type;
-const userRole = user?.role || UserRole.USER;
-  const orgRole = currentOrg?.role || OrganizationRole.MEMBER;
+  const orgRole = currentOrg?.role ? OrganizationRole[currentOrg.role as keyof typeof OrganizationRole] : OrganizationRole.MEMBER;
+  const userRole: UserRole = user?.role && typeof user.role === "string"
+    ? UserRole[user.role as keyof typeof UserRole]
+    : UserRole.USER;
 
   // Generate navigation from features
-  const navMain = generateNavFromFeatures(enabledFeatures, userRole, pathname, orgType);
+  const navMain = generateNavFromFeatures(enabledFeatures, orgRole, userRole, pathname, orgType);
 
   // User data for sidebar
   const userData = {
@@ -328,7 +329,7 @@ const userRole = user?.role || UserRole.USER;
                   </div>
                   
                   {/* Performance Monitor Toggle */}
-                  {hasFeaturePermission("dynamic-components", userRole) && (
+                  {hasFeaturePermission("dynamic-components", orgRole) && (
                     <Button
                       variant="ghost"
                       size="sm"
