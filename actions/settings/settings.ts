@@ -115,12 +115,26 @@ export const settings = async (values: z.infer<typeof SettingsSchema>) => {
     }
   }
 
+  // Track image change if the image is being updated and is different
+  if (typeof values.image !== 'undefined' && values.image !== dbUser.image) {
+    console.log(`User image changed for userId=${dbUser.id}:`, {
+      oldImage: dbUser.image,
+      newImage: values.image,
+    });
+    // You can replace this with a more robust logger or tracking system if needed
+  }
+
+  // Sanitize defaultOrgId: convert empty string to null for safe FK update
+if (typeof userValues.defaultOrgId === "string" && userValues.defaultOrgId.trim() === "") {
+  userValues.defaultOrgId = undefined;
+}
+
   // Update the user in the database, including the image URL if provided
   await prisma.user.update({
     where: { id: dbUser.id },
     data: {
       ...userValues,
-      // image: values.image, // Only update if provided
+      image: values.image, // Only update if provided
     },
   });
 

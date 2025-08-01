@@ -24,6 +24,7 @@ import { userSettingsSchema } from "../user-settings-schema"
 import CustomUploadImagePage from "../../image-upload/components/upload-image"
 import { MobileProfileHeader } from "../components/MobileProfileHeader"
 import { DesktopProfileHeader } from "../components/DesktopProfileHeader"
+import { settings as updateSettings } from "@/actions/settings/settings" // Server action for updating settings
 
 // Types remain the same...
 type UserRole = "SUPERADMIN" | "ADMIN" | "USER"
@@ -66,7 +67,6 @@ export function UserProfileSettings({ user, telegram }: UserProfileSettingsProps
   const [isLoading, setIsLoading] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isClient, setIsClient] = useState(false);
-  const [isPending, startTransition] = useTransition();
   const [imageUrl, setImageUrl] = useState(
     user?.image || null
   );
@@ -88,30 +88,41 @@ export function UserProfileSettings({ user, telegram }: UserProfileSettingsProps
     },
   })
 
-  // Sync imageUrl to form value so the latest uploaded image is always submitted
-  useEffect(() => {
-    if (imageUrl) {
-      form.setValue("image", imageUrl, { shouldDirty: true });
-    }
-  }, [imageUrl]);
-
   const fileRef = form.register("image" as any);
 
+  /**
+   * Handles form submission for user settings using the server action.
+   * Calls the server action and shows user feedback.
+   * All sensitive logic is handled server-side for security.
+   */
+  /**
+   * Handles form submission for user settings using the server action.
+   * Ensures all required fields (role, image) are included for type safety.
+   * Calls the server action and shows user feedback.
+   * All sensitive logic is handled server-side for security.
+   */
   const onSubmit = async (data: UserSettingsFormData) => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      const updateData = Object.fromEntries(
-        Object.entries(data).filter(([_, value]) => value !== "" && value !== undefined),
-      )
-      console.log("Updating user settings:", updateData)
-      toast.success("Settings updated successfully!")
+      // Always include required fields from the user object if not present in form data
+      const payload = {
+        ...data,
+        // Always provide a valid role string; fallback to 'USER' if undefined
+        role: user.role ?? "USER",
+        image: imageUrl, // Use form image or fallback to user image
+      };
+      const result = await updateSettings(payload);
+      if (result?.success) {
+        toast.success(result.success);
+      } else {
+        toast.error(result?.error || "Failed to update settings");
+      }
     } catch (error) {
-      toast.error("Failed to update settings")
+      toast.error("Failed to update settings");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   // Compatible with DesktopProfileHeader/MobileProfileHeader
   const getRoleBadgeVariant = (role?: string): BadgeVariant => {
@@ -166,7 +177,7 @@ export function UserProfileSettings({ user, telegram }: UserProfileSettingsProps
     <div className="min-h-screen bg-background">
       {/* Mobile Header */}
       <MobileProfileHeader
-        user={user}
+        user={{...user,image:imageUrl??""}}
         currentTab={currentTab}
         getRoleBadgeVariant={getRoleBadgeVariant}
       />

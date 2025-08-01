@@ -117,25 +117,7 @@ export const teamFormSchema = z.object({
   description: z.string().optional(),
   logoImage: z.string().optional(),
   startedAt: z.date().optional(),
-  type: z.string()
-    .transform((val) => {
-      if (!val) return val;
-      // Handle mapping from lowercase to uppercase
-      const typeMap: Record<string, string> = {
-        'school': 'SCHOOL',
-        'training_center': 'TRAINING_CENTER',
-        'university': 'UNIVERSITY', 
-        'corporate': 'CORPORATE',
-        'church': 'CHURCH',
-        'business': 'CORPORATE', // Map business to corporate
-        'nonprofit': 'OTHER', // Map nonprofit to other
-        'other': 'OTHER'
-      };
-      const upperVal = val.toUpperCase();
-      return typeMap[val.toLowerCase()] || upperVal;
-    })
-    .pipe(z.enum(["SCHOOL", "TRAINING_CENTER", "UNIVERSITY", "CORPORATE", "CHURCH", "OTHER"]))
-    .optional(),
+  type: z.enum(["SCHOOL", "TRAINING_CENTER", "UNIVERSITY", "CORPORATE", "CHURCH", "OTHER"]).optional(),
 });
 
 // Define Feedback Schema

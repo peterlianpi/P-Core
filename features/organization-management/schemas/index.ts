@@ -6,9 +6,7 @@ export const organizationSchema = z.object({
   description: z.string().optional(),
   logoImage: z.string().url().optional().or(z.literal('')),
   startedAt: z.date().optional(),
-  type: z.string()
-    .transform((val) => val?.toUpperCase())
-    .pipe(z.nativeEnum(OrganizationType))
+  type:  z.enum(OrganizationType)
     .optional(),
 });
 

@@ -22,6 +22,7 @@ import { useData } from "@/providers/data-provider";
 import CustomUploadImagePage from "@/features/system/image-upload/components/upload-image";
 import { useIsOrgOwner } from "@/hooks/use-current-team-role";
 import { useOrgData } from "../context/org-context";
+ 
 import {
   Select,
   SelectContent,
@@ -29,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 const apiSchema = teamFormSchema.omit({
   id: true,
@@ -61,6 +63,7 @@ export function TeamForm({
   const [isClient, setIsClient] = useState(false);
   const [imageUrl, setImageUrl] = useState(defaultValues?.logoImage || null);
   const { users } = useOrgData();
+  const user =useCurrentUser()
 
   // Initialize FileReader only on the client side
   useEffect(() => {
@@ -105,8 +108,11 @@ export function TeamForm({
         >
           {/* Image Section */}
           <CustomUploadImagePage
-            type="team"
-            canEdit={canEdit}
+            feature="logo"
+            orgId={id??''}
+            ownerId={user?.id ?? ""}
+            ownerType="ORGANIZATION"
+            canEdit={!!id && canEdit}
             isClient={isClient}
             imageUrl={imageUrl}
             setImageUrl={setImageUrl}
@@ -173,17 +179,23 @@ export function TeamForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem key="school" value="school">
+                      <SelectItem key="SCHOOL" value="SCHOOL">
                         School
                       </SelectItem>
-                      <SelectItem value="church" key="church">
+                      <SelectItem value="TRAINING_CENTER" key="TRAINING_CENTER">
+                        Training Center
+                      </SelectItem>
+                      <SelectItem value="UNIVERSITY" key="UNIVERSITY">
+                        University
+                      </SelectItem>
+                      <SelectItem value="CORPORATE" key="CORPORATE">
+                        Corporate
+                      </SelectItem>
+                      <SelectItem value="CHURCH" key="CHURCH">
                         Church
                       </SelectItem>
-                      <SelectItem value="business" key="business">
-                        Business
-                      </SelectItem>
-                      <SelectItem value="nonprofit" key="nonprofit">
-                        Nonprofit
+                      <SelectItem value="OTHER" key="OTHER">
+                        Other
                       </SelectItem>
                     </SelectContent>
                   </Select>

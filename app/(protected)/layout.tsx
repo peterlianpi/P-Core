@@ -1,7 +1,7 @@
 import { getOrganizationsByUserId } from "@/actions/features/org/organization";
 import { AdminPanelLayoutPage } from "@/components/admin-panel/admin-panel-layout";
-import { getAllUsers } from "@/data/users";
-import { OrgDataProvider } from "@/features/organization-management/context/org-context";
+import { getAllUsers } from "@/data/user";
+ import { OrgDataProvider } from "@/features/organization-management/context/org-context";
 import { SelectedOrgProvider } from "@/features/organization-management/context/selected-org-context";
 import { currentUser } from "@/lib/auth";
 import type { OrganizationRole } from "@/lib/types/database";

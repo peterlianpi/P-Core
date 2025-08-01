@@ -20,10 +20,10 @@ const AddNewTeam = () => {
     }
 
     startTransition(async () => {
-      const result = await createOrganization(user.id, values);
+      const result = await createOrganization(user?.id??'', values);
 
       if (result.success) {
-        toast.success(`Organization "${result.data.name}" created successfully!`);
+        toast.success(`Organization "${result?.data?.name}" created successfully!`);
         setIsAddTeam(false);
       } else {
         toast.error(result.error || "Failed to create organization.");

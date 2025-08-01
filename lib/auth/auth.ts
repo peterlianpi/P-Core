@@ -3,11 +3,11 @@ import authConfig from "./auth.config";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { getUserById, getUserByEmail } from "@/data/user";
 import { getTwoFactorConfirmationByUserId } from "@/data/two-factor-confirmation";
-import { getAccountByUserId } from "@/data/account";
 import { UserRole } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import bcrypt from "bcryptjs";
 import { mapUserFieldsForAuth } from "./user-field-mapper";
+import { getAccountByUserId } from "@/data/account/getAccountByUserId";
 
 // Exporting NextAuth handlers to use for authentication in the application
 export const { handlers, signIn, signOut, auth } = NextAuth({

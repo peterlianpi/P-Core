@@ -8,70 +8,68 @@ import type {
   ImageOwnerType,
   ImageFeature
 } from "@/lib/schemas/image-schemas";
+import { apiFetch } from "@/lib/utils/api"; // Use the shared API utility
 
-// API functions for image operations
-async function uploadImage(data: ImageUploadInput) {
-  const response = await fetch("/api/upload-image", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
+// Define a proper response type for all image API endpoints
+export type ImageApiResponse<T = any> = {
+  success?: boolean;
+  data?: T;
+  error?: string;
+};
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "Failed to upload image");
-  }
-
-  return response.json();
+// API functions for image operations (using apiFetch for type safety and modularity)
+async function uploadImage(data: ImageUploadInput): Promise<ImageApiResponse> {
+  const response = await apiFetch<ImageApiResponse>(
+    "/api/upload-image",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }
+  );
+  if (response.error) throw new Error(response.error || "Failed to upload image");
+  return response;
 }
 
-async function deleteImage(data: ImageDeleteInput) {
-  const response = await fetch("/api/upload-image", {
-    method: "DELETE",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "Failed to delete image");
-  }
-
-  return response.json();
+async function deleteImage(data: ImageDeleteInput): Promise<ImageApiResponse> {
+  const response = await apiFetch<ImageApiResponse>(
+    "/api/upload-image",
+    {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }
+  );
+  if (response.error) throw new Error(response.error || "Failed to delete image");
+  return response;
 }
 
-async function fetchImages(params: ImageListInput) {
+async function fetchImages(params: ImageListInput): Promise<ImageApiResponse> {
   const queryParams = new URLSearchParams();
-
   if (params.ownerType) queryParams.set("ownerType", params.ownerType);
   if (params.ownerId) queryParams.set("ownerId", params.ownerId);
   if (params.feature) queryParams.set("feature", params.feature);
   if (params.page) queryParams.set("page", params.page.toString());
   if (params.limit) queryParams.set("limit", params.limit.toString());
 
-  const response = await fetch(`/api/upload-image?${queryParams.toString()}`);
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "Failed to fetch images");
-  }
-
-  return response.json();
+  const response = await apiFetch<ImageApiResponse>(
+    `/api/upload-image?${queryParams.toString()}`
+  );
+  if (response.error) throw new Error(response.error || "Failed to fetch images");
+  return response;
 }
 
-async function updateImage(imageId: string, imageData: string, feature?: string) {
-  const response = await fetch(`/api/upload-image/${imageId}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ imageData, feature }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "Failed to update image");
-  }
-
-  return response.json();
+async function updateImage(imageId: string, imageData: string, feature?: string): Promise<ImageApiResponse> {
+  const response = await apiFetch<ImageApiResponse>(
+    `/api/upload-image/${imageId}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ imageData, feature }),
+    }
+  );
+  if (response.error) throw new Error(response.error || "Failed to update image");
+  return response;
 }
 
 // Query keys for React Query cache management
@@ -174,7 +172,8 @@ export function usePrimaryImage(
 ) {
   const { data, ...rest } = useEntityImages(ownerType, ownerId, feature);
 
-  const primaryImage = data?.success ? data.data[0] : null;
+  // data is of type ImageApiResponse
+  const primaryImage = data?.success && Array.isArray(data.data) ? data.data[0] : null;
 
   return {
     data: primaryImage,

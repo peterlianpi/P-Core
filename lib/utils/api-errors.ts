@@ -19,7 +19,7 @@ export function handleApiError(c: Context, error: unknown, defaultMessage?: stri
 
   // Handle Zod validation errors
   if (error instanceof ZodError) {
-    const message = error.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
+    const message = error.issues.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
     return c.json({
       error: 'Validation failed',
       details: message,
@@ -91,7 +91,7 @@ export function handleError(error: unknown, defaultMessage?: string): { error: s
 
   // Handle Zod validation errors
   if (error instanceof ZodError) {
-    const message = error.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
+    const message = error.issues.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
     return { error: 'Validation failed', code: 'VALIDATION_ERROR' };
   }
 

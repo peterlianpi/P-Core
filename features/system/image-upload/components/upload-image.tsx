@@ -20,6 +20,7 @@ type Props = {
   canEdit?: boolean;
   fileRef: any;
   isClient: boolean;
+  orgId?: string;
   imageUrl: string | null;
   setImageUrl: React.Dispatch<React.SetStateAction<string | null>>;
   className?: string; // For parent-level control
@@ -34,6 +35,7 @@ const CustomUploadImagePage = ({
   isClient,
   imageUrl,
   setImageUrl,
+  orgId,
   className = "",
 }: Props) => {
   const [isPending, startTransition] = useTransition();
@@ -55,7 +57,7 @@ const CustomUploadImagePage = ({
         reader.onload = async () => {
           fileLink = reader.result as string;
           uploadImageMutation.mutate(
-            { imageData: fileLink, ownerType, ownerId, feature },
+            { imageData: fileLink, ownerType, ownerId, feature, orgId },
             {
               onSuccess: (response) => {
                 const link = response?.data?.url;

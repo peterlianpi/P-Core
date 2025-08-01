@@ -77,6 +77,7 @@ export const ImageUploadSchema = z.object({
   feature: ImageFeatureSchema.optional().default("profile"),
   alt: z.string().optional(), // Alt text for accessibility
   description: z.string().optional(),
+  orgId:z.string().optional()
 });
 
 // Image update schema

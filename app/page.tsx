@@ -44,6 +44,7 @@ import { Separator } from "@/components/ui/separator";
 import ThemeSelector from "@/components/theme/theme-selector";
 import { cn } from "@/lib/utils";
 import { Poppins, Inter } from "next/font/google";
+import { siteConfig } from '@/config/site';
 
 const titleFont = Poppins({
   subsets: ["latin"],
@@ -74,6 +75,7 @@ const stagger = {
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
+  const currentYear = new Date().getFullYear();
   const { scrollY } = useScroll();
   const y1 = useTransform(scrollY, [0, 300], [0, -50]);
   const y2 = useTransform(scrollY, [0, 300], [0, -100]);
@@ -505,16 +507,25 @@ export default function Home() {
                 <span className="text-primary-foreground font-bold text-lg">P</span>
               </div>
               <span className={cn("text-xl font-semibold", titleFont.className)}>
-                {appName}
+                {siteConfig.appName}
               </span>
             </div>
-            
             <div className="flex items-center space-x-6 text-sm text-muted-foreground">
-              <span>© 2024 P-Core System</span>
+              <span>© {currentYear} {siteConfig.appName} System</span>
               <span>•</span>
-              <span>Built with ❤️ by Peter Pau Sian Lian</span>
+              <span>
+                Built with {siteConfig.builtWith} by {" "}
+                <a
+                  href={siteConfig.authorUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-primary"
+                >
+                  {siteConfig.author}
+                </a>
+              </span>
               <span>•</span>
-              <span>Myanmar 🇲🇲</span>
+              <span>{siteConfig.location}</span>
             </div>
           </div>
         </div>

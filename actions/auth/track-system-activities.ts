@@ -3,10 +3,12 @@
 import { currentUser } from "@/lib/auth";
 import { logUserActivity } from "@/lib/logging/log-user-activity";
 import { notifySuperAdmins } from "@/lib/notification/notify-superadmin";
-import { loginDate } from "@/lib/utils/date-format";
+import { loginDate } from "@/lib/utils/date";
 import { UserRole } from "@prisma/client";
 
-type UserEvent = { value: string };
+import type { ActivityContext } from "@/lib/types/activity";
+
+type UserEvent = { value: string; context?: ActivityContext };
 
 const user = async () => {
   const current = await currentUser();
@@ -36,26 +38,43 @@ export const trackLogout = async ({ value }: UserEvent) => {
   });
 };
 
+import { getDeviceContext } from "@/lib/utils/device-context";
+import { DeviceType } from '../../lib/types/activity';
+
 export const trackLogin = async ({
   value,
   userId,
   role,
+  req,
 }: {
   value: string;
   userId?: string;
   role?: UserRole;
+  req?: Request | { headers: { get: (key: string) => string | null }, socket?: { remoteAddress?: string } };
 }) => {
+  // Extract device context from the request if available
+  const deviceContext = req ? getDeviceContext(req) : {
+    deviceType: "unknown" as DeviceType,
+    ip: "Unknown IP",
+    userAgent: "Unknown",
+    os: "Unknown OS",
+    browser: "Unknown Browser"
+  };
+
   await notifySuperAdmins({
     title: "\n*👤 P-Core Login Notification*",
-    message: `A user has successfully signed in to the system.\n\n*User:* ${value}\n*Date:* ${loginDate}\n\n_This login event is for monitoring purposes only._\n\n_P-Core Activity Log_`,
+    message: `Login successful! 🎉\n\n*User:* ${value}\n*Date:* ${loginDate}\n*Device:* ${deviceContext.deviceType}\n*OS:* ${deviceContext.os}\n*Browser:* ${deviceContext.browser}\n*IP Address:* ${deviceContext.ip}\n\n_You have securely signed in. If this wasn't you, please contact support immediately._\n\n_P-Core Security Log_`,
     type: "INFO",
   });
 
   await logUserActivity({
     title: "User Login",
-    message: `*User:* ${value}\n*Date:* ${loginDate}\n has logged in.`,
+    message: `*User:* ${value}\n*Date:* ${loginDate}\n*Device:* ${deviceContext.deviceType}\n*OS:* ${deviceContext.os}\n*Browser:* ${deviceContext.browser}\n*IP Address:* ${deviceContext.ip}\nUser has logged in successfully.`,
     userId: userId ?? "",
     role: role ?? "USER",
+    deviceType: deviceContext.deviceType,
+    ip: deviceContext.ip,
+    userAgent: deviceContext.userAgent,
   });
 };
 

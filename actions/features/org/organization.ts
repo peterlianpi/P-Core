@@ -6,16 +6,22 @@ import { prisma } from "@/lib/db/client";
 import { trackOrganizationCreatedBy } from "@/actions/auth/track-system-activities";
 import { organizationSchema } from "@/features/organization-management/schemas";
 import { ApiError, handleApiError, handleError } from "@/lib/utils/api-errors";
+
+// Standard API response type for all organization actions
+export type ApiResponse<T = any> = {
+  success: boolean;
+  data?: T;
+  error?: string;
+};
 import { OrganizationsAPISchema } from "@/lib/schemas";
 import { OrganizationType } from "@prisma/client";
 
 
 const context = '' as any;
 
-export async function getOrganizationsByUserId(userId: string | undefined) {
+export async function getOrganizationsByUserId(userId: string | undefined): Promise<ApiResponse<any>> {
   if (!userId) {
-
-    return { data: [] };
+    return { success: true, data: [] };
   }
   const userOrganizations = await prisma.userOrganization.findMany({
     where: { userId },
@@ -39,15 +45,15 @@ export async function getOrganizationsByUserId(userId: string | undefined) {
   const result = OrganizationsAPISchema.safeParse(userOrganizations);
   if (!result.success) {
     console.error("Zod validation error in getOrganizationsByUserId:", result.error.flatten());
-    throw new Error("Invalid organization data");
+    return { success: false, error: "Invalid organization data" };
   }
 
-  return result;
+  return { success: true, data: result.data };
 }
 
 type CreateOrganizationInput = z.infer<typeof organizationSchema>;
 
-export async function createOrganization(userId: string, values: CreateOrganizationInput) {
+export async function createOrganization(userId: string, values: CreateOrganizationInput): Promise<ApiResponse<any>> {
   try {
     // 1. Validate input with the dedicated Zod schema on the server.
     const validatedData = organizationSchema.parse(values);
@@ -88,7 +94,12 @@ export async function createOrganization(userId: string, values: CreateOrganizat
     return { success: true, data: newOrganization };
 
   } catch (error) {
-    return handleApiError(context, error, "Failed to create organization");
+    const apiError = handleApiError(context, error, "Failed to create organization");
+    return {
+      success: false,
+      data: undefined,
+      error: apiError?.error || (typeof apiError === 'string' ? apiError : 'Failed to create organization'),
+    };
   }
 }
 
@@ -104,7 +115,7 @@ export async function updateOrganization({
     startedAt?: Date;
     type?: string;
   };
-}) {
+}): Promise<ApiResponse<{ name: string }>> {
   try {
     // Transform the type to the correct enum if provided
     const updateData = {
@@ -118,14 +129,19 @@ export async function updateOrganization({
     });
     revalidatePath("/organization"); // Optional: revalidate page
 
-    return { success: { name: updated.name } };
+    return { success: true, data: { name: updated.name } };
   } catch (error: unknown) {
-    return handleError(error, "Failed to update organization");
+    const apiError = handleError(error, "Failed to update organization");
+    return {
+      success: false,
+      data: undefined,
+      error: apiError?.error || (typeof apiError === 'string' ? apiError : 'Failed to update organization'),
+    };
   }
 }
 
-export async function deleteOrganization(organizationId: string) {
-  if (!organizationId) return { error: "Organization ID is required" };
+export async function deleteOrganization(organizationId: string): Promise<ApiResponse<any>> {
+  if (!organizationId) return { success: false, error: "Organization ID is required" };
 
   try {
     // Delete related userOrganization links (optional)
@@ -138,8 +154,13 @@ export async function deleteOrganization(organizationId: string) {
     });
     revalidatePath("/organization"); // Optional: revalidate page
 
-    return { success: deleted };
+    return { success: true, data: deleted };
   } catch (error: unknown) {
-    return handleError(error, "Failed to delete organization");
+    const apiError = handleError(error, "Failed to delete organization");
+    return {
+      success: false,
+      data: undefined,
+      error: apiError?.error || (typeof apiError === 'string' ? apiError : 'Failed to delete organization'),
+    };
   }
 }

@@ -58,7 +58,7 @@ const app = new Hono()
     optionalPermission("write:images"),
     async (c) => {
       try {
-        const { imageData, ownerType, ownerId, feature } = c.req.valid("json");
+        const { imageData, ownerType, ownerId, feature,orgId } = c.req.valid("json");
         const orgContext = getOptionalOrganizationContext(c);
         // --- BEGIN: Detailed Debug Logging ---
         console.log("[BACKEND] Upload-image handler hit");
@@ -67,7 +67,7 @@ const app = new Hono()
         console.log("[BACKEND] ownerType (normalized):", normalizedOwnerType);
         console.log("[BACKEND] orgContext?.organizationId:", orgContext?.organizationId);
         const orgRequiredTypes = [
-          "MEMBER", "STUDENT", "BOOK", "COURSE", "LESSON", "SCHEDULE", "ORGANIZATION"
+          "MEMBER", "STUDENT", "BOOK", "COURSE", "LESSON", "SCHEDULE",
         ];
         console.log("[BACKEND] orgRequiredTypes:", orgRequiredTypes);
         console.log(
