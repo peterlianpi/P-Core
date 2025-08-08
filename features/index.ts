@@ -11,7 +11,7 @@
 
 // Feature Registry & Loading System
 export * from './feature-registry'
-export * from './feature-loader'
+// export * from './feature-loader' // temporarily disabled: file not present
 
 // =============================================================================
 // DOMAIN FEATURES - Business Logic
@@ -20,13 +20,13 @@ export * from './feature-loader'
 // Organization Management (Combined org + organizations)
 export * from './organization-management'
 
-// School Management Features
-export * from './school-management/features/overview/components/overview-grid'
-export * from './school-management/features/overview/components/stats-charts'
-export * from './school-management/features/students/components/students-table'
-export * from './school-management/features/courses/components/courses-table'
-export * from './school-management/features/schedule/components/schedules-table'
-export { schoolApi, queryKeys as schoolQueryKeys } from './school-management/lib/api-client'
+// School Management Features (temporarily disabled: modules not present)
+// export * from './school-management/features/overview/components/overview-grid'
+// export * from './school-management/features/overview/components/stats-charts'
+// export * from './school-management/features/students/components/students-table'
+// export * from './school-management/features/courses/components/courses-table'
+// export * from './school-management/features/schedule/components/schedules-table'
+// export { schoolApi, queryKeys as schoolQueryKeys } from './school-management/lib/api-client'
 
 // // Church Management Features
 // export * from './church-management/features/members/api/use-create-member'
@@ -71,7 +71,5 @@ export type {
 
 // Feature system types
 export type {
-  FeatureConfig,
-  DomainFeatureConfig,
-  SystemFeatureConfig
+  FeatureConfig
 } from './feature-registry'

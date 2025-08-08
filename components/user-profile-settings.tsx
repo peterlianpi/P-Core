@@ -100,8 +100,7 @@ export function UserProfileSettings({ user, telegram }: UserProfileSettingsProps
       const updateData = Object.fromEntries(
         Object.entries(data).filter(([_, value]) => value !== "" && value !== undefined),
       )
-      console.log("Updating user settings:", updateData)
-      toast.success("Settings updated successfully!")
+        toast.success("Settings updated successfully!")
     } catch (error) {
       toast.error("Failed to update settings")
     } finally {

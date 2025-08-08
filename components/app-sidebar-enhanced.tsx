@@ -48,7 +48,6 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { useData } from "@/providers/data-provider";
 import { usePerformanceToggle } from "@/components/performance/performance-monitor";
 import { 
-  featureRegistry, 
   getEnabledFeatures,
   hasFeaturePermission,
   type FeatureConfig 
@@ -154,8 +153,8 @@ function generateNavFromFeatures(
     isActive: pathname.startsWith("/settings"),
     items: [
       { title: "Profile", url: "/settings" },
-      { title: "Account", url: "/settings/account" },
-      { title: "Notifications", url: "/settings/notifications" },
+      // { title: "Account", url: "/settings/account" },
+      // { title: "Notifications", url: "/settings/notifications" },
       ...systemNavItems.map(item => ({
         title: item.title,
         url: item.url,

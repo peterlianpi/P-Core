@@ -22,13 +22,13 @@ import versionInfo from "./version";
 import feedback from "./feedback";
 import invite from "./invite";
 // --- Protected Routes ---
-import { studentsRouter as students } from "./students";
-import studentCourses from "./studentCourses";
-import courses from "./courses";
-import lessonBooks from "./lessonBooks";
-import purchases from "./purchases";
-import courseStatusLogs from "./courseStatusLogs";
-import schedules from "./schedules";
+// import { studentsRouter as students } from "./students";
+// import studentCourses from "./studentCourses";
+// import courses from "./courses";
+// import lessonBooks from "./lessonBooks";
+// import purchases from "./purchases";
+// import courseStatusLogs from "./courseStatusLogs";
+// import schedules from "./schedules";
 import dashboard from "./dashboard";
 import superadmin from "./superadmin";
 import telegramSetting from './telegramSetting'
@@ -75,7 +75,9 @@ app.onError((err, c) => {
 const routes = app
     .route("/upload-image", uploadImage)
     .route("/org", org)
-            .route("/invite", invite)
+    .route("/invite", invite)
+    .route("/version", versionInfo)
+    .route("/feedback", feedback)
     .route("/superadmin", superadmin)
     .route("/telegram-setting", telegramSetting)
 
@@ -83,15 +85,14 @@ const routes = app
     // A single group for all routes that require the organization security middleware.
 
     .use(organizationSecurityMiddleware)
-    .route("/version", versionInfo)
-    .route("/feedback", feedback)
-    .route("/students", students)
-    .route("/courses", courses)
-    .route("/schedules", schedules)
-    .route("/purchases", purchases)
-    .route("/lessonBooks", lessonBooks)
-    .route("/studentCourses", studentCourses)
-    .route("/courseStatusLogs", courseStatusLogs)
+
+    // .route("/students", students)
+    // .route("/courses", courses)
+    // .route("/schedules", schedules)
+    // .route("/purchases", purchases)
+    // .route("/lessonBooks", lessonBooks)
+    // .route("/studentCourses", studentCourses)
+    // .route("/courseStatusLogs", courseStatusLogs)
     .route("/dashboard", dashboard)
 
 

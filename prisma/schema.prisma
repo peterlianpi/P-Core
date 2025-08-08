@@ -5,7 +5,7 @@
 generator client {
   provider = "prisma-client-js"
   output   = "../node_modules/.prisma/client"
-  // previewFeatures = ["multiSchema"]
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
@@ -661,6 +661,7 @@ model MemberRoleAssignment {
 enum UserRole {
   USER
   ADMIN
+  DEVELOPMENT
   SUPERADMIN
 
   @@schema("auth")

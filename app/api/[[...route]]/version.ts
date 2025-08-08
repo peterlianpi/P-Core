@@ -3,7 +3,7 @@ import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
 import { prisma } from "@/lib/db/client";
 import { handleError } from "@/lib/error-handler";
-import { requirePermission } from "@/lib/security/tenant";
+import { requirePermission, requireRole } from "@/lib/security/tenant";
 
 // Validation schemas
 const createVersionSchema = z.object({
@@ -11,18 +11,15 @@ const createVersionSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   status: z.enum(["DEVELOPMENT", "TESTING", "STAGING", "PRODUCTION", "DEPRECATED"]).default("DEVELOPMENT"),
-  releaseDate: z.date({
-    required_error: "Release date is required",
-    invalid_type_error: "Release date must be a valid date",
-  }),
+  releaseDate: z.coerce.date({ message: "Release date is required" }),
   createdBy: z.string().min(1, "Created by is required"),
 });
 
 const updateVersionSchema = createVersionSchema.partial();
 
 const querySchema = z.object({
-  page: z.string().transform(Number).default('1'),
-  limit: z.string().transform(Number).default('20'),
+  page: z.string().default('1').transform(Number),
+  limit: z.string().default('20').transform(Number),
   status: z.enum(["DEVELOPMENT", "TESTING", "STAGING", "PRODUCTION", "DEPRECATED"]).optional(),
   search: z.string().optional(),
 });
@@ -32,7 +29,7 @@ const app = new Hono()
   .get(
     "/",
     zValidator("query", querySchema),
-    requirePermission("read:versions"),
+    // requirePermission("read:versions"),
     async (c) => {
       try {
         const { page, limit, status, search } = c.req.valid("query");
@@ -80,7 +77,8 @@ const app = new Hono()
   .post(
     "/", 
     zValidator("json", createVersionSchema),
-    requirePermission("create:versions"),
+    // Only SUPERADMIN or DEVELOPMENT can create versions
+    requireRole("DEVELOPMENT"),
     async (c) => {
       try {
         const values = c.req.valid("json");
@@ -107,8 +105,7 @@ const app = new Hono()
 
   // GET /version/:id - Get specific version
   .get(
-    "/:id", 
-    requirePermission("read:versions"),
+    "/:id",
     async (c) => {
       try {
         const id = c.req.param("id");
@@ -132,7 +129,8 @@ const app = new Hono()
   .patch(
     "/:id",
     zValidator("json", updateVersionSchema),
-    requirePermission("update:versions"),
+    // Only SUPERADMIN or DEVELOPMENT can update versions
+    requireRole("DEVELOPMENT"),
     async (c) => {
       try {
         const id = c.req.param("id");
@@ -176,7 +174,8 @@ const app = new Hono()
   // DELETE /version/:id - Delete version
   .delete(
     "/:id",
-    requirePermission("delete:versions"),
+    // Only SUPERADMIN or DEVELOPMENT can delete versions
+    requireRole("DEVELOPMENT"),
     async (c) => {
       try {
         const id = c.req.param("id");

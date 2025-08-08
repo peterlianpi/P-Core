@@ -60,6 +60,12 @@ const ROLE_PERMISSIONS = {
     "read:organizations","update:organization","delete:organization","update:organization_roles","remove:organization_member",
     "read:all_organizations"
   ],
+  // Give DEVELOPMENT role the same broad permissions as SUPERADMIN for internal environments
+  DEVELOPMENT: [
+    // Restrict development role to version management and dashboard visibility
+    "read:dashboard",
+    "read:versions","create:versions","update:versions","delete:versions"
+  ],
   OWNER: [
     "read:all",
     "write:all",
