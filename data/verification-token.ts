@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db/client";
+import crypto from "crypto";
 
 
 /**
@@ -39,10 +40,11 @@ export const getVerificationTokenByEmail = async (email: string) => {
  */
 export const getVerificationTokenByToken = async (token: string) => {
   try {
-    // Query the database to find the verification token by token.
+    // SECURITY: Tokens are stored hashed. Hash incoming plain token before lookup.
+    const hashed = crypto.createHash("sha256").update(token).digest("hex");
     const verificationToken = await prisma.verificationToken.findUnique({
       where: {
-        token,
+        token: hashed,
       },
     });
 

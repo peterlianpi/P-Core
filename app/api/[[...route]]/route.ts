@@ -75,9 +75,7 @@ app.onError((err, c) => {
 const routes = app
     .route("/upload-image", uploadImage)
     .route("/org", org)
-    .route("/version", versionInfo)
-    .route("/feedback", feedback)
-    .route("/invite", invite)
+            .route("/invite", invite)
     .route("/superadmin", superadmin)
     .route("/telegram-setting", telegramSetting)
 
@@ -85,6 +83,8 @@ const routes = app
     // A single group for all routes that require the organization security middleware.
 
     .use(organizationSecurityMiddleware)
+    .route("/version", versionInfo)
+    .route("/feedback", feedback)
     .route("/students", students)
     .route("/courses", courses)
     .route("/schedules", schedules)

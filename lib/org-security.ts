@@ -14,7 +14,7 @@
 
 import { auth } from "@/lib/auth/auth";
 import { getUserById } from "@/data/user";
-import { prisma } from "./prisma-client/user-prisma-client";
+import { prisma } from "@/lib/db/client";
 import type { Context } from "hono";
 
 /**

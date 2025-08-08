@@ -38,32 +38,14 @@ export const login = async (
   }
 
   if (!existingUser.emailVerified) {
-    // Delete any old tokens for this email
-    await prisma.verificationToken.deleteMany({ where: { email: existingUser.email } });
-
-    // Generate a new token value
-    const tokenValue = Math.random().toString(36).slice(2) + Date.now().toString(36);
-    const verificationToken = await prisma.verificationToken.create({
-      data: {
-        email: existingUser.email,
-        token: tokenValue,
-        expires: new Date(Date.now() + 1000 * 60 * 10), // 10 min expiry
-      },
-    });
-
     try {
-      // Edge support: Use Resend if available, otherwise fallback to SMTP
-      // sendVerificationEmail uses Resend (Edge-compatible)
-      // sendMailSMTP uses SMTP (Node.js only)
+      // Generate secure verification token and send email via appropriate provider
+      const verificationToken = await generateVerificationToken(existingUser.email);
+
       if (typeof process !== 'undefined' && process.env.NEXT_RUNTIME === 'edge') {
-        // Edge runtime: use Resend
-        await sendVerificationEmail(
-          verificationToken.email,
-          verificationToken.token
-        );
+        await sendVerificationEmail(verificationToken.email, verificationToken.token);
         console.log("[Edge] Verification email sent via Resend to", verificationToken.email);
       } else {
-        // Node.js runtime: use SMTP
         const { sendMailSMTP } = await import("@/lib/mail/mail");
         await sendMailSMTP("confirm", verificationToken.email, { token: verificationToken.token });
         console.log("[Node] Verification email sent via SMTP to", verificationToken.email);

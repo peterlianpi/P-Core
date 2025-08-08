@@ -49,15 +49,32 @@ const ROLE_PERMISSIONS = {
     "manage:billing",
     "manage:system",
     "read:dashboard",
-    "access:superadmin"
+    "access:superadmin",
+    // Granular permissions (full access)
+    "read:students","create:students","update:students","delete:students",
+    "read:courses","write:courses","update:courses","delete:courses",
+    "read:schedules","create:schedules","update:schedules","delete:schedules",
+    "read:feedback","create:feedback","update:feedback","delete:feedback",
+    "read:purchases","create:purchases","update:purchases","delete:purchases",
+    "read:versions","create:versions","update:versions","delete:versions",
+    "read:organizations","update:organization","delete:organization","update:organization_roles","remove:organization_member",
+    "read:all_organizations"
   ],
   OWNER: [
     "read:all",
-    "write:all", 
+    "write:all",
     "delete:all",
     "manage:users",
     "manage:organization",
-    "manage:billing"
+    "manage:billing",
+    // Granular permissions
+    "read:students","create:students","update:students","delete:students",
+    "read:courses","write:courses","update:courses","delete:courses",
+    "read:schedules","create:schedules","update:schedules","delete:schedules",
+    "read:feedback","create:feedback","update:feedback","delete:feedback",
+    "read:purchases","create:purchases","update:purchases","delete:purchases",
+    "read:versions","create:versions","update:versions","delete:versions",
+    "read:organizations","update:organization","delete:organization","update:organization_roles","remove:organization_member"
   ],
   ADMIN: [
     "read:all",
@@ -65,29 +82,52 @@ const ROLE_PERMISSIONS = {
     "delete:most",
     "manage:users",
     "view:analytics",
-    "read:dashboard"
+    "read:dashboard",
+    // Granular permissions
+    "read:students","create:students","update:students","delete:students",
+    "read:courses","write:courses","update:courses","delete:courses",
+    "read:schedules","create:schedules","update:schedules","delete:schedules",
+    "read:feedback","create:feedback","update:feedback","delete:feedback",
+    "read:purchases","create:purchases","update:purchases","delete:purchases",
+    "read:versions","create:versions","update:versions","delete:versions",
+    "read:organizations","update:organization","update:organization_roles","remove:organization_member"
   ],
   MANAGER: [
     "read:all",
     "write:most",
     "delete:some",
     "manage:courses",
-    "manage:students"
+    "manage:students",
+    // Granular permissions (no destructive deletes where possible)
+    "read:students","create:students","update:students",
+    "read:courses","write:courses","update:courses",
+    "read:schedules","create:schedules","update:schedules",
+    "read:feedback","create:feedback","update:feedback",
+    "read:purchases","create:purchases","update:purchases",
+    "read:versions"
   ],
   MEMBER: [
     "read:assigned",
-    "write:assigned"
+    "write:assigned",
+    // Minimal read access in own org
+    "read:students",
+    "read:courses",
+    "read:schedules"
   ],
   ACCOUNTANT: [
     "read:all",
     "write:financial",
     "manage:purchases",
-    "view:reports"
+    "view:reports",
+    // Granular permissions
+    "read:purchases","create:purchases","update:purchases"
   ],
   OFFICE_STAFF: [
     "read:basic",
     "write:basic",
-    "manage:schedules"
+    "manage:schedules",
+    // Granular permissions
+    "read:schedules","create:schedules","update:schedules"
   ],
 } as const;
 
