@@ -7,7 +7,6 @@ import { TeamForm } from "./team-form";
 import { useData } from "@/providers/data-provider";
 import { updateOrganization } from "@/actions/features/org/organization";
 import { useTransition } from "react";
-import { isError } from "../helper/organization-type";
 import { useSelectedOrg } from "../context/selected-org-context";
 import { isValidTeamType } from "./team-type-helper";
 
@@ -36,12 +35,12 @@ const EditTeam = () => {
 
       setIsAddTeam(false); // set isAddTeam to true to show the add team button in the dashboard page
 
-      if (isError(result)) {
+      if (!result.success) {
         // ❌ onError
-        toast("Failed to update: " + result.error);
-      } else if (result?.success) {
+        toast("Failed to update: " + (result.error || "Unknown error"));
+      } else if (result.data) {
         // ✅ onSuccess
-        toast(`${result.success.name} updated!`);
+        toast(`${result.data.name} updated!`);
       }
     });
   };
@@ -51,7 +50,14 @@ const EditTeam = () => {
     description: organization?.description,
     logoImage: organization?.logoImage,
     startedAt: organization?.startedAt,
-    type: isValidTeamType(organization?.type) ? organization.type : undefined,
+    type: isValidTeamType(organization?.type)
+      ? (organization.type?.toUpperCase() as
+          | "SCHOOL"
+          | "TRAINING_CENTER"
+          | "CORPORATE"
+          | "CHURCH"
+          | "OTHER")
+      : undefined,
   };
 
   return (

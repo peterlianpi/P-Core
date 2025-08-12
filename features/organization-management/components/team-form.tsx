@@ -22,7 +22,7 @@ import { useData } from "@/providers/data-provider";
 import CustomUploadImagePage from "@/features/system/image-upload/components/upload-image";
 import { useIsOrgOwner } from "@/hooks/use-current-team-role";
 import { useOrgData } from "../context/org-context";
- 
+
 import {
   Select,
   SelectContent,
@@ -63,7 +63,7 @@ export function TeamForm({
   const [isClient, setIsClient] = useState(false);
   const [imageUrl, setImageUrl] = useState(defaultValues?.logoImage || null);
   const { users } = useOrgData();
-  const user =useCurrentUser()
+  const user = useCurrentUser()
 
   // Initialize FileReader only on the client side
   useEffect(() => {
@@ -109,7 +109,7 @@ export function TeamForm({
           {/* Image Section */}
           <CustomUploadImagePage
             feature="logo"
-            orgId={id??''}
+            orgId={id ?? ''}
             ownerId={user?.id ?? ""}
             ownerType="ORGANIZATION"
             canEdit={!!id && canEdit}
@@ -185,9 +185,7 @@ export function TeamForm({
                       <SelectItem value="TRAINING_CENTER" key="TRAINING_CENTER">
                         Training Center
                       </SelectItem>
-                      <SelectItem value="UNIVERSITY" key="UNIVERSITY">
-                        University
-                      </SelectItem>
+
                       <SelectItem value="CORPORATE" key="CORPORATE">
                         Corporate
                       </SelectItem>

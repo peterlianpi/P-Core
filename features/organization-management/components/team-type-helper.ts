@@ -1,4 +1,4 @@
-const teamTypes = ["school", "church", "business", "nonprofit"] as const;
+const teamTypes = ["SCHOOL", "CHURCH", "CORPORATE","TRAINING_CENTER", "OTHER"] as const;
 
 export type TeamType = (typeof teamTypes)[number];
 

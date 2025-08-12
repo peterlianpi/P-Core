@@ -1,101 +1,125 @@
 import * as React from "react";
 import { format } from "date-fns";
-import {
-  Calendar as CalendarIcon,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
-import { DayPicker, SelectSingleEventHandler } from "react-day-picker";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { DayPicker } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { Button, buttonVariants } from "./ui/button";
+import { Button } from "./ui/button";
 
 type Props = {
   value?: Date;
-  onChange?: SelectSingleEventHandler;
+  onChange?: (date: Date | undefined) => void;
   disabled?: boolean;
+  placeholder?: string;
+  fromDate?: Date;
+  toDate?: Date;
+  disabledDays?: Date[] | ((date: Date) => boolean);
+  className?: string;
 };
 
-export const DatePicker = ({ value, onChange, disabled }: Props) => {
+export const DatePicker = ({ 
+  value, 
+  onChange, 
+  disabled, 
+  placeholder = "Pick a date",
+  fromDate,
+  toDate,
+  disabledDays,
+  className
+}: Props) => {
+  const [open, setOpen] = React.useState(false);
   const currentYear = new Date().getFullYear();
   
-    return (
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            disabled={disabled}
-            variant="outline"
-            className={cn(
-              "w-full justify-start text-left font-normal",
-              !value && "text-muted-foreground"
-            )}
-          >
-            <CalendarIcon className="size-4 mr-2" />
-            {value ? format(value, "PPP") : <span>Pick a date</span>}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent>
+  const handleSelect = (date: Date | undefined) => {
+    onChange?.(date);
+    if (date) {
+      setOpen(false);
+    }
+  };
+
+  const hidden = fromDate || toDate ? {
+    ...(fromDate && { before: fromDate }),
+    ...(toDate && { after: toDate })
+  } : undefined;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          disabled={disabled}
+          variant="outline"
+          className={cn(
+            "w-full justify-start text-left font-normal",
+            "hover:bg-accent hover:text-accent-foreground",
+            "focus:ring-2 focus:ring-ring focus:ring-offset-2",
+            "transition-colors duration-200",
+            !value && "text-muted-foreground",
+            className
+          )}
+        >
+          <CalendarIcon className="mr-2 h-4 w-4" />
+          {value ? format(value, "PPP") : <span>{placeholder}</span>}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent 
+        className="w-auto p-0" 
+        align="start"
+        sideOffset={4}
+      >
+        <div className="rounded-lg border bg-popover p-3 shadow-lg">
           <DayPicker
+            mode="single"
+            selected={value}
+            onSelect={handleSelect}
+            disabled={disabled ? true : disabledDays}
+            hidden={hidden}
+            showOutsideDays
+            fixedWeeks
             captionLayout="dropdown"
             fromYear={1970}
-            toYear={currentYear}
-            showOutsideDays={true}
-            className={cn("p-3")}
+            toYear={currentYear + 10}
+            className="p-3"
             classNames={{
-              months:
-                "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+              months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
               month: "space-y-4",
-              caption: "flex justify-center pt-1 relative items-center",
-              caption_label: "text-sm font-medium hidden",
+              caption_label: "text-sm font-medium",
               nav: "space-x-1 flex items-center",
               nav_button: cn(
-                buttonVariants({ variant: "outline" }),
-                "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+                "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+                "hover:bg-accent hover:text-accent-foreground",
+                "rounded-md transition-colors duration-200"
               ),
               nav_button_previous: "absolute left-1",
               nav_button_next: "absolute right-1",
               table: "w-full border-collapse space-y-1",
               head_row: "flex",
-              caption_dropdowns: "flex",
-              dropdown: "rounded-md border bg-background py-1",
-              head_cell:
-                "text-muted-foreground rounded-md w-8 font-normal text-[0.8rem]",
+              head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
               row: "flex w-full mt-2",
-              cell: cn(
-                "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected].day-range-end)]:rounded-r-md"
-              ),
+              cell: "text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
               day: cn(
-                buttonVariants({ variant: "ghost" }),
-                "h-8 w-8 p-0 font-normal aria-selected:opacity-100"
+                "h-9 w-9 p-0 font-normal",
+                "hover:bg-accent hover:text-accent-foreground",
+                "rounded-md transition-colors duration-200"
               ),
-              day_range_start: "day-range-start",
-              day_range_end: "day-range-end",
-              day_selected:
-                "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+              day_selected: cn(
+                "bg-primary text-primary-foreground",
+                "hover:bg-primary hover:text-primary-foreground",
+                "focus:bg-primary focus:text-primary-foreground"
+              ),
               day_today: "bg-accent text-accent-foreground",
-              day_outside:
-                "day-outside text-muted-foreground aria-selected:bg-accent/50 aria-selected:text-muted-foreground",
+              day_outside: "text-muted-foreground opacity-50",
               day_disabled: "text-muted-foreground opacity-50",
-              day_range_middle:
-                "aria-selected:bg-accent aria-selected:text-accent-foreground",
+              day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
               day_hidden: "invisible",
+              caption_dropdowns: "flex gap-2",
+              dropdown: "rounded-md border bg-background px-2 py-1 text-sm",
+              dropdown_month: "flex items-center gap-1",
+              dropdown_year: "flex items-center gap-1"
             }}
-            components={{
-              IconLeft: ({ className, ...props }) => (
-                <ChevronLeft className={cn("h-4 w-4", className)} {...props} />
-              ),
-              IconRight: ({ className, ...props }) => (
-                <ChevronRight className={cn("h-4 w-4", className)} {...props} />
-              ),
-            }}
-            mode="single"
-            selected={value}
-            onSelect={onChange}
-            disabled={disabled}
-            initialFocus
           />
-        </PopoverContent>
-      </Popover>
-    );
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
 };

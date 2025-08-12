@@ -90,7 +90,9 @@ export const OrganizationSchema = z.object({
   description: z.string().optional(),
   startedAt: z.date().optional(),
   logoImage: z.string().optional(),
-  type: z.string().optional(),
+  // type: z.string().optional(),
+   type: z.enum(["SCHOOL", "TRAINING_CENTER",  "CORPORATE", "CHURCH", "OTHER"]).optional(),
+
 });
 
 // UserOrganization Schema (Join Table)
@@ -108,7 +110,9 @@ export const OrgSchema = z.object({
   startedAt: z.date().optional(), // Date format
   logoImage: z.string().optional(),
   role: z.string().optional(),
-  type: z.string().optional(),
+  // type: z.string().optional(),
+   type: z.enum(["SCHOOL", "TRAINING_CENTER",  "CORPORATE", "CHURCH", "OTHER"]).optional(),
+
 });
 
 export const teamFormSchema = z.object({
@@ -117,7 +121,7 @@ export const teamFormSchema = z.object({
   description: z.string().optional(),
   logoImage: z.string().optional(),
   startedAt: z.date().optional(),
-  type: z.enum(["SCHOOL", "TRAINING_CENTER", "UNIVERSITY", "CORPORATE", "CHURCH", "OTHER"]).optional(),
+  type: z.enum(["SCHOOL", "TRAINING_CENTER",  "CORPORATE", "CHURCH", "OTHER"]).optional(),
 });
 
 // Define Feedback Schema
@@ -158,7 +162,7 @@ export const OrganizationsAPISchema = z.array(
         .enum([
           "SCHOOL",
     "TRAINING_CENTER",
-    "UNIVERSITY",
+    
     "CORPORATE",
     "CHURCH",
     "OTHER"

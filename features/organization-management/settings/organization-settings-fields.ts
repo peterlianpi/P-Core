@@ -6,7 +6,6 @@ export const organizationSettingsFields = [
   { name: "type", label: "Organization Type", type: "select", options: [
     { value: "SCHOOL", label: "School" },
     { value: "TRAINING_CENTER", label: "Training Center" },
-    { value: "UNIVERSITY", label: "University" },
     { value: "CORPORATE", label: "Corporate" },
     { value: "CHURCH", label: "Church" },
     { value: "OTHER", label: "Other" },
