@@ -92,7 +92,7 @@ const CustomUploadImagePage = ({
     <section className={`w-full flex flex-col items-center rounded-md ${className}`}>
       <div className="relative flex items-center justify-center">
         {/* Responsive avatar size: larger on desktop */}
-        <Avatar className="h-24 w-24 md:h-32 md:w-32 border border-emerald-600 shadow-md">
+        <Avatar className="h-24 w-24 md:h-30 md:w-30 border border-emerald-600 shadow-md">
           <AvatarImage src={imageUrl || "/image/profile.png"} alt={user?.name || "Avatar"} />
           <AvatarFallback className="text-lg md:text-2xl">{getInitials()}</AvatarFallback>
         </Avatar>

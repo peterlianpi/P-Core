@@ -15,7 +15,6 @@ type Props = {
   fromDate?: Date;
   toDate?: Date;
   disabledDays?: Date[] | ((date: Date) => boolean);
-  className?: string;
 };
 
 export const DatePicker = ({ 
@@ -25,8 +24,7 @@ export const DatePicker = ({
   placeholder = "Pick a date",
   fromDate,
   toDate,
-  disabledDays,
-  className
+  disabledDays
 }: Props) => {
   const [open, setOpen] = React.useState(false);
   const currentYear = new Date().getFullYear();
@@ -38,11 +36,6 @@ export const DatePicker = ({
     }
   };
 
-  const hidden = fromDate || toDate ? {
-    ...(fromDate && { before: fromDate }),
-    ...(toDate && { after: toDate })
-  } : undefined;
-
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -51,75 +44,56 @@ export const DatePicker = ({
           variant="outline"
           className={cn(
             "w-full justify-start text-left font-normal",
-            "hover:bg-accent hover:text-accent-foreground",
-            "focus:ring-2 focus:ring-ring focus:ring-offset-2",
-            "transition-colors duration-200",
-            !value && "text-muted-foreground",
-            className
+            !value && "text-muted-foreground"
           )}
         >
-          <CalendarIcon className="mr-2 h-4 w-4" />
+          <CalendarIcon className="size-4 mr-2" />
           {value ? format(value, "PPP") : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent 
-        className="w-auto p-0" 
-        align="start"
-        sideOffset={4}
-      >
-        <div className="rounded-lg border bg-popover p-3 shadow-lg">
-          <DayPicker
-            mode="single"
-            selected={value}
-            onSelect={handleSelect}
-            disabled={disabled ? true : disabledDays}
-            hidden={hidden}
-            showOutsideDays
-            fixedWeeks
-            captionLayout="dropdown"
-            fromYear={1970}
-            toYear={currentYear + 10}
-            className="p-3"
-            classNames={{
-              months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-              month: "space-y-4",
-              caption_label: "text-sm font-medium",
-              nav: "space-x-1 flex items-center",
-              nav_button: cn(
-                "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
-                "hover:bg-accent hover:text-accent-foreground",
-                "rounded-md transition-colors duration-200"
-              ),
-              nav_button_previous: "absolute left-1",
-              nav_button_next: "absolute right-1",
-              table: "w-full border-collapse space-y-1",
-              head_row: "flex",
-              head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
-              row: "flex w-full mt-2",
-              cell: "text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
-              day: cn(
-                "h-9 w-9 p-0 font-normal",
-                "hover:bg-accent hover:text-accent-foreground",
-                "rounded-md transition-colors duration-200"
-              ),
-              day_selected: cn(
-                "bg-primary text-primary-foreground",
-                "hover:bg-primary hover:text-primary-foreground",
-                "focus:bg-primary focus:text-primary-foreground"
-              ),
-              day_today: "bg-accent text-accent-foreground",
-              day_outside: "text-muted-foreground opacity-50",
-              day_disabled: "text-muted-foreground opacity-50",
-              day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
-              day_hidden: "invisible",
-              caption_dropdowns: "flex gap-2",
-              dropdown: "rounded-md border bg-background px-2 py-1 text-sm",
-              dropdown_month: "flex items-center gap-1",
-              dropdown_year: "flex items-center gap-1"
-            }}
-          />
-        </div>
+      <PopoverContent className="w-auto p-0" align="start">
+        <DayPicker
+          mode="single"
+          selected={value}
+          onSelect={handleSelect}
+          disabled={disabled ? true : disabledDays}
+          // fromDate={fromDate}
+          // hidden={{ before: fromDate??new Date() ,after: toDate??new Date()}}
+          // toDate={toDate}
+          showOutsideDays
+          fixedWeeks
+          captionLayout="dropdown"
+          startMonth={new Date(1900, 0)}
+          endMonth={new Date(currentYear + 10, 0)}
+          className={cn("p-3")}
+          classNames={{
+            root:"p-4",
+            months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+            month: "space-y-4",
+            month_caption: "flex justify-center items-center",
+            dropdowns:"space-x-4",
+            dropdown:"rounded-sm bg-background border p-1",
+            caption_label: "text-sm font-medium hidden",
+            nav: "space-x-1 flex items-center",
+            button_previous: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute left-1",
+            button_next: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute right-1",
+            month_grid: "w-full border-collapse space-y-1",
+            weekdays: "flex",
+            weekday: "text-muted-foreground rounded-md w-8 font-normal text-[0.8rem]",
+            week: "flex w-full mt-2",
+            day: "relative py-1.5 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected].day-range-end)]:rounded-r-md h-8 w-8 font-normal aria-selected:opacity-100 rounded-md",
+            selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+            today: "bg-accent text-accent-foreground",
+            outside: "day-outside text-muted-foreground aria-selected:bg-accent/50 aria-selected:text-muted-foreground",
+            disabled: "text-muted-foreground opacity-50",
+            range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
+            hidden: "invisible",
+          }}
+        />
       </PopoverContent>
     </Popover>
   );
 };
+
+// Export types for better TypeScript support
+export type { SelectSingleEventHandler } from "react-day-picker";
