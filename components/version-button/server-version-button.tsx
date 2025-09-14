@@ -26,8 +26,8 @@ type Props = {
 export default function VersionButtonServerPage({ versions }: Props) {
   const [open, setOpen] = useState(false);
 
-  const betaVersion = versions.find((v) => v.name.toLowerCase() === "beta");
-  if (!betaVersion) return <Button variant="outline">No Beta Version</Button>;
+  const latest = versions.find((v) => v.name.toLowerCase() === "latest");
+  if (!latest) return <Button variant="outline">No Version</Button>;
   return (
     <section className="w-full">
       <Button
@@ -35,16 +35,16 @@ export default function VersionButtonServerPage({ versions }: Props) {
         className="bg-blue-500 text-white"
         onClick={() => setOpen(true)}
       >
-        {betaVersion.name} (v{betaVersion.version})
+        {latest.name} (v{latest.version})
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="w-[90%] rounded-lg mx-auto">
           <DialogHeader className="py-2 mb-2">
             <DialogTitle>
-              Version {betaVersion.version} - {betaVersion.name}
+              Version {latest.version} - {latest.name}
             </DialogTitle>
           </DialogHeader>
-          <p>{betaVersion.description || "No description available."}</p>
+          <p>{latest.description || "No description available."}</p>
         </DialogContent>
       </Dialog>
     </section>

@@ -1,12 +1,15 @@
-// Version Management System Feature
-// Export all version management components and utilities
+// Version Management System Exports
+export { VersionManagement } from "./components/version-management";
+export { VersionForm } from "./components/version-form";
+export { useVersionFields } from "./hooks/use-version-fields";
+export { useVersionComparisonFields } from "./hooks/use-version-fields";
+export { useVersionFilterFields } from "./hooks/use-version-fields";
 
-// Default export for dynamic imports
-const VersionFeature = {
-  name: "Version Management",
-  version: "1.0.0",
-  category: "system" as const,
-  critical: true
-};
+// API Hooks
+export { useListVersions } from "./api/use-list-versions";
+export { useCreateVersion } from "./api/use-create-version";
+export { useUpdateVersion } from "./api/use-update-version";
+export { useDeleteVersion } from "./api/use-delete-version";
 
-export default VersionFeature;
+// Types
+export type { VersionFormData } from "./components/version-form";

@@ -9,7 +9,7 @@ async function main() {
   // Clean existing data (development only)
   if (process.env.NODE_ENV === 'development') {
     console.log('🧹 Cleaning existing data...');
-    
+
     // Domain schema cleanup
     await prisma.purchase.deleteMany();
     await prisma.courseStatusLog.deleteMany();
@@ -18,7 +18,7 @@ async function main() {
     await prisma.lessonBook.deleteMany();
     await prisma.student.deleteMany();
     await prisma.course.deleteMany();
-    
+
     // Auth schema cleanup
     await prisma.updateLog.deleteMany();
     await prisma.userOrganization.deleteMany();
@@ -34,9 +34,9 @@ async function main() {
 
   // Create sample users
   console.log('👥 Creating users...');
-  
+
   const hashedPassword = await hash('password123', 12);
-  
+
   const superAdmin = await prisma.user.create({
     data: {
       id: 'user_superadmin',
@@ -94,7 +94,7 @@ async function main() {
 
   // Create sample organizations
   console.log('🏢 Creating organizations...');
-  
+
   const school = await prisma.organization.create({
     data: {
       id: 'org_greenwood_school',
@@ -130,7 +130,7 @@ async function main() {
 
   // Create user-organization relationships
   console.log('🔗 Creating user-organization relationships...');
-  
+
   await prisma.userOrganization.createMany({
     data: [
       {
@@ -168,7 +168,7 @@ async function main() {
 
   // Create sample courses for the school
   console.log('📚 Creating courses...');
-  
+
   const mathCourse = await prisma.course.create({
     data: {
       id: 'course_math_grade5',
@@ -215,7 +215,7 @@ async function main() {
 
   // Create sample students
   console.log('👨‍🎓 Creating students...');
-  
+
   const student1Record = await prisma.student.create({
     data: {
       id: 'student_alice',
@@ -290,7 +290,7 @@ async function main() {
 
   // Create student-course enrollments
   console.log('📝 Creating student enrollments...');
-  
+
   await prisma.studentCourse.createMany({
     data: [
       // Alice Brown enrollments
@@ -315,7 +315,7 @@ async function main() {
         grade: 'A+',
         orgId: school.id,
       },
-      
+
       // Bob Wilson enrollments
       {
         studentId: student2Record.id,
@@ -338,7 +338,7 @@ async function main() {
         grade: 'B',
         orgId: school.id,
       },
-      
+
       // Emma Davis enrollments
       {
         studentId: student3Record.id,
@@ -360,7 +360,7 @@ async function main() {
         status: 'ENROLLED',
         orgId: school.id,
       },
-      
+
       // James Miller enrollments
       {
         studentId: student4Record.id,
@@ -381,7 +381,7 @@ async function main() {
 
   // Create lesson books
   console.log('📖 Creating lesson books...');
-  
+
   await prisma.lessonBook.createMany({
     data: [
       {
@@ -421,7 +421,7 @@ async function main() {
 
   // Create schedules
   console.log('📅 Creating class schedules...');
-  
+
   await prisma.schedule.createMany({
     data: [
       // Mathematics - Monday, Wednesday, Friday
@@ -453,7 +453,7 @@ async function main() {
         room: 'Room 101',
         orgId: school.id,
       },
-      
+
       // English - Tuesday, Thursday
       {
         title: 'English Language Arts Grade 5',
@@ -474,7 +474,7 @@ async function main() {
         room: 'Room 102',
         orgId: school.id,
       },
-      
+
       // Science - Monday, Wednesday
       {
         title: 'Science Grade 5 - Lab Session',
@@ -495,7 +495,7 @@ async function main() {
         room: 'Science Lab',
         orgId: school.id,
       },
-      
+
       // Art - Friday
       {
         title: 'Creative Arts Grade 5',
@@ -512,7 +512,7 @@ async function main() {
 
   // Create sample purchases
   console.log('💰 Creating purchase records...');
-  
+
   await prisma.purchase.createMany({
     data: [
       {
@@ -567,7 +567,7 @@ async function main() {
 
   // Create update logs
   console.log('📋 Creating activity logs...');
-  
+
   await prisma.updateLog.createMany({
     data: [
       {
