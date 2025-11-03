@@ -40,6 +40,15 @@ P-Core is a **next-generation, multi-tenant management platform** designed to re
 
 ## 🎯 **Core Features**
 
+### **🚀 MVP Features (v2.0)**
+
+- **👥 User Management** - Complete user lifecycle management with role-based access control
+- **🔔 Notifications Management** - In-app and email notifications with user preferences  
+- **🏢 Organizations Management** - Multi-tenant organization and membership management
+- **💳 Subscriptions Management** - Flexible subscription plans with usage tracking
+
+📖 See [MVP Features Documentation](./docs/MVP_FEATURES.md) for detailed information.
+
 ### **🏢 Multi-Tenant Architecture**
 - **Secure Isolation**: Database-level tenant separation with RLS
 - **Organization Management**: Create and manage multiple organizations

@@ -60,11 +60,35 @@ const hasMinRole = (required: OrganizationRole = OrganizationRole.MEMBER, curren
 const registry: FeatureConfig[] = [
   // Domain features
   {
+    id: "user-management",
+    name: "User Management",
+    category: "system",
+    enabled: true,
+    minRole: OrganizationRole.ADMIN,
+    description: "Manage users, roles, and permissions",
+  },
+  {
     id: "organization-management",
     name: "Organization",
     category: "domain",
     enabled: true,
     minRole: OrganizationRole.MEMBER,
+  },
+  {
+    id: "notifications",
+    name: "Notifications",
+    category: "system",
+    enabled: true,
+    minRole: OrganizationRole.MEMBER,
+    description: "In-app and email notifications",
+  },
+  {
+    id: "subscriptions",
+    name: "Subscriptions",
+    category: "system",
+    enabled: true,
+    minRole: OrganizationRole.OWNER,
+    description: "Subscription plans and billing",
   },
   {
     id: "school-management",
