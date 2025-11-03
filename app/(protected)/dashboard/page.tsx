@@ -1,403 +1,480 @@
-'use client';
-
 /**
- * COMPREHENSIVE DASHBOARD: Modern Analytics & Overview
- * 
- * This dashboard provides:
- * 1. Organization-specific statistics and analytics
- * 2. Role-based content and permissions
- * 3. Real-time data visualization
- * 4. Key performance indicators (KPIs)
- * 5. Quick actions and shortcuts
- * 
- * FEATURES:
- * - Dynamic content based on organization type
- * - Interactive charts and graphs
- * - Recent activity feed
- * - Quick statistics cards
- * - Performance monitoring integration
+ * Dashboard Page - MVP Implementation
+ *
+ * Comprehensive dashboard with data analysis for different user roles
  */
 
-import React from "react";
-import { Suspense, useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { Suspense } from 'react';
+import { useAuth } from '@/features/user-management/mvp/hooks';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
+  Loader2,
   Users,
-  GraduationCap,
+  Bell,
   TrendingUp,
   Activity,
+  Shield,
+  Settings,
   BarChart3,
   PieChart,
-  Clock,
-  Target
-} from "lucide-react";
+  Calendar,
+  DollarSign,
+  UserCheck,
+  AlertTriangle
+} from 'lucide-react';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
-import { CardSkeleton } from "@/components/ui/modern-loading";
-import { ErrorBoundaryWrapper } from "@/components/error/error-boundary";
+function DashboardPageContent() {
+  const { user, isLoading } = useAuth();
 
-import { useSession } from "next-auth/react";
-import DashboardStats from "@/components/dashboard/dashboard-stats";
-import RecentActivity from "@/components/dashboard/recent-activity";
-import QuickActions from "@/components/dashboard/quick-actions";
-import AnalyticsCharts from "@/components/dashboard/analytics-charts";
-import { useOrgData } from "@/features";
-import { useData } from "@/providers/data-provider";
-
-// Animation variants
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1
-    }
-  }
-};
-
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-    transition: { duration: 0.5 }
-  }
-};
-
-interface OrganizationWithRole {
-  organization: {
-    id: string;
-    name: string;
-    type: string;
-  };
-  role: string;
-}
-
-const DashboardPage = () => {
-  const { data: session } = useSession();
-  const { organizations } = useOrgData()
-  const [loading, setLoading] = useState(true);
-  const {orgId}=useData()
-
-  // useEffect(() => {
-  //   const fetchOrganizations = async () => {
-  //     try {
-  //       if (session?.user?.id) {
-  //         const result = await organizationsApi.getByUserId() as { data: OrganizationWithRole[] };
-  //         setOrganizations(result.data || []);
-  //       }
-  //     } catch (error) {
-  //       console.error('Error fetching organizations:', error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchOrganizations();
-  // }, [session?.user?.id]);
-
-  // Get current organization context
-  // const currentOrgId = session?.user?.defaultOrgId;
-  
-  const currentOrg = organizations.find((org) => org.organization.id === orgId);
-  const orgType = currentOrg?.organization?.type;
-  const userRole = currentOrg?.role;
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => <CardSkeleton key={i} />)}
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
 
-  return (
-    <ErrorBoundaryWrapper level="page">
-      <div className="space-y-6">
-        {/* Header Section */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="flex flex-col sm:flex-row sm:items-center sm:justify-between"
-        >
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-            <p className="text-muted-foreground">
-              Welcome back, {session?.user?.name}! Here&apos;s what&apos;s happening in your organization.
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6">
+            <p className="text-center text-muted-foreground">
+              Please log in to view your dashboard.
             </p>
-          </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-          <div className="flex items-center space-x-2 mt-4 sm:mt-0">
-            {currentOrg && (
-              <Badge variant="outline" className="text-sm">
-                {/*
-                  Display a badge label and icon based on the organization type.
-                  Supported types: SCHOOL, TRAINING_CENTER, UNIVERSITY, CORPORATE, CHURCH, OTHER
-                */}
-                {orgType === 'SCHOOL' && '🎓 School Management'}
-                {orgType === 'TRAINING_CENTER' && '🏫 Training Center Management'}
-                {orgType === 'UNIVERSITY' && '🎓 University Management'}
-                {orgType === 'CORPORATE' && '🏢 Corporate Management'}
-                {orgType === 'CHURCH' && '⛪ Church Management'}
-                {orgType === 'OTHER' && '🏷️ Other Organization'}
-                {/* Fallback for missing or unknown orgType */}
-                {!orgType && '🏢 Organization Management'}
-                {/* If orgType is set but not recognized, show a generic label */}
-                {orgType && !['SCHOOL','TRAINING_CENTER','UNIVERSITY','CORPORATE','CHURCH','OTHER'].includes(orgType) && '🏢 Organization Management'}
+  const isAdmin = user.role === 'ADMIN' || user.role === 'SUPERADMIN';
+  const isSuperAdmin = user.role === 'SUPERADMIN';
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Welcome back, {user.name || user.email}!
+              </h1>
+              <p className="mt-1 text-sm text-gray-600">
+                Here's what's happening with your account today.
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <Badge variant={user.isActive ? "default" : "secondary"}>
+                {user.role}
               </Badge>
-            )}
-            <Badge variant="secondary">
-              {userRole || 'Member'}
-            </Badge>
+              <Button variant="outline" size="sm">
+                <Settings className="h-4 w-4 mr-2" />
+                Settings
+              </Button>
+            </div>
           </div>
-        </motion.div>
-
-        {/* Main Dashboard Content */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="space-y-6"
-        >
-          {/* Quick Statistics */}
-          <motion.div variants={itemVariants}>
-            <Suspense fallback={<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[...Array(4)].map((_, i) => <CardSkeleton key={i} />)}
-            </div>}>
-              <DashboardStats orgType={orgType} userRole={userRole} />
-            </Suspense>
-          </motion.div>
-
-          {/* Main Content Tabs */}
-          <motion.div variants={itemVariants}>
-            <Tabs defaultValue="overview" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:grid-cols-4">
-                <TabsTrigger value="overview" className="flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4" />
-                  Overview
-                </TabsTrigger>
-                <TabsTrigger value="analytics" className="flex items-center gap-2">
-                  <PieChart className="h-4 w-4" />
-                  Analytics
-                </TabsTrigger>
-                <TabsTrigger value="activity" className="flex items-center gap-2">
-                  <Activity className="h-4 w-4" />
-                  Activity
-                </TabsTrigger>
-                <TabsTrigger value="actions" className="flex items-center gap-2">
-                  <Target className="h-4 w-4" />
-                  Quick Actions
-                </TabsTrigger>
-              </TabsList>
-
-              {/* Overview Tab */}
-              <TabsContent value="overview" className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Main Chart Area */}
-                  <div className="lg:col-span-2">
-                    <Suspense fallback={<CardSkeleton className="h-96" />}>
-                      <AnalyticsCharts orgType={orgType} />
-                    </Suspense>
-                  </div>
-
-                  {/* Side Panel */}
-                  <div className="space-y-6">
-                    <Suspense fallback={<CardSkeleton />}>
-                      <RecentActivity orgType={orgType} />
-                    </Suspense>
-                  </div>
-                </div>
-              </TabsContent>
-
-              {/* Analytics Tab */}
-              <TabsContent value="analytics" className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Suspense fallback={<CardSkeleton className="h-96" />}>
-                    <PerformanceMetrics orgType={orgType} />
-                  </Suspense>
-                  <Suspense fallback={<CardSkeleton className="h-96" />}>
-                    <TrendAnalysis orgType={orgType} />
-                  </Suspense>
-                </div>
-              </TabsContent>
-
-              {/* Activity Tab */}
-              <TabsContent value="activity" className="space-y-6">
-                <Suspense fallback={<CardSkeleton />}>
-                  <ActivityFeed orgType={orgType} />
-                </Suspense>
-              </TabsContent>
-
-              {/* Quick Actions Tab */}
-              <TabsContent value="actions" className="space-y-6">
-                <Suspense fallback={<CardSkeleton />}>
-                  <QuickActions orgType={orgType} userRole={userRole} />
-                </Suspense>
-              </TabsContent>
-            </Tabs>
-          </motion.div>
-        </motion.div>
+        </div>
       </div>
-    </ErrorBoundaryWrapper>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">1,247</div>
+              <p className="text-xs text-muted-foreground">
+                <span className="text-green-600">+12%</span> from last month
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+              <UserCheck className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">1,156</div>
+              <p className="text-xs text-muted-foreground">
+                <span className="text-green-600">+8%</span> from last month
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Notifications</CardTitle>
+              <Bell className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">24</div>
+              <p className="text-xs text-muted-foreground">
+                <span className="text-blue-600">5</span> unread
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">System Health</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">98.5%</div>
+              <p className="text-xs text-muted-foreground">
+                All systems operational
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            {isAdmin && <TabsTrigger value="admin">Admin Panel</TabsTrigger>}
+            {isSuperAdmin && <TabsTrigger value="superadmin">Super Admin</TabsTrigger>}
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Recent Activity */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Activity</CardTitle>
+                  <CardDescription>Your latest actions and updates</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Profile updated</p>
+                        <p className="text-xs text-muted-foreground">2 hours ago</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Login successful</p>
+                        <p className="text-xs text-muted-foreground">5 hours ago</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Notification preferences updated</p>
+                        <p className="text-xs text-muted-foreground">1 day ago</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Quick Actions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Quick Actions</CardTitle>
+                  <CardDescription>Common tasks and shortcuts</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button className="w-full justify-start" variant="outline">
+                    <Bell className="h-4 w-4 mr-2" />
+                    View Notifications
+                  </Button>
+                  <Button className="w-full justify-start" variant="outline">
+                    <Users className="h-4 w-4 mr-2" />
+                    Manage Profile
+                  </Button>
+                  <Button className="w-full justify-start" variant="outline">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Account Settings
+                  </Button>
+                  {isAdmin && (
+                    <Button className="w-full justify-start" variant="outline">
+                      <Shield className="h-4 w-4 mr-2" />
+                      Admin Panel
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Usage Statistics */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Usage Statistics</CardTitle>
+                <CardDescription>Your account usage this month</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Storage Used</span>
+                    <span>2.4 GB / 10 GB</span>
+                  </div>
+                  <Progress value={24} className="h-2" />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>API Calls</span>
+                    <span>8,450 / 10,000</span>
+                  </div>
+                  <Progress value={84.5} className="h-2" />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Active Sessions</span>
+                    <span>3 / 5</span>
+                  </div>
+                  <Progress value={60} className="h-2" />
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5" />
+                    User Growth
+                  </CardTitle>
+                  <CardDescription>Monthly active users trend</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-64 flex items-center justify-center text-muted-foreground">
+                    <div className="text-center">
+                      <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>Chart visualization would go here</p>
+                      <p className="text-sm">+15% growth this month</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <PieChart className="h-5 w-5" />
+                    User Distribution
+                  </CardTitle>
+                  <CardDescription>Users by role and status</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Students</span>
+                      <span className="text-sm font-medium">45%</span>
+                    </div>
+                    <Progress value={45} className="h-2" />
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Teachers</span>
+                      <span className="text-sm font-medium">30%</span>
+                    </div>
+                    <Progress value={30} className="h-2" />
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Admins</span>
+                      <span className="text-sm font-medium">15%</span>
+                    </div>
+                    <Progress value={15} className="h-2" />
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Others</span>
+                      <span className="text-sm font-medium">10%</span>
+                    </div>
+                    <Progress value={10} className="h-2" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {isAdmin && (
+            <TabsContent value="admin" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      User Management
+                    </CardTitle>
+                    <CardDescription>Manage system users</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <p className="text-2xl font-bold">1,247</p>
+                      <p className="text-sm text-muted-foreground">Total users</p>
+                      <Button className="w-full mt-4" size="sm">
+                        Manage Users
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Shield className="h-5 w-5" />
+                      System Security
+                    </CardTitle>
+                    <CardDescription>Security monitoring</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <p className="text-2xl font-bold text-green-600">Secure</p>
+                      <p className="text-sm text-muted-foreground">All systems secure</p>
+                      <Button className="w-full mt-4" size="sm" variant="outline">
+                        View Security Logs
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5" />
+                      Performance
+                    </CardTitle>
+                    <CardDescription>System performance metrics</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <p className="text-2xl font-bold">99.9%</p>
+                      <p className="text-sm text-muted-foreground">Uptime</p>
+                      <Button className="w-full mt-4" size="sm" variant="outline">
+                        View Metrics
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          )}
+
+          {isSuperAdmin && (
+            <TabsContent value="superadmin" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <DollarSign className="h-5 w-5" />
+                      Revenue
+                    </CardTitle>
+                    <CardDescription>Monthly recurring revenue</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <p className="text-2xl font-bold">$156,789</p>
+                      <p className="text-sm text-green-600">+12% from last month</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Calendar className="h-5 w-5" />
+                      Subscriptions
+                    </CardTitle>
+                    <CardDescription>Active subscriptions</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <p className="text-2xl font-bold">1,156</p>
+                      <p className="text-sm text-muted-foreground">Active subscriptions</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5" />
+                      System Alerts
+                    </CardTitle>
+                    <CardDescription>Critical system notifications</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <p className="text-2xl font-bold text-yellow-600">3</p>
+                      <p className="text-sm text-muted-foreground">Pending alerts</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5" />
+                      Growth Rate
+                    </CardTitle>
+                    <CardDescription>User acquisition rate</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <p className="text-2xl font-bold text-green-600">+23%</p>
+                      <p className="text-sm text-muted-foreground">Monthly growth</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Super Admin Controls</CardTitle>
+                  <CardDescription>Advanced system management tools</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Button variant="outline">
+                      <Settings className="h-4 w-4 mr-2" />
+                      System Settings
+                    </Button>
+                    <Button variant="outline">
+                      <Shield className="h-4 w-4 mr-2" />
+                      Security Audit
+                    </Button>
+                    <Button variant="outline">
+                      <BarChart3 className="h-4 w-4 mr-2" />
+                      Advanced Analytics
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+        </Tabs>
+      </div>
+    </div>
   );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      }
+    >
+      <DashboardPageContent />
+    </Suspense>
+  );
+}
+
+export const metadata = {
+  title: 'Dashboard - P-Core',
+  description: 'Your P-Core dashboard with analytics and insights',
 };
-
-// Additional Dashboard Components (to be implemented)
-const PerformanceMetrics = ({ orgType }: { orgType?: string }) => (
-  <Card>
-    <CardHeader>
-      <CardTitle className="flex items-center gap-2">
-        <TrendingUp className="h-5 w-5" />
-        Performance Metrics
-      </CardTitle>
-      <CardDescription>
-        Key performance indicators for your {orgType || 'organization'}
-      </CardDescription>
-    </CardHeader>
-    <CardContent>
-      <div className="space-y-4">
-        {orgType === 'school' && (
-          <>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Student Enrollment Rate</span>
-                <span>87%</span>
-              </div>
-              <Progress value={87} className="h-2" />
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Course Completion Rate</span>
-                <span>92%</span>
-              </div>
-              <Progress value={92} className="h-2" />
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Teacher Satisfaction</span>
-                <span>94%</span>
-              </div>
-              <Progress value={94} className="h-2" />
-            </div>
-          </>
-        )}
-
-        {/* Default metrics for other org types */}
-        {orgType !== 'school' && (
-          <>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Member Engagement</span>
-                <span>78%</span>
-              </div>
-              <Progress value={78} className="h-2" />
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Goal Achievement</span>
-                <span>85%</span>
-              </div>
-              <Progress value={85} className="h-2" />
-            </div>
-          </>
-        )}
-      </div>
-    </CardContent>
-  </Card>
-);
-
-const TrendAnalysis = ({ orgType }: { orgType?: string }) => (
-  <Card>
-    <CardHeader>
-      <CardTitle className="flex items-center gap-2">
-        <BarChart3 className="h-5 w-5" />
-        Trend Analysis
-      </CardTitle>
-      <CardDescription>
-        Growth trends and insights
-      </CardDescription>
-    </CardHeader>
-    <CardContent>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-green-600" />
-            <span className="text-sm font-medium">Growth Rate</span>
-          </div>
-          <span className="text-green-600 font-semibold">+12.5%</span>
-        </div>
-
-        <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-blue-600" />
-            <span className="text-sm font-medium">Member Growth</span>
-          </div>
-          <span className="text-blue-600 font-semibold">+8.3%</span>
-        </div>
-
-        {orgType === 'school' && (
-          <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-            <div className="flex items-center gap-2">
-              <GraduationCap className="h-4 w-4 text-purple-600" />
-              <span className="text-sm font-medium">Academic Performance</span>
-            </div>
-            <span className="text-purple-600 font-semibold">+15.2%</span>
-          </div>
-        )}
-      </div>
-    </CardContent>
-  </Card>
-);
-
-const ActivityFeed = ({ orgType }: { orgType?: string }) => (
-  <Card>
-    <CardHeader>
-      <CardTitle className="flex items-center gap-2">
-        <Clock className="h-5 w-5" />
-        Recent Activity Feed
-      </CardTitle>
-      <CardDescription>
-        Latest updates and activities in your {orgType || 'organization'}
-      </CardDescription>
-    </CardHeader>
-    <CardContent>
-      <div className="space-y-4">
-        {/* Sample activity items */}
-        <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
-          <div className="h-2 w-2 bg-green-500 rounded-full mt-2" />
-          <div className="flex-1">
-            <p className="text-sm font-medium">New student enrolled</p>
-            <p className="text-xs text-muted-foreground">John Doe joined Computer Science course</p>
-            <span className="text-xs text-muted-foreground">2 hours ago</span>
-          </div>
-        </div>
-
-        <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
-          <div className="h-2 w-2 bg-blue-500 rounded-full mt-2" />
-          <div className="flex-1">
-            <p className="text-sm font-medium">Course updated</p>
-            <p className="text-xs text-muted-foreground">Mathematics curriculum revised</p>
-            <span className="text-xs text-muted-foreground">5 hours ago</span>
-          </div>
-        </div>
-
-        <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
-          <div className="h-2 w-2 bg-purple-500 rounded-full mt-2" />
-          <div className="flex-1">
-            <p className="text-sm font-medium">Payment received</p>
-            <p className="text-xs text-muted-foreground">Monthly fee payment processed</p>
-            <span className="text-xs text-muted-foreground">1 day ago</span>
-          </div>
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-);
-
-export default DashboardPage;

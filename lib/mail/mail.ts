@@ -10,7 +10,24 @@ import {
 } from "./email-templates";
 import { mailConfig } from "./mail-config";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Handle mock API key for development
+const isMockMode = process.env.RESEND_API_KEY?.includes('mock') || !process.env.RESEND_API_KEY;
+
+const resend = isMockMode
+  ? {
+      emails: {
+        send: async (options: any) => {
+          console.log('📧 [MOCK] Email would be sent:', {
+            to: options.to,
+            subject: options.subject,
+            from: options.from
+          });
+          return { id: 'mock-email-id', data: options };
+        }
+      }
+    }
+  : new Resend(process.env.RESEND_API_KEY);
+
 const myMail = mailConfig.from;
 
 // SMTP config (from centralized config)

@@ -39,6 +39,8 @@ export async function getAllVersions() {
     },
   });
 
+  console.log('🔍 getAllVersions raw data:', versions);
+
   const result = Versions.safeParse(versions);
 
   if (!result.success) {

@@ -517,6 +517,334 @@ async function seedImages(orgId: string, deps: { userId: string; studentId: stri
 }
 
 // -----------------------------
+// ENHANCED REALISTIC DATA SEEDING
+// -----------------------------
+async function seedEnhancedRealisticData() {
+  console.log('Seeding enhanced realistic data...');
+
+  // Create additional organizations
+  const organizations = [
+    { id: 'org2', name: 'Community Church', type: OrganizationType.CHURCH, description: 'A welcoming community church serving the local area' },
+    { id: 'org3', name: 'Tech Academy', type: OrganizationType.TRAINING_CENTER, description: 'Modern technology training center' },
+    { id: 'org4', name: 'Business Institute', type: OrganizationType.CORPORATE, description: 'Professional business training institute' },
+  ];
+
+  const createdOrgs = [];
+  for (const orgData of organizations) {
+    const org = await prisma.organization.upsert({
+      where: { id: orgData.id },
+      update: {},
+      create: {
+        id: orgData.id,
+        name: orgData.name,
+        type: orgData.type,
+        description: orgData.description,
+        createdById: 'user-admin-001', // Reference the admin user
+      },
+    });
+    createdOrgs.push(org);
+  }
+
+  // Create additional users with realistic data
+  const additionalUsers = [
+    {
+      name: 'Sarah Johnson',
+      email: 'sarah.johnson@p-core.com',
+      role: UserRole.USER,
+      password: await bcrypt.hash('password123', 10),
+      isTwoFactorEnabled: false,
+    },
+    {
+      name: 'Mike Chen',
+      email: 'mike.chen@p-core.com',
+      role: UserRole.USER,
+      password: await bcrypt.hash('password123', 10),
+      isTwoFactorEnabled: false,
+    },
+    {
+      name: 'Linda Rodriguez',
+      email: 'linda.rodriguez@p-core.com',
+      role: UserRole.USER,
+      password: await bcrypt.hash('password123', 10),
+      isTwoFactorEnabled: true,
+    },
+    {
+      name: 'David Kim',
+      email: 'david.kim@p-core.com',
+      role: UserRole.ADMIN,
+      password: await bcrypt.hash('admin123', 10),
+      isTwoFactorEnabled: true,
+    },
+    {
+      name: 'Emma Wilson',
+      email: 'emma.wilson@p-core.com',
+      role: UserRole.USER,
+      password: await bcrypt.hash('password123', 10),
+      isTwoFactorEnabled: false,
+    },
+  ];
+
+  const createdUsers = [];
+  for (const userData of additionalUsers) {
+    const user = await prisma.user.upsert({
+      where: { email: userData.email },
+      update: {},
+      create: userData,
+    });
+    createdUsers.push(user);
+  }
+
+  // Link users to organizations with appropriate roles
+  const userOrgLinks = [
+    { userEmail: 'sarah.johnson@p-core.com', orgId: 'org1', role: OrganizationRole.TEACHER },
+    { userEmail: 'mike.chen@p-core.com', orgId: 'org1', role: OrganizationRole.STUDENT },
+    { userEmail: 'linda.rodriguez@p-core.com', orgId: 'org1', role: OrganizationRole.LIBRARIAN },
+    { userEmail: 'david.kim@p-core.com', orgId: 'org1', role: OrganizationRole.ADMIN },
+    { userEmail: 'emma.wilson@p-core.com', orgId: 'org2', role: OrganizationRole.MEMBER },
+    { userEmail: 'sarah.johnson@p-core.com', orgId: 'org2', role: OrganizationRole.CHOIR_LEADER },
+    { userEmail: 'mike.chen@p-core.com', orgId: 'org3', role: OrganizationRole.STUDENT },
+  ];
+
+  for (const link of userOrgLinks) {
+    const user = createdUsers.find(u => u.email === link.userEmail);
+    if (user) {
+      await prisma.userOrganization.upsert({
+        where: { userId_organizationId: { userId: user.id, organizationId: link.orgId } },
+        update: {},
+        create: {
+          userId: user.id,
+          organizationId: link.orgId,
+          role: link.role,
+        },
+      });
+    }
+  }
+
+  // Create additional students for each organization
+  const studentsData = [
+    { number: 'STU-002', name: 'Alice Johnson', email: 'alice.johnson@p-core.com', orgId: 'org1', gender: Gender.FEMALE },
+    { number: 'STU-003', name: 'Bob Smith', email: 'bob.smith@p-core.com', orgId: 'org1', gender: Gender.MALE },
+    { number: 'STU-004', name: 'Diana Prince', email: 'diana.prince@p-core.com', orgId: 'org1', gender: Gender.FEMALE },
+    { number: 'STU-005', name: 'Charlie Brown', email: 'charlie.brown@p-core.com', orgId: 'org3', gender: Gender.MALE },
+    { number: 'STU-006', name: 'Eva Green', email: 'eva.green@p-core.com', orgId: 'org3', gender: Gender.FEMALE },
+  ];
+
+  const createdStudents = [];
+  for (const studentData of studentsData) {
+    const student = await prisma.student.upsert({
+      where: { number_orgId: { number: studentData.number, orgId: studentData.orgId } },
+      update: {},
+      create: {
+        ...studentData,
+        phone: `091${Math.floor(Math.random() * 90000000) + 10000000}`,
+        isActive: true,
+      },
+    });
+    createdStudents.push(student);
+  }
+
+  // Create additional courses
+  const coursesData = [
+    { name: 'Advanced Mathematics', orgId: 'org1', price: '150.00', duration: 120 },
+    { name: 'Physics 101', orgId: 'org1', price: '130.00', duration: 100 },
+    { name: 'Chemistry Basics', orgId: 'org1', price: '140.00', duration: 110 },
+    { name: 'Web Development', orgId: 'org3', price: '200.00', duration: 180 },
+    { name: 'Data Science', orgId: 'org3', price: '250.00', duration: 200 },
+    { name: 'Business Management', orgId: 'org4', price: '180.00', duration: 150 },
+  ];
+
+  const createdCourses = [];
+  for (const courseData of coursesData) {
+    const course = await prisma.course.upsert({
+      where: { name_orgId: { name: courseData.name, orgId: courseData.orgId } },
+      update: {},
+      create: {
+        ...courseData,
+        description: `Comprehensive ${courseData.name} course`,
+        isActive: true,
+      },
+    });
+    createdCourses.push(course);
+  }
+
+  // Create additional books for libraries
+  const booksData = [
+    { title: 'Introduction to Algorithms', author: 'Cormen et al.', isbn: '978-0262033848', orgId: 'org1' },
+    { title: 'Clean Code', author: 'Robert C. Martin', isbn: '978-0132350884', orgId: 'org1' },
+    { title: 'The Pragmatic Programmer', author: 'Hunt and Thomas', isbn: '978-0201616224', orgId: 'org1' },
+    { title: 'JavaScript: The Good Parts', author: 'Douglas Crockford', isbn: '978-0596517748', orgId: 'org3' },
+    { title: 'Python Crash Course', author: 'Eric Matthes', isbn: '978-1593279288', orgId: 'org3' },
+  ];
+
+  const createdBooks = [];
+  for (const bookData of booksData) {
+    const book = await prisma.book.upsert({
+      where: { isbn_orgId: { isbn: bookData.isbn, orgId: bookData.orgId } },
+      update: {},
+      create: {
+        ...bookData,
+        total: Math.floor(Math.random() * 10) + 5,
+        available: Math.floor(Math.random() * 5) + 1,
+        isActive: true,
+      },
+    });
+    createdBooks.push(book);
+  }
+
+  // Create additional members for church organization
+  const membersData = [
+    { number: 'MBR-002', name: 'Mary Johnson', orgId: 'org2', gender: Gender.FEMALE },
+    { number: 'MBR-003', name: 'James Wilson', orgId: 'org2', gender: Gender.MALE },
+    { number: 'MBR-004', name: 'Patricia Brown', orgId: 'org2', gender: Gender.FEMALE },
+    { number: 'MBR-005', name: 'Michael Davis', orgId: 'org2', gender: Gender.MALE },
+  ];
+
+  const createdMembers = [];
+  for (const memberData of membersData) {
+    const member = await prisma.member.upsert({
+      where: { number_orgId: { number: memberData.number, orgId: memberData.orgId } },
+      update: {},
+      create: {
+        ...memberData,
+        phone: `091${Math.floor(Math.random() * 90000000) + 10000000}`,
+        isActive: true,
+      },
+    });
+    createdMembers.push(member);
+  }
+
+  // Create additional purchases and enrollments
+  for (let i = 0; i < 10; i++) {
+    const randomStudent = createdStudents[Math.floor(Math.random() * createdStudents.length)];
+    const studentCourses = createdCourses.filter(c => c.orgId === randomStudent.orgId);
+    if (studentCourses.length > 0) {
+      const randomCourse = studentCourses[Math.floor(Math.random() * studentCourses.length)];
+
+      // Create enrollment
+      const existingEnrollment = await prisma.studentCourse.findFirst({
+        where: {
+          studentId: randomStudent.id,
+          courseId: randomCourse.id,
+          orgId: randomStudent.orgId
+        }
+      });
+
+      if (!existingEnrollment) {
+        await prisma.studentCourse.create({
+          data: {
+            studentId: randomStudent.id,
+            courseId: randomCourse.id,
+            orgId: randomStudent.orgId,
+            status: StudentCourseStatus.ENROLLED,
+          },
+        });
+
+        // Create purchase
+        await prisma.purchase.create({
+          data: {
+            studentId: randomStudent.id,
+            courseId: randomCourse.id,
+            amount: randomCourse.price,
+            status: PurchaseStatus.COMPLETED,
+            method: PaymentMethod.CASH,
+            reference: `INV-${Date.now()}-${i}`,
+            orgId: randomStudent.orgId,
+          },
+        });
+      }
+    }
+  }
+
+  // Create additional book loans
+  for (let i = 0; i < 15; i++) {
+    const randomBook = createdBooks[Math.floor(Math.random() * createdBooks.length)];
+    const availableStudents = createdStudents.filter(s => s.orgId === randomBook.orgId);
+    const availableMembers = createdMembers.filter(m => m.orgId === randomBook.orgId);
+
+    // Randomly choose between student and member borrowers
+    let loanData: any;
+
+    if (availableStudents.length > 0 && availableMembers.length > 0) {
+      // Both available, choose randomly
+      const isStudent = Math.random() > 0.5;
+      const borrowerId = isStudent
+        ? availableStudents[Math.floor(Math.random() * availableStudents.length)].id
+        : availableMembers[Math.floor(Math.random() * availableMembers.length)].id;
+
+      loanData = {
+        bookId: randomBook.id,
+        orgId: randomBook.orgId,
+        dueDate: addDays(new Date(), Math.floor(Math.random() * 30) + 7),
+        status: Math.random() > 0.3 ? 'ACTIVE' : 'RETURNED',
+        ...(isStudent ? { studentId: borrowerId } : { memberId: borrowerId }),
+      };
+    } else if (availableStudents.length > 0) {
+      // Only students available
+      const borrowerId = availableStudents[Math.floor(Math.random() * availableStudents.length)].id;
+      loanData = {
+        bookId: randomBook.id,
+        studentId: borrowerId,
+        orgId: randomBook.orgId,
+        dueDate: addDays(new Date(), Math.floor(Math.random() * 30) + 7),
+        status: Math.random() > 0.3 ? 'ACTIVE' : 'RETURNED',
+      };
+    } else if (availableMembers.length > 0) {
+      // Only members available
+      const borrowerId = availableMembers[Math.floor(Math.random() * availableMembers.length)].id;
+      loanData = {
+        bookId: randomBook.id,
+        memberId: borrowerId,
+        orgId: randomBook.orgId,
+        dueDate: addDays(new Date(), Math.floor(Math.random() * 30) + 7),
+        status: Math.random() > 0.3 ? 'ACTIVE' : 'RETURNED',
+      };
+    } else {
+      // No borrowers available for this org
+      continue;
+    }
+
+    const existingLoan = await prisma.bookLoan.findFirst({
+      where: { bookId: randomBook.id, orgId: randomBook.orgId }
+    });
+
+    if (!existingLoan) {
+      await prisma.bookLoan.create({
+        data: loanData,
+      });
+    }
+  }
+
+  // Create additional feedback entries
+  const feedbackData = [
+    { name: 'Anonymous User', message: 'Great platform! Very user-friendly.', orgId: 'org1' },
+    { name: 'Parent', message: 'My child enjoys the courses. Good quality content.', orgId: 'org1' },
+    { name: 'Teacher', message: 'Excellent tools for managing classes and students.', orgId: 'org1' },
+    { name: 'Church Member', message: 'Love the community features and choir management.', orgId: 'org2' },
+    { name: 'Student', message: 'The library system is fantastic. Easy to find and borrow books.', orgId: 'org3' },
+  ];
+
+  for (const feedback of feedbackData) {
+    const existingFeedback = await prisma.feedback.findFirst({
+      where: { orgId: feedback.orgId, message: feedback.message }
+    });
+
+    if (!existingFeedback) {
+      await prisma.feedback.create({
+        data: {
+          ...feedback,
+          email: feedback.name !== 'Anonymous User' ? `${feedback.name.toLowerCase().replace(' ', '.')}@example.com` : undefined,
+          anonymous: feedback.name === 'Anonymous User',
+        },
+      });
+    }
+  }
+
+  console.log(`Enhanced realistic data seeded: ${createdUsers.length} users, ${createdOrgs.length} orgs, ${createdStudents.length} students, ${createdCourses.length} courses, ${createdBooks.length} books, ${createdMembers.length} members`);
+
+  return { createdUsers, createdOrgs, createdStudents, createdCourses, createdBooks, createdMembers };
+}
+
+// -----------------------------
 // ORCHESTRATOR
 // -----------------------------
 async function main() {
@@ -556,6 +884,9 @@ async function main() {
 
   // Seed images for key entities
   await seedImages(org.id, { userId: user1.id, studentId: academics.student.id, bookId: library.book.id });
+
+  // Seed enhanced realistic data
+  await seedEnhancedRealisticData();
 
   // Final console outputs for quick verification
   console.log('Seed complete:');

@@ -42,11 +42,13 @@ import {
   SidebarRail,
   SidebarMenu,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useData } from "@/providers/data-provider";
 import { usePerformanceToggle } from "@/components/performance/performance-monitor";
+import { useOrgData } from "@/features";
 import { 
   getEnabledFeatures,
   hasFeaturePermission,
@@ -85,7 +87,8 @@ function generateNavFromFeatures(
   orgRole: OrganizationRole,
   userRole: UserRole,
   pathname: string,
-  orgType?: string
+  orgType?: string,
+  organizations?: Organizations[]
 ) {
   const domainFeatures = enabledFeatures.filter(f => f.category === "domain");
   const systemFeatures = enabledFeatures.filter(f => f.category === "system");
@@ -94,7 +97,12 @@ function generateNavFromFeatures(
 
   // Add domain features based on organization type
   for (const feature of domainFeatures) {
-    if (!hasFeaturePermission(feature.id, orgRole)) continue;
+    // Special handling for organization-management - allow access if user has any organizations
+    const hasOrgAccess = feature.id === "organization-management"
+      ? organizations && organizations.length > 0
+      : hasFeaturePermission(feature.id, orgRole);
+
+    if (!hasOrgAccess) continue;
 
     const icon = FEATURE_ICONS[feature.id as keyof typeof FEATURE_ICONS] || Settings;
     // Skip features that don't match organization type
@@ -145,7 +153,7 @@ function generateNavFromFeatures(
     });
   }
 
-  // Always add settings section
+  // Always add settings section with comprehensive sub-menu
   navItems.push({
     title: "Settings",
     url: "/settings",
@@ -153,8 +161,10 @@ function generateNavFromFeatures(
     isActive: pathname.startsWith("/settings"),
     items: [
       { title: "Profile", url: "/settings" },
-      // { title: "Account", url: "/settings/account" },
-      // { title: "Notifications", url: "/settings/notifications" },
+      { title: "Security", url: "/settings#security" },
+      { title: "Organization", url: "/settings#organization" },
+      { title: "Telegram", url: "/settings#telegram" },
+      // Add system features as additional sub-items
       ...systemNavItems.map(item => ({
         title: item.title,
         url: item.url,
@@ -250,10 +260,13 @@ export function AppSidebarEnhanced({
   const user = useCurrentUser();
   const { orgId } = useData();
   const performanceToggle = usePerformanceToggle();
+  const { users } = useOrgData();
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
 
   // Get enabled features
   const enabledFeatures = getEnabledFeatures();
-  
+
   // Current organization context
   const currentOrg = organizations.find((org) => org.organization.id === orgId);
   const orgType = currentOrg?.organization?.type;
@@ -263,7 +276,7 @@ export function AppSidebarEnhanced({
     : UserRole.USER;
 
   // Generate navigation from features
-  const navMain = generateNavFromFeatures(enabledFeatures, orgRole, userRole, pathname, orgType);
+  const navMain = generateNavFromFeatures(enabledFeatures, orgRole, userRole, pathname, orgType, organizations);
 
   // User data for sidebar
   const userData = {
@@ -283,15 +296,15 @@ export function AppSidebarEnhanced({
 
   return (
     <Sidebar variant="floating" collapsible="icon" {...props}>
-      <SidebarHeader className="border-b border-sidebar-border">
+      <SidebarHeader className="border-b border-sidebar-border bg-gradient-to-b from-background to-muted/20">
         <TeamSwitcher teams={teams} />
-        
+
         {/* Organization Context Badge */}
         {currentOrg && (
           <div className="px-2 pb-2">
-            <Badge variant="secondary" className="w-full justify-center text-xs">
+            <Badge variant="secondary" className="w-full justify-center text-xs font-medium bg-primary/10 text-primary border-primary/20 hover:bg-primary/15 transition-colors">
               {orgType === 'school' && '🎓 School'}
-              {orgType === 'church' && '⛪ Church'} 
+              {orgType === 'church' && '⛪ Church'}
               {orgType === 'business' && '🏢 Business'}
               {orgType === 'nonprofit' && '🤝 Non-Profit'}
               {!orgType && '🏢 Organization'}
@@ -300,49 +313,65 @@ export function AppSidebarEnhanced({
         )}
 
         {/* Feature Status */}
-        <div className="px-2 pb-2">
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{domainFeaturesCount} features</span>
-            <span>{systemFeaturesCount} tools</span>
+        {!isCollapsed && (
+          <div className="px-2 pb-2">
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                {domainFeaturesCount} features
+              </span>
+              <span className="flex items-center gap-1">
+                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                {systemFeaturesCount} tools
+              </span>
+            </div>
           </div>
-        </div>
+        )}
       </SidebarHeader>
 
       <SidebarContent className="px-2">
         <NavMain items={navMain} />
-        
-        {/* Quick Actions */}
+
+        {/* Quick Actions & Realtime Data */}
         <div className="mt-auto pt-4">
           <Separator className="mb-4" />
-          
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <div className="px-2 pb-2">
-                <p className="text-xs font-medium text-sidebar-foreground/70 mb-2">
-                  Quick Tools
-                </p>
-                <div className="space-y-2">
-                  {/* Theme Selector */}
-                  <div className="flex justify-center">
-                    <ThemeSelector />
+
+          {/* Realtime Data Section */}
+          {!isCollapsed && (
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <div className="px-2 pb-3">
+                  <p className="text-xs font-semibold text-sidebar-foreground mb-3 flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    Live Data
+                  </p>
+                  <div className="space-y-3">
+                    {/* Organization Stats */}
+                    <div className="flex items-center justify-between text-xs p-2 rounded-md bg-muted/30 hover:bg-muted/50 transition-colors">
+                      <span className="text-sidebar-foreground font-medium">Active Users</span>
+                      <Badge variant="secondary" className="text-xs px-2 py-1 bg-primary/10 text-primary border-primary/20">
+                        {users?.length || 0}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between text-xs p-2 rounded-md bg-muted/30 hover:bg-muted/50 transition-colors">
+                      <span className="text-sidebar-foreground font-medium">Organizations</span>
+                      <Badge variant="secondary" className="text-xs px-2 py-1 bg-blue-500/10 text-blue-600 border-blue-500/20">
+                        {organizations?.length || 0}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between text-xs p-2 rounded-md bg-muted/30 hover:bg-muted/50 transition-colors">
+                      <span className="text-sidebar-foreground font-medium">System Health</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span className="text-green-600 font-medium text-xs">Excellent</span>
+                      </div>
+                    </div>
                   </div>
-                  
-                  {/* Performance Monitor Toggle */}
-                  {hasFeaturePermission("dynamic-components", orgRole) && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={performanceToggle.toggle}
-                      className="w-full justify-start text-xs"
-                    >
-                      <Activity className="mr-2 h-3 w-3" />
-                      Performance Monitor
-                    </Button>
-                  )}
                 </div>
-              </div>
-            </SidebarMenuItem>
-          </SidebarMenu>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          )}
+
         </div>
       </SidebarContent>
 

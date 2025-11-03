@@ -2,7 +2,7 @@
 
 
 import { notifySuperAdmins } from "@/lib/notification/notify-superadmin";
-import { loginDate } from "@/lib/utils/date-format";
+import { loginDate } from "@/lib/utils/date";
 
 type UserEvent = { value: string };
 

@@ -307,15 +307,13 @@ function parseHSL(hslString: string): { h: number; s: number; l: number } | null
 /**
  * Initialize theme system
  * Call this on app startup to apply saved theme
+ * Note: This should be called after next-themes is initialized
  */
 export function initializeTheme() {
   if (typeof window !== 'undefined') {
     const store = useThemeStore.getState();
-    
-    // Apply dark mode class
-    document.documentElement.classList.toggle('dark', store.isDarkMode);
-    
-    // Apply current theme
+
+    // Apply current theme (colors only, dark mode is handled by next-themes)
     if (store.useCustomColors) {
       applyCustomColorsToDOM(store.customColors, store.isDarkMode);
     } else {

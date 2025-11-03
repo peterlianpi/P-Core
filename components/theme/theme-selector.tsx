@@ -21,12 +21,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Palette, 
-  Sun, 
-  Moon, 
-  Check, 
-  Settings2, 
+import { useTheme } from 'next-themes';
+import {
+  Palette,
+  Sun,
+  Moon,
+  Check,
+  Settings2,
   Eye,
   RefreshCw,
   Sparkles
@@ -147,6 +148,7 @@ const CustomColorPicker: React.FC<{
  * Main theme selector component
  */
 export const ThemeSelector: React.FC = () => {
+  const { theme, setTheme } = useTheme();
   const {
     currentPalette,
     customColors,
@@ -155,12 +157,24 @@ export const ThemeSelector: React.FC = () => {
     setPalette,
     setCustomColors,
     toggleCustomColors,
-    toggleDarkMode,
     resetTheme
   } = useThemeStore();
 
   const [isOpen, setIsOpen] = useState(false);
   const [previewPalette, setPreviewPalette] = useState<ThemePalette | null>(null);
+
+  // Handle dark mode toggle using next-themes
+  const handleDarkModeToggle = (checked: boolean) => {
+    setTheme(checked ? 'dark' : 'light');
+  };
+
+  // Handle reset theme - reset to light mode and default colors
+  const handleResetTheme = () => {
+    // Reset next-themes to light mode
+    setTheme('light');
+    // Reset custom theme store
+    resetTheme();
+  };
 
   // Handle theme preview (without applying)
   const handlePreview = (palette: ThemePalette) => {
@@ -217,7 +231,7 @@ export const ThemeSelector: React.FC = () => {
                   </div>
                   <Switch
                     checked={isDarkMode}
-                    onCheckedChange={toggleDarkMode}
+                    onCheckedChange={handleDarkModeToggle}
                   />
                 </div>
               </CardContent>
@@ -384,25 +398,30 @@ export const ThemeSelector: React.FC = () => {
             <Separator />
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4">
               <Button
-                variant="outline"
-                onClick={resetTheme}
-                className="flex items-center gap-2"
+                variant="default"
+                onClick={handleResetTheme}
+                className="flex items-center gap-2 flex-1"
+                style={{
+                  backgroundColor: 'hsl(214 100% 60%)',
+                  borderColor: 'hsl(214 100% 60%)'
+                }}
               >
                 <RefreshCw className="h-4 w-4" />
-                Reset to Default
+                {/* Reset to Default */}
               </Button>
 
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-xs">
-                  Current: {useCustomColors ? 'Custom' : THEME_PALETTES[currentPalette].name}
-                </Badge>
-                
-                <Button onClick={() => setIsOpen(false)}>
-                  Done
-                </Button>
-              </div>
+              <Badge variant="outline" className="text-xs px-2 py-3">
+                Current: {useCustomColors ? 'Custom' : THEME_PALETTES[currentPalette].name}
+              </Badge>
+
+              <Button
+                onClick={() => setIsOpen(false)}
+                className="flex-1"
+              >
+                Done
+              </Button>
             </div>
           </div>
         </DialogContent>

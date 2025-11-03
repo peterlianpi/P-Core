@@ -25,6 +25,7 @@ import { getSession, useSession } from "next-auth/react";
 import Link from "next/link";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "../ui/input-otp";
 import { InviteTokenTracker } from "@/features/organization-management/components/InviteTokenTracker";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 export const LoginForm = () => {
   const searchParams = useSearchParams();
@@ -34,6 +35,7 @@ export const LoginForm = () => {
       : "";
   const callbackUrl = searchParams.get("callbackUrl");
   const [showTwoFactor, setShowTwoFactor] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | undefined>("");
   const [success, setSuccess] = useState<string | undefined>("");
   const [isPending, startTransition] = useTransition();
@@ -155,12 +157,29 @@ export const LoginForm = () => {
                       <FormItem>
                         <FormLabel>Password</FormLabel>
                         <FormControl>
-                          <Input
-                            {...field}
-                            disabled={isPending}
-                            placeholder="********"
-                            type="password"
-                          />
+                          <div className="relative">
+                            <Input
+                              {...field}
+                              disabled={isPending}
+                              placeholder="********"
+                              type={showPassword ? "text" : "password"}
+                              className="pr-10"
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                              onClick={() => setShowPassword(!showPassword)}
+                              disabled={isPending}
+                            >
+                              {showPassword ? (
+                                <EyeOff className="h-4 w-4 text-gray-400" />
+                              ) : (
+                                <Eye className="h-4 w-4 text-gray-400" />
+                              )}
+                            </Button>
+                          </div>
                         </FormControl>
                         <Button
                           size="sm"
@@ -180,7 +199,14 @@ export const LoginForm = () => {
             <FormSuccess message={success} />
             <FormError message={error || urlError} />
             <Button type="submit" disabled={isPending} className="w-full">
-              {showTwoFactor ? "Confirm" : "Login"}
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {showTwoFactor ? "Confirming..." : "Logging in..."}
+                </>
+              ) : (
+                showTwoFactor ? "Confirm" : "Login"
+              )}
             </Button>
           </form>
         </Form>

@@ -1,0 +1,54 @@
+
+> p-core@2.0.0 build
+> bun --bun next build --experimental-build-mode=compile
+
+   ▲ Next.js 15.5.6
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 18.4s
+   Collecting page data ...
+   Finalizing page optimization ...
+   Collecting build traces ...
+   Build ran with "compile" mode, to finalize the build run either "generate" or "generate-env" mode as well
+
+Route (app)                                 Size  First Load JS
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /accept
+├ ƒ /admin/version
+├ ƒ /api/[[...route]]
+├ ƒ /api/auth/[...nextauth]
+├ ƒ /api/dashboard/activity
+├ ƒ /api/dashboard/analytics
+├ ƒ /api/dashboard/stats
+├ ƒ /api/superadmin/organizations
+├ ƒ /api/superadmin/stats
+├ ƒ /api/superadmin/system/health
+├ ƒ /api/superadmin/system/logs
+├ ƒ /api/superadmin/users
+├ ƒ /api/superadmin/users/[userId]
+├ ƒ /api/superadmin/users/[userId]/role
+├ ƒ /auth/after-login
+├ ƒ /auth/error
+├ ƒ /auth/login
+├ ƒ /auth/new-password
+├ ƒ /auth/new-verification
+├ ƒ /auth/register
+├ ƒ /auth/reset
+├ ƒ /dashboard
+├ ƒ /hello-world
+├ ƒ /organization
+├ ƒ /organization/manage-member
+├ ƒ /settings
+└ ƒ /superadmin
++ First Load JS shared by all             102 kB
+  ├ chunks/1255-2105420c098dfa13.js      45.8 kB
+  ├ chunks/4bd1b696-100b9d70ed4e49c1.js  54.2 kB
+  └ other shared chunks (total)          2.03 kB
+
+
+ƒ Middleware                              173 kB
+
+ƒ  (Dynamic)  server-rendered on demand
+

@@ -20,6 +20,9 @@ export * from './feature-registry'
 // Organization Management (Combined org + organizations)
 export * from './organization-management'
 
+// Re-export commonly used hooks
+export { useOrgData } from './organization-management/context/org-context'
+
 // School Management Features (temporarily disabled: modules not present)
 // export * from './school-management/features/overview/components/overview-grid'
 // export * from './school-management/features/overview/components/stats-charts'

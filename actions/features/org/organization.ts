@@ -41,10 +41,13 @@ export async function getOrganizationsByUserId(userId: string | undefined): Prom
     },
   });
 
+  console.log('🔍 getOrganizationsByUserId raw data:', userOrganizations);
 
   const result = OrganizationsAPISchema.safeParse(userOrganizations);
   if (!result.success) {
-    console.error("Zod validation error in getOrganizationsByUserId:", result.error.flatten());
+    console.error("Zod validation error in getOrganizationsByUserId:", result.error);
+    console.error("Zod validation error details:", result.error.issues);
+    console.error("Data being validated:", userOrganizations);
     return { success: false, error: "Invalid organization data" };
   }
 
@@ -67,7 +70,7 @@ export async function createOrganization(userId: string, values: CreateOrganizat
     }
 
     // 3. Use a transaction for atomic creation of organization and user link.
-    const newOrganization = await prisma.$transaction(async (tx) => {
+    const newOrganization = await prisma.$transaction(async (tx: any) => {
       const organization = await tx.organization.create({
         data: {
           ...validatedData,
@@ -98,7 +101,7 @@ export async function createOrganization(userId: string, values: CreateOrganizat
     return {
       success: false,
       data: undefined,
-      error: apiError?.error || (typeof apiError === 'string' ? apiError : 'Failed to create organization'),
+      error: (apiError as any)?.error || (typeof apiError === 'string' ? apiError : 'Failed to create organization'),
     };
   }
 }

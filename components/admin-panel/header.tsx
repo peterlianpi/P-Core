@@ -1,8 +1,8 @@
 "use client";
 import React from "react";
-import { ModeToggle } from "../mode-toggle";
 import { CustomTrigger } from "./custom-trigger";
 import { Separator } from "../ui/separator";
+import ThemeSelector from "@/components/theme/theme-selector";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -15,8 +15,8 @@ import { useData } from "@/providers/data-provider";
 import VersionButtonServerPage from "../version-button/server-version-button";
 
 type Version = {
-  status: string;
   id: string;
+  name: string;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
@@ -51,8 +51,8 @@ export default function HeaderPage({ versions }: Props) {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <div className="fixed top-2 right-4">
-        <ModeToggle />
+      <div className="fixed top-2 right-4 flex items-center gap-2">
+        <ThemeSelector />
       </div>
     </div>
   );
