@@ -10,6 +10,3 @@ export * from './api';
 export * from './hooks';
 export * from './components/user-management-table';
 export * from './components/user-stats-cards';
-
-// Explicit exports for hooks to ensure they're available
-export { useCurrentUser, useUpdateProfile, useChangePassword, useDeleteAccount, useUsers, useUser, useUpdateUserRole, useToggleUserStatus, useUserStats } from './hooks';

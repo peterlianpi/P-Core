@@ -7,7 +7,7 @@
 'use client';
 
 import { Suspense, useState } from 'react';
-import { useCurrentUser, useUpdateProfile } from '@/features/user-management';
+import { useCurrentUser, useUpdateProfile } from '@/features/user-management/hooks';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, User, Settings } from 'lucide-react';

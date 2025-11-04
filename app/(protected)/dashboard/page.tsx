@@ -7,7 +7,7 @@
 'use client';
 
 import { Suspense } from 'react';
-import { useCurrentUser } from '@/features/user-management';
+import { useCurrentUser } from '@/features/user-management/hooks';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

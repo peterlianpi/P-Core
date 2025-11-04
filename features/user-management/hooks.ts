@@ -3,8 +3,6 @@
  * React Query hooks for user operations
  */
 
-'use client';
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
   UpdateProfileData,
