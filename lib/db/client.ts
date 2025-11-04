@@ -56,6 +56,34 @@ const createPrismaClient = () => {
           updatedAt: new Date(),
         },
         {
+          id: 'mock-admin-user',
+          name: 'Admin User',
+          email: 'admin@admin.com',
+          password: '$2a$12$KYRlu/KpzG2lez782RxaNe/gsY.GI5OxVa14AM6ZCxmdHxymFVkHi', // bcrypt hash for 'password'
+          emailVerified: new Date(),
+          role: 'ADMIN',
+          isActive: true,
+          isTwoFactorEnabled: false,
+          defaultOrgId: 'mock-org-1',
+          image: '/images/admin-user.jpg',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 'mock-superadmin-user',
+          name: 'Super Admin',
+          email: 'superadmin@superadmin.com',
+          password: '$2a$12$KYRlu/KpzG2lez782RxaNe/gsY.GI5OxVa14AM6ZCxmdHxymFVkHi', // bcrypt hash for 'password'
+          emailVerified: new Date(),
+          role: 'SUPERADMIN',
+          isActive: true,
+          isTwoFactorEnabled: false,
+          defaultOrgId: 'mock-org-1',
+          image: '/images/superadmin.jpg',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
           id: 'mock-admin-1',
           name: 'Admin User',
           email: 'admin@example.com',
@@ -261,9 +289,29 @@ const createPrismaClient = () => {
       ],
       telegramSettings: [
         {
-          id: 'mock-telegram-1',
+          id: 'mock-telegram-superadmin',
+          scope: 'SUPERADMIN',
+          userId: null,
+          telegramChatId: null,
+          telegramBotToken: null,
+          isActive: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 'mock-telegram-admin',
+          scope: 'ADMIN',
+          userId: null,
+          telegramChatId: null,
+          telegramBotToken: null,
+          isActive: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 'mock-telegram-user-1',
+          scope: 'USER',
           userId: 'mock-user-1',
-          role: 'USER',
           telegramChatId: null,
           telegramBotToken: null,
           isActive: false,
@@ -540,35 +588,6 @@ const createPrismaClient = () => {
         },
       },
 
-      telegramSetting: {
-        findFirst: ({ where }: any) => {
-          const setting = mockStorage.telegramSettings.find(s =>
-            s.userId === where.userId && s.role === where.role
-          );
-          return Promise.resolve(setting || null);
-        },
-        create: ({ data }: any) => {
-          const newSetting = {
-            ...data,
-            id: `mock-telegram-${Date.now()}`,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          };
-          mockStorage.telegramSettings.push(newSetting);
-          return Promise.resolve(newSetting);
-        },
-        update: ({ where, data }: any) => {
-          const index = mockStorage.telegramSettings.findIndex(s =>
-            s.userId === where.userId && s.role === where.role
-          );
-          if (index !== -1) {
-            mockStorage.telegramSettings[index] = { ...mockStorage.telegramSettings[index], ...data, updatedAt: new Date() };
-            return Promise.resolve(mockStorage.telegramSettings[index]);
-          }
-          return Promise.resolve(null);
-        },
-      },
-
       userOrganization: {
         findMany: ({ where, select }: any) => {
           console.log('🔍 userOrganization.findMany called with:', { where, select });
@@ -664,6 +683,70 @@ const createPrismaClient = () => {
 
           console.log('🔍 versionInfo.findMany returning:', results);
           return Promise.resolve(results);
+        },
+      },
+
+      telegramSetting: {
+        findMany: ({ where }: any) => {
+          console.log('🔍 telegramSetting.findMany called with:', { where });
+          let results = mockStorage.telegramSettings;
+
+          if (where) {
+            if (where.scope) {
+              results = results.filter(setting => setting.scope === where.scope);
+            }
+            if (where.userId) {
+              results = results.filter(setting => setting.userId === where.userId);
+            }
+            if (where.role) {
+              results = results.filter(setting => setting.role === where.role);
+            }
+            // Handle OR conditions for complex queries
+            if (where.OR && Array.isArray(where.OR)) {
+              results = results.filter(setting =>
+                where.OR.some((condition: any) =>
+                  (condition.scope && setting.scope === condition.scope) ||
+                  (condition.userId && setting.userId === condition.userId)
+                )
+              );
+            }
+          }
+
+          console.log('🔍 telegramSetting.findMany returning:', results);
+          return Promise.resolve(results);
+        },
+        create: ({ data }: any) => {
+          const newSetting = {
+            ...data,
+            id: `mock-telegram-${Date.now()}`,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+          mockStorage.telegramSettings.push(newSetting);
+          return Promise.resolve(newSetting);
+        },
+        update: ({ where, data }: any) => {
+          const index = mockStorage.telegramSettings.findIndex(s =>
+            (where.id && s.id === where.id) ||
+            (where.userId && where.role && s.userId === where.userId && s.role === where.role)
+          );
+          if (index !== -1) {
+            mockStorage.telegramSettings[index] = { ...mockStorage.telegramSettings[index], ...data, updatedAt: new Date() };
+            return Promise.resolve(mockStorage.telegramSettings[index]);
+          }
+          return Promise.resolve(null);
+        },
+      },
+
+      updateLog: {
+        create: ({ data }: any) => {
+          const newLog = {
+            ...data,
+            id: `mock-log-${Date.now()}`,
+            createdAt: new Date(),
+          };
+          mockStorage.updateLogs.push(newLog);
+          return Promise.resolve(newLog);
         },
       },
     };

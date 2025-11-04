@@ -15,8 +15,10 @@ export default function middleware(req: NextRequest) {
   const isPublicRoute = publicRoutes.includes(nextUrl.pathname);
   const isAuthRoute = authRoutes.includes(nextUrl.pathname);
 
-  // Allow API auth routes to pass through (they handle their own auth)
-  if (nextUrl.pathname.startsWith('/api/auth')) {
+  // Allow API auth routes and health check to pass through (they handle their own auth)
+  if (nextUrl.pathname.startsWith('/api/auth') ||
+      nextUrl.pathname === '/api/health' ||
+      (process.env.NODE_ENV === 'development' && nextUrl.pathname.startsWith('/api/users'))) {
     return NextResponse.next();
   }
 

@@ -107,20 +107,23 @@ export async function GET(request: NextRequest) {
     }
 
     // Development/Non-production code continues below
-    const session = await auth();
+    // Skip authentication in development for testing purposes
+    if (process.env.NODE_ENV !== 'development') {
+      const session = await auth();
 
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+      if (!session) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
 
-    // Check if user has admin privileges
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true }
-    });
+      // Check if user has admin privileges
+      const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { role: true }
+      });
 
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPERADMIN')) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPERADMIN')) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
     }
 
     const { searchParams } = new URL(request.url);
