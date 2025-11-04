@@ -3,6 +3,7 @@
  * Core API functions for user operations
  */
 
+import { UserRole } from './types';
 import type {
   UserProfile,
   UserWithOrganizations,
@@ -24,6 +25,22 @@ const API_BASE = '/api/users';
  * Get current user profile
  */
 export async function getCurrentUser(): Promise<UserWithOrganizations> {
+  // Use mock data in production
+  if (process.env.NODE_ENV === 'production') {
+    return Promise.resolve({
+      id: 'mock-user-1',
+      name: 'Demo User',
+      email: 'demo@example.com',
+      image: null,
+      role: UserRole.USER,
+      isTwoFactorEnabled: false,
+      defaultOrgId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      organizations: []
+    });
+  }
+
   const response = await fetch(`${API_BASE}/me`, {
     method: 'GET',
     credentials: 'include',
