@@ -19,20 +19,30 @@ export interface UserProfile extends User {
   lastLogin?: Date;
 }
 
-export interface LoginCredentials {
+export interface CreateUserData {
   email: string;
-  password: string;
-}
-
-export interface RegisterData {
-  email: string;
-  password: string;
   name: string;
+  role: UserRole;
+  isActive?: boolean;
 }
 
-export interface UpdateProfileData {
+export interface UpdateUserData {
   name?: string;
-  avatar?: string;
+  role?: UserRole;
+  isActive?: boolean;
+}
+
+export interface UserFilters {
+  role?: UserRole;
+  isActive?: boolean;
+  search?: string;
+}
+
+export interface UserListResponse {
+  users: User[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
 export interface AuthResponse {

@@ -1,7 +1,7 @@
 // features/school-management/site/config.ts
 "use client";
 
-import { Settings2, GroupIcon, GraduationCap, Users } from "lucide-react";
+import { Settings2, GroupIcon, GraduationCap, Users, ListTodo, Home } from "lucide-react";
 
 type Organizations = {
   organization: {
@@ -17,6 +17,22 @@ type Organizations = {
 
 function getSharedNavItems(pathname: string, hasOrg: boolean) {
   const sharedItems = [];
+
+  // Dashboard - always available
+  sharedItems.push({
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: Home,
+    isActive: pathname === "/dashboard",
+  });
+
+  // Tasks - always available
+  sharedItems.push({
+    title: "Tasks",
+    url: "/tasks",
+    icon: ListTodo,
+    isActive: pathname.startsWith("/tasks"),
+  });
 
   if (hasOrg) {
     sharedItems.push({

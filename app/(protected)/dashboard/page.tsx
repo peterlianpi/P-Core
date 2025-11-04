@@ -4,6 +4,8 @@
  * Comprehensive dashboard with data analysis for different user roles
  */
 
+'use client';
+
 import { Suspense } from 'react';
 import { useAuth } from '@/features/user-management/mvp/hooks';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -473,8 +475,3 @@ export default function DashboardPage() {
     </Suspense>
   );
 }
-
-export const metadata = {
-  title: 'Dashboard - P-Core',
-  description: 'Your P-Core dashboard with analytics and insights',
-};

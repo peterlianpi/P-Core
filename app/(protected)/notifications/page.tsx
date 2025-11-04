@@ -4,6 +4,8 @@
  * Notifications management page using the Notifications MVP components
  */
 
+'use client';
+
 import { Suspense } from 'react';
 import { NotificationList, NotificationPreferences } from '@/features/notifications/mvp/components';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -127,8 +129,3 @@ export default function NotificationsPage() {
     </Suspense>
   );
 }
-
-export const metadata = {
-  title: 'Notifications - P-Core',
-  description: 'View and manage your notifications',
-};

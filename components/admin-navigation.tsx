@@ -1,6 +1,8 @@
 // AdminNavigation - Sidebar navigation for P-Core management domains
 // See: /docs/FOLDER_STRUCTURE.md and PROJECT_DEVELOPMENT_GUIDELINES.md for architecture/conventions.
 
+'use client';
+
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";

@@ -27,7 +27,8 @@ import {
   Crown,
   Layers,
   MessageSquare,
-  Receipt
+  Receipt,
+  ListTodo
 } from "lucide-react";
 
 import {

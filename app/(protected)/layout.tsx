@@ -15,12 +15,12 @@ const ProtectedLayout = async ({ children }: ProtectedLayoutProps) => {
   const rawOrganizations = await getOrganizationsByUserId(user?.id);
   const allUsers = await getAllUsers();
 
-  const users = allUsers?.map((u) => ({
+  const users = allUsers?.map((u: any) => ({
     id: u.id,
     name: u.name ?? "",
     email: u.email,
     image: u.image,
-    organization: u.organizations.map((i) => ({
+    organization: u.organizations.map((i: any) => ({
       id: i.organizationId,
       role: i.role as OrganizationRole,
       status: i.status,

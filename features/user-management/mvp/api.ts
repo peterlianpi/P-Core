@@ -1,81 +1,91 @@
 /**
  * User Management MVP API
  *
- * Core API functions for user registration, authentication, and profile management
+ * Core API functions for user CRUD operations (create, read, update, delete users)
  */
 
-import { UserProfile, LoginCredentials, RegisterData, UpdateProfileData, AuthResponse } from './types';
+import { User, UserProfile, CreateUserData, UpdateUserData, UserFilters, UserListResponse } from './types';
 
-const API_BASE = '/api/auth';
+const API_BASE = '/api/users';
 
 /**
- * Register a new user
+ * Get users list with optional filtering and pagination
  */
-export async function registerUser(data: RegisterData): Promise<AuthResponse> {
-  const response = await fetch(`${API_BASE}/register`, {
+export async function getUsers(
+  filters?: UserFilters,
+  page: number = 1,
+  limit: number = 20
+): Promise<UserListResponse> {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+    ...(filters?.role && { role: filters.role }),
+    ...(filters?.isActive !== undefined && { isActive: filters.isActive.toString() }),
+    ...(filters?.search && { search: filters.search }),
+  });
+
+  const response = await fetch(`${API_BASE}?${params}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to get users');
+  }
+
+  return response.json();
+}
+
+/**
+ * Get a specific user by ID
+ */
+export async function getUserById(userId: string): Promise<User> {
+  const response = await fetch(`${API_BASE}/${userId}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to get user');
+  }
+
+  return response.json();
+}
+
+/**
+ * Create a new user
+ */
+export async function createUser(data: CreateUserData): Promise<User> {
+  const response = await fetch(API_BASE, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
+    credentials: 'include',
     body: JSON.stringify(data),
   });
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.message || 'Registration failed');
+    throw new Error(error.message || 'Failed to create user');
   }
 
   return response.json();
 }
 
 /**
- * Authenticate user login
+ * Update an existing user
  */
-export async function loginUser(credentials: LoginCredentials): Promise<AuthResponse> {
-  const response = await fetch(`${API_BASE}/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(credentials),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Login failed');
-  }
-
-  return response.json();
-}
-
-/**
- * Get current user profile
- */
-export async function getCurrentUser(): Promise<UserProfile> {
-  const response = await fetch(`${API_BASE}/me`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include', // Include cookies for session
-  });
-
-  if (!response.ok) {
-    if (response.status === 401) {
-      throw new Error('Not authenticated');
-    }
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to get user profile');
-  }
-
-  return response.json();
-}
-
-/**
- * Update user profile
- */
-export async function updateUserProfile(data: UpdateProfileData): Promise<UserProfile> {
-  const response = await fetch(`${API_BASE}/profile`, {
+export async function updateUser(userId: string, data: UpdateUserData): Promise<User> {
+  const response = await fetch(`${API_BASE}/${userId}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -86,24 +96,67 @@ export async function updateUserProfile(data: UpdateProfileData): Promise<UserPr
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.message || 'Profile update failed');
+    throw new Error(error.message || 'Failed to update user');
   }
 
   return response.json();
 }
 
 /**
- * Logout user
+ * Delete a user
  */
-export async function logoutUser(): Promise<void> {
-  const response = await fetch(`${API_BASE}/logout`, {
-    method: 'POST',
+export async function deleteUser(userId: string): Promise<void> {
+  const response = await fetch(`${API_BASE}/${userId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
     credentials: 'include',
   });
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.message || 'Logout failed');
+    throw new Error(error.message || 'Failed to delete user');
+  }
+}
+
+/**
+ * Bulk update users
+ */
+export async function bulkUpdateUsers(userIds: string[], data: UpdateUserData): Promise<User[]> {
+  const response = await fetch(`${API_BASE}/bulk`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify({ userIds, data }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to bulk update users');
+  }
+
+  return response.json();
+}
+
+/**
+ * Bulk delete users
+ */
+export async function bulkDeleteUsers(userIds: string[]): Promise<void> {
+  const response = await fetch(`${API_BASE}/bulk`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify({ userIds }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to bulk delete users');
   }
 }
 

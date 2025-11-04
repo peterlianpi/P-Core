@@ -69,6 +69,7 @@ const createPrismaClient = () => {
           password: '$2a$12$KYRlu/KpzG2lez782RxaNe/gsY.GI5OxVa14AM6ZCxmdHxymFVkHi', // bcrypt hash for 'password'
           emailVerified: new Date(),
           role: 'USER',
+          isActive: true,
           isTwoFactorEnabled: false,
           defaultOrgId: 'mock-org-1',
           image: '/images/demo-user.jpg',
@@ -82,6 +83,7 @@ const createPrismaClient = () => {
           password: '$2a$12$KYRlu/KpzG2lez782RxaNe/gsY.GI5OxVa14AM6ZCxmdHxymFVkHi', // bcrypt hash for 'password'
           emailVerified: new Date(),
           role: 'ADMIN',
+          isActive: true,
           isTwoFactorEnabled: false,
           defaultOrgId: 'mock-org-1',
           image: '/images/admin-user.jpg',
@@ -95,6 +97,7 @@ const createPrismaClient = () => {
           password: '$2a$12$KYRlu/KpzG2lez782RxaNe/gsY.GI5OxVa14AM6ZCxmdHxymFVkHi', // bcrypt hash for 'password'
           emailVerified: new Date(),
           role: 'SUPERADMIN',
+          isActive: true,
           isTwoFactorEnabled: true,
           defaultOrgId: 'mock-org-1',
           image: '/images/superadmin.jpg',
@@ -108,6 +111,7 @@ const createPrismaClient = () => {
           password: '$2a$12$KYRlu/KpzG2lez782RxaNe/gsY.GI5OxVa14AM6ZCxmdHxymFVkHi', // bcrypt hash for 'password'
           emailVerified: new Date(),
           role: 'USER',
+          isActive: false,
           isTwoFactorEnabled: false,
           defaultOrgId: 'mock-org-1',
           image: '/images/teacher.jpg',
@@ -121,6 +125,7 @@ const createPrismaClient = () => {
           password: '$2a$12$KYRlu/KpzG2lez782RxaNe/gsY.GI5OxVa14AM6ZCxmdHxymFVkHi', // bcrypt hash for 'password'
           emailVerified: new Date(),
           role: 'USER',
+          isActive: true,
           isTwoFactorEnabled: false,
           defaultOrgId: 'mock-org-2',
           image: '/images/student.jpg',
@@ -339,19 +344,24 @@ const createPrismaClient = () => {
             if (where.email) {
               results = results.filter(u => u.email === where.email);
             }
+            if (where.isActive !== undefined) {
+              results = results.filter(u => u.isActive === where.isActive);
+            }
             // Add other where conditions as needed
           }
 
           // Handle select with relationships
+          console.log('🔍 Processing select:', select, 'isTruthy:', !!select);
           if (select) {
             results = results.map(user => {
               const selectedUser: any = {};
 
-              // Copy selected fields
-              if (select.id) selectedUser.id = user.id;
-              if (select.name) selectedUser.name = user.name;
-              if (select.email) selectedUser.email = user.email;
-              if (select.image) selectedUser.image = user.image;
+              // Copy all requested fields - only include fields explicitly set to true
+              Object.keys(select).forEach(key => {
+                if (select[key] === true && user[key] !== undefined) {
+                  selectedUser[key] = user[key];
+                }
+              });
 
               // Handle organizations relationship
               if (select.organizations) {
@@ -364,6 +374,7 @@ const createPrismaClient = () => {
                 console.log(`🔗 User ${user.id} has ${selectedUser.organizations.length} organizations`);
               }
 
+              console.log(`🔍 Selected user ${user.id}:`, selectedUser);
               return selectedUser;
             });
           }
@@ -381,14 +392,38 @@ const createPrismaClient = () => {
           mockStorage.users.push(newUser);
           return Promise.resolve(newUser);
         },
-        update: ({ where, data }: any) => {
+        update: ({ where, data, select }: any) => {
           const index = mockStorage.users.findIndex(u =>
             (where.id && u.id === where.id) ||
             (where.email && u.email === where.email)
           );
           if (index !== -1) {
             mockStorage.users[index] = { ...mockStorage.users[index], ...data, updatedAt: new Date() };
-            return Promise.resolve(mockStorage.users[index]);
+            const updatedUser = mockStorage.users[index];
+
+            // Apply select if specified
+            if (select) {
+              const selectedUser: any = {};
+              Object.keys(select).forEach(key => {
+                if (select[key] === true && updatedUser[key] !== undefined) {
+                  selectedUser[key] = updatedUser[key];
+                }
+              });
+              return Promise.resolve(selectedUser);
+            }
+
+            return Promise.resolve(updatedUser);
+          }
+          return Promise.resolve(null);
+        },
+        delete: ({ where }: any) => {
+          const index = mockStorage.users.findIndex(u =>
+            (where.id && u.id === where.id) ||
+            (where.email && u.email === where.email)
+          );
+          if (index !== -1) {
+            const deletedUser = mockStorage.users.splice(index, 1)[0];
+            return Promise.resolve(deletedUser);
           }
           return Promise.resolve(null);
         },

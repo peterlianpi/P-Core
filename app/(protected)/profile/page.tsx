@@ -4,6 +4,8 @@
  * Profile management page using the User Management MVP components
  */
 
+'use client';
+
 import { Suspense } from 'react';
 import { ProfileForm, UserProfileDisplay } from '@/features/user-management/mvp/components';
 import { useAuth } from '@/features/user-management/mvp/hooks';
@@ -138,8 +140,3 @@ export default function ProfilePage() {
     </Suspense>
   );
 }
-
-export const metadata = {
-  title: 'My Profile - P-Core',
-  description: 'Manage your P-Core account settings',
-};
