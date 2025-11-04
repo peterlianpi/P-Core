@@ -8,3 +8,5 @@
 export * from './types';
 export * from './api';
 export * from './hooks';
+export * from './components/user-management-table';
+export * from './components/user-stats-cards';

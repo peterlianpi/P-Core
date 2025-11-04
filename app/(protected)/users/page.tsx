@@ -5,8 +5,8 @@
  * Uses tabbed interface instead of sidebar navigation for cleaner UX
  */
 
-import { UserManagement } from '@/features/user-management/mvp/components';
+import { UserManagementTable } from '@/features/user-management/components/user-management-table';
 
 export default function UserManagementPage() {
-  return <UserManagement />;
+  return <UserManagementTable />;
 }

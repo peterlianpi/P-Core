@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/auth';
 import { prisma } from '@/lib/db/client';
-import { UserRole } from '@/features/user-management/mvp/types';
+import { UserRole } from '@/features/user-management/types';
 
 // GET /api/users - Get users list with filtering and pagination
 export async function GET(request: NextRequest) {

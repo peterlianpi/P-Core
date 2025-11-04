@@ -6,19 +6,18 @@
 
 'use client';
 
-import { Suspense } from 'react';
-import { ProfileForm, UserProfileDisplay } from '@/features/user-management/mvp/components';
-import { useAuth } from '@/features/user-management/mvp/hooks';
+import { Suspense, useState } from 'react';
+import { useCurrentUser, useUpdateProfile } from '@/features/user-management';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, User, Settings } from 'lucide-react';
 
 function ProfilePageContent() {
-  const { user, isLoading } = useAuth();
+  const { data: user, isLoading } = useCurrentUser();
+  const updateProfile = useUpdateProfile();
 
-  const handleProfileUpdate = (updatedUser: any) => {
-    console.log('Profile updated:', updatedUser);
-    // Optionally refresh the page or show success message
+  const handleProfileUpdate = (data: any) => {
+    updateProfile.mutate(data);
   };
 
   const handleLogout = () => {
@@ -94,11 +93,11 @@ function ProfilePageContent() {
                       <p className="text-sm font-medium text-muted-foreground">Status</p>
                       <p className="text-sm">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          user.isActive
+                          user.isTwoFactorEnabled
                             ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
                         }`}>
-                          {user.isActive ? 'Active' : 'Inactive'}
+                          {user.isTwoFactorEnabled ? '2FA Enabled' : '2FA Disabled'}
                         </span>
                       </p>
                     </div>
@@ -117,13 +116,107 @@ function ProfilePageContent() {
               <ProfileForm
                 user={user}
                 onSuccess={handleProfileUpdate}
-                onError={(error) => console.error('Profile update error:', error)}
+                onError={(error: Error) => console.error('Profile update error:', error)}
               />
             </div>
           </TabsContent>
         </Tabs>
       </div>
     </div>
+  );
+}
+
+// Simple profile display component
+function UserProfileDisplay({ user, onLogout }: { user: any; onLogout: () => void }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <User className="h-5 w-5" />
+          Profile Information
+        </CardTitle>
+        <CardDescription>
+          Your personal account details
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center gap-4">
+          <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+            <User className="h-8 w-8 text-primary" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold">{user.name || 'No name'}</h3>
+            <p className="text-sm text-muted-foreground">{user.email}</p>
+          </div>
+        </div>
+
+        <div className="pt-4">
+          <button
+            onClick={onLogout}
+            className="w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors"
+          >
+            Sign Out
+          </button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Simple profile form component
+function ProfileForm({ user, onSuccess, onError }: { user: any; onSuccess: (data: any) => void; onError: (error: Error) => void }) {
+  const [name, setName] = useState(user.name || '');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSuccess({ name });
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Edit Profile</CardTitle>
+        <CardDescription>
+          Update your personal information
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <label htmlFor="name" className="text-sm font-medium">Full Name</label>
+            <input
+              id="name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-3 py-2 border rounded-md"
+              placeholder="Enter your full name"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="email" className="text-sm font-medium">Email</label>
+            <input
+              id="email"
+              type="email"
+              value={user.email}
+              disabled
+              className="w-full px-3 py-2 border rounded-md bg-muted"
+            />
+            <p className="text-xs text-muted-foreground">
+              Email cannot be changed. Contact support if needed.
+            </p>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+          >
+            Save Changes
+          </button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
 

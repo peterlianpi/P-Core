@@ -7,7 +7,7 @@
 'use client';
 
 import { Suspense } from 'react';
-import { useAuth } from '@/features/user-management/mvp/hooks';
+import { useCurrentUser } from '@/features/user-management';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 
 function DashboardPageContent() {
-  const { user, isLoading } = useAuth();
+  const { data: user, isLoading } = useCurrentUser();
 
   if (isLoading) {
     return (
@@ -72,7 +72,7 @@ function DashboardPageContent() {
               </p>
             </div>
             <div className="flex items-center gap-4">
-              <Badge variant={user.isActive ? "default" : "secondary"}>
+              <Badge variant="default">
                 {user.role}
               </Badge>
               <Button variant="outline" size="sm">

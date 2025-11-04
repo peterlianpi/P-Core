@@ -3,8 +3,10 @@
  * Core type definitions for user management operations
  */
 
-import type { UserRole } from '@/shared/types/user-role';
+import { UserRole } from '@/shared/types/user-role';
 import type { OrganizationRole } from '@/shared/types/organization-role';
+
+export { UserRole } from '@/shared/types/user-role';
 
 export interface UserProfile {
   id: string;
