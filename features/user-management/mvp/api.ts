@@ -161,6 +161,26 @@ export async function bulkDeleteUsers(userIds: string[]): Promise<void> {
 }
 
 /**
+ * Get current authenticated user
+ */
+export async function getCurrentUser(): Promise<UserProfile> {
+  const response = await fetch('/api/auth/me', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to get current user');
+  }
+
+  return response.json();
+}
+
+/**
  * Validate password strength
  */
 export function validatePassword(password: string): { isValid: boolean; errors: string[] } {

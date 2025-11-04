@@ -7,7 +7,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { User, CreateUserData, UpdateUserData, UserFilters, UserRole } from './types';
+import { User, UserProfile, CreateUserData, UpdateUserData, UserFilters, UserRole } from './types';
 import { getUsers, createUser, updateUser, deleteUser } from './api';
 
 // shadcn/ui components
@@ -385,9 +385,9 @@ function UsersTab({ onUserUpdate }: { onUserUpdate?: () => void }) {
                         <div className="flex items-center gap-2">
                           <Avatar className="h-6 w-6 flex-shrink-0 hidden sm:flex">
                             <AvatarImage src="" />
-                            <AvatarFallback className="text-xs">
-                              {user.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : user.email[0].toUpperCase()}
-                            </AvatarFallback>
+            <AvatarFallback className="text-xs">
+              {user.name ? user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : user.email[0].toUpperCase()}
+            </AvatarFallback>
                           </Avatar>
                           <div className="min-w-0 flex-1 overflow-hidden">
                             <p className="font-medium truncate" title={user.name || 'No name'}>{user.name || 'No name'}</p>
@@ -710,5 +710,152 @@ function UpdateUserForm({ user, onSubmit, onCancel }: UpdateUserFormProps) {
         </Button>
       </div>
     </form>
+  );
+}
+
+// Profile Components
+interface UserProfileDisplayProps {
+  user: UserProfile;
+  onLogout: () => void;
+}
+
+export function UserProfileDisplay({ user, onLogout }: UserProfileDisplayProps) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <UserIcon className="h-5 w-5" />
+          Profile Information
+        </CardTitle>
+        <CardDescription>
+          Your personal account details
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center gap-4">
+          <Avatar className="h-16 w-16">
+            <AvatarImage src={user.avatar} />
+            <AvatarFallback className="text-lg">
+              {user.name ? user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : user.email[0].toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <h3 className="text-lg font-semibold">{user.name || 'No name'}</h3>
+            <p className="text-sm text-muted-foreground">{user.email}</p>
+            <Badge variant="secondary" className="mt-1">
+              {user.role.toLowerCase()}
+            </Badge>
+          </div>
+        </div>
+
+        <Separator />
+
+        <div className="space-y-3">
+          <div className="flex justify-between">
+            <span className="text-sm font-medium">Status</span>
+            <Badge variant={user.isActive ? 'default' : 'secondary'}>
+              {user.isActive ? 'Active' : 'Inactive'}
+            </Badge>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-sm font-medium">Member Since</span>
+            <span className="text-sm text-muted-foreground">
+              {new Date(user.createdAt).toLocaleDateString()}
+            </span>
+          </div>
+        </div>
+
+        <Separator />
+
+        <Button variant="outline" onClick={onLogout} className="w-full">
+          Sign Out
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+interface ProfileFormProps {
+  user: UserProfile;
+  onSuccess: (user: UserProfile) => void;
+  onError: (error: Error) => void;
+}
+
+export function ProfileForm({ user, onSuccess, onError }: ProfileFormProps) {
+  const [formData, setFormData] = useState({
+    name: user.name || '',
+    email: user.email,
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setErrors({});
+
+    try {
+      // Update user profile
+      const updatedUser = await updateUser(user.id, {
+        name: formData.name,
+      });
+
+      onSuccess(updatedUser);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to update profile');
+      setErrors({ general: error.message });
+      onError(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Edit Profile</CardTitle>
+        <CardDescription>
+          Update your personal information
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="profile-name">Full Name</Label>
+            <Input
+              id="profile-name"
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              placeholder="Enter your full name"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="profile-email">Email</Label>
+            <Input
+              id="profile-email"
+              type="email"
+              value={formData.email}
+              disabled
+              className="bg-muted"
+            />
+            <p className="text-xs text-muted-foreground">
+              Email cannot be changed. Contact support if needed.
+            </p>
+          </div>
+
+          {errors.general && (
+            <Alert variant="destructive">
+              <AlertDescription>{errors.general}</AlertDescription>
+            </Alert>
+          )}
+
+          <Button type="submit" disabled={isLoading} className="w-full">
+            {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            Save Changes
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

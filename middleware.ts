@@ -1,29 +1,26 @@
-// EDGE RUNTIME FIX: Use edge-compatible auth configuration
-// This prevents Prisma client from being bundled in middleware
-import { auth } from "./lib/auth/auth.edge";
+// LIGHTWEIGHT EDGE-COMPATIBLE MIDDLEWARE
+// This middleware only checks for session cookies without importing heavy dependencies
+// Authorization logic is handled in API routes to keep middleware lightweight
 import {
-  apiAuthPrefix,
   authRoutes,
   DEFAULT_LOGIN_REDIRECT,
   publicRoutes,
 } from "./lib/auth/routes";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export default auth((req) => {
+export default function middleware(req: NextRequest) {
   const { nextUrl } = req;
-  const isLoggedIn = !!req.auth;
+  const isLoggedIn = checkIfLoggedIn(req);
 
-  const isApiAuthRoute = nextUrl.pathname.startsWith(apiAuthPrefix);
   const isPublicRoute = publicRoutes.includes(nextUrl.pathname);
   const isAuthRoute = authRoutes.includes(nextUrl.pathname);
 
-  // Note: Security headers are now consistently applied by Hono in the API layer.
-  // Removing them from middleware avoids duplication and potential conflicts.
-
-  if (isApiAuthRoute) {
+  // Allow API auth routes to pass through (they handle their own auth)
+  if (nextUrl.pathname.startsWith('/api/auth')) {
     return NextResponse.next();
   }
 
+  // Handle auth routes (login, register, etc.)
   if (isAuthRoute) {
     if (isLoggedIn) {
       // SECURITY FIX: Prevent redirect loops
@@ -34,6 +31,7 @@ export default auth((req) => {
     return NextResponse.next();
   }
 
+  // Redirect to login if not logged in and not on a public route
   if (!isLoggedIn && !isPublicRoute) {
     let callbackUrl = nextUrl.pathname;
     if (nextUrl.search) {
@@ -45,9 +43,17 @@ export default auth((req) => {
       new URL(`/auth/login?callbackUrl=${encodedCallbackUrl}`, nextUrl)
     );
   }
-  
+
   return NextResponse.next();
-});
+}
+
+// Lightweight function to check if user is logged in by checking for session cookie
+function checkIfLoggedIn(req: NextRequest): boolean {
+  // Check for NextAuth session token cookie
+  const cookies = req.cookies;
+  return cookies.has('next-auth.session-token') ||
+         cookies.has('__Secure-next-auth.session-token');
+}
 
 // Optionally, don't invoke Middleware on some paths
 export const config = {
