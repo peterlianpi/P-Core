@@ -12,38 +12,17 @@ declare global {
 
 // Database configuration optimized for serverless environments
 const createPrismaClient = () => {
+  // Check if we should use mock database
+  const useMock = process.env.USE_MOCK_DB === 'true' || process.env.DATABASE_URL?.includes('mock');
+
   console.log('🔧 DATABASE_URL:', process.env.DATABASE_URL);
-  console.log('🔧 Should use mock:', process.env.DATABASE_URL?.includes('mock'));
-
-  const client = new PrismaClient({
-    log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
-
-    // Connection pool configuration for optimal performance
-    datasources: {
-      db: {
-        url: process.env.DATABASE_URL,
-      },
-    },
-  });
-
-  // Add middleware for Row-Level Security (RLS) context setting (for real database)
-  if (!process.env.DATABASE_URL?.includes('mock')) {
-    (client as any).$use(async (params: any, next: any) => {
-      // Extract orgId from the query params if available
-      const orgId = extractOrgIdFromParams(params);
-
-      if (orgId) {
-        // Set the organization context for RLS policies
-        await (client as any).$executeRaw`SELECT set_config('app.current_org_id', ${orgId}, true)`;
-      }
-
-      return next(params);
-    });
-  }
+  console.log('🔧 USE_MOCK_DB:', process.env.USE_MOCK_DB);
+  console.log('🔧 Should use mock:', useMock);
 
   // For development with mock data, create a simple in-memory mock client
-  if (process.env.DATABASE_URL?.includes('mock')) {
+  if (useMock) {
     console.log('🔧 Using mock database for development');
+
     // In-memory storage for mock data (server-side only)
     const mockStorage: {
       users: any[];
@@ -691,6 +670,31 @@ const createPrismaClient = () => {
 
     return mockClient as any;
   }
+
+  // Create real Prisma client for production
+  const client = new PrismaClient({
+    log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+
+    // Connection pool configuration for optimal performance
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL,
+      },
+    },
+  });
+
+  // Add middleware for Row-Level Security (RLS) context setting (for real database)
+  (client as any).$use(async (params: any, next: any) => {
+    // Extract orgId from the query params if available
+    const orgId = extractOrgIdFromParams(params);
+
+    if (orgId) {
+      // Set the organization context for RLS policies
+      await (client as any).$executeRaw`SELECT set_config('app.current_org_id', ${orgId}, true)`;
+    }
+
+    return next(params);
+  });
 
   return client;
 };

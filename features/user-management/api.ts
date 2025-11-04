@@ -25,8 +25,8 @@ const API_BASE = '/api/users';
  * Get current user profile
  */
 export async function getCurrentUser(): Promise<UserWithOrganizations> {
-  // Use mock data in production
-  if (process.env.NODE_ENV === 'production') {
+  // Use mock data if USE_MOCK_DB is set to true
+  if (process.env.USE_MOCK_DB === 'true') {
     return Promise.resolve({
       id: 'mock-user-1',
       name: 'Demo User',

@@ -12,8 +12,8 @@ import { UserRole } from '@/features/user-management/types';
 // GET /api/users - Get users list with filtering and pagination
 export async function GET(request: NextRequest) {
   try {
-    // Use mock data in production - skip database entirely
-    if (process.env.NODE_ENV === 'production') {
+    // Use mock data if USE_MOCK_DB is set to true - skip database entirely
+    if (process.env.USE_MOCK_DB === 'true') {
       const { searchParams } = new URL(request.url);
       const page = parseInt(searchParams.get('page') || '1');
       const limit = parseInt(searchParams.get('limit') || '20');
