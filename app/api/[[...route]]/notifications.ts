@@ -17,14 +17,13 @@ import { handleError } from "@/lib/error-handler";
 const getNotificationsSchema = z.object({
   limit: z.string().optional().transform(val => val ? parseInt(val) : 20),
   offset: z.string().optional().transform(val => val ? parseInt(val) : 0),
-})
+});
 
 const markAsReadSchema = z.object({
   notificationId: z.string().min(1, "Notification ID is required"),
-})
-const notifications = new Hono()
+});
 
-
+const notifications = new Hono();
 
 // ============================================================================
 // ROUTES
@@ -34,7 +33,7 @@ const notifications = new Hono()
  * GET /api/notifications
  * Get user notifications with pagination
  */
-.get(
+notifications.get(
   "/",
   zValidator("query", getNotificationsSchema),
   async (c) => {
@@ -77,7 +76,7 @@ const notifications = new Hono()
             }
           }
         }
-      })
+      });
 
       // Transform to match expected format
       const notifications = userNotifications.map(notification => {
@@ -117,13 +116,13 @@ const notifications = new Hono()
       return handleError(c, error, 500, 'DATABASE_ERROR');
     }
   }
-)
+);
 
 /**
  * GET /api/notifications/unread-count
  * Get unread notification count for current user
  */
-.get("/unread-count", async (c) => {
+notifications.get("/unread-count", async (c) => {
   try {
     const user = await currentUser();
     if (!user || !user.id) {
@@ -158,13 +157,13 @@ const notifications = new Hono()
   } catch (error) {
     return handleError(c, error, 500, 'DATABASE_ERROR');
   }
-})
+});
 
 /**
  * PUT /api/notifications/:notificationId/read
  * Mark a specific notification as read
  */
-.put(
+notifications.put(
   "/:notificationId/read",
   zValidator("param", markAsReadSchema),
   async (c) => {
@@ -217,13 +216,13 @@ const notifications = new Hono()
       return handleError(c, error, 500, 'UPDATE_ERROR');
     }
   }
-)
+);
 
 /**
  * PUT /api/notifications/read-all
  * Mark all notifications as read for current user
  */
-.put("/read-all", async (c) => {
+notifications.put("/read-all", async (c) => {
   try {
     const user = await currentUser();
     if (!user || !user.id) {
@@ -263,13 +262,13 @@ const notifications = new Hono()
   } catch (error) {
     return handleError(c, error, 500, 'UPDATE_ERROR');
   }
-})
+});
 
 /**
  * DELETE /api/notifications/:notificationId
  * Delete a specific notification
  */
-.delete(
+notifications.delete(
   "/:notificationId",
   zValidator("param", markAsReadSchema),
   async (c) => {
@@ -302,13 +301,13 @@ const notifications = new Hono()
       return handleError(c, error, 500, 'DELETION_ERROR');
     }
   }
-)
+);
 
 /**
  * POST /api/notifications/bulk-delete
  * Bulk delete notifications
  */
-.post(
+notifications.post(
   "/bulk-delete",
   zValidator(
     "json",
@@ -340,13 +339,13 @@ const notifications = new Hono()
       return handleError(c, error, 500, 'DELETION_ERROR');
     }
   }
-)
+);
 
 /**
  * POST /api/notifications/bulk-read
  * Bulk mark notifications as read
  */
-.post(
+notifications.post(
   "/bulk-read",
   zValidator(
     "json",
@@ -393,6 +392,6 @@ const notifications = new Hono()
       return handleError(c, error, 500, 'UPDATE_ERROR');
     }
   }
-)
+);
 
 export default notifications;

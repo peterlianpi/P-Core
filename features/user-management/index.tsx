@@ -2,6 +2,13 @@
 // Provides UI to manage users: list, add, edit, delete, and manage roles.
 // Follows feature-based structure; see /docs/PROJECT_DEVELOPMENT_GUIDELINES.md.
 
+// Re-export all hooks, types, and API functions
+export * from './types';
+export * from './api';
+export * from './hooks';
+export * from './components/user-management-table';
+export * from './components/user-stats-cards';
+
 import React from "react";
 import { AdminLayout } from "../../components/admin-layout";
 import { UserManagementTable } from "./components/user-management-table";
