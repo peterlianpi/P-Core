@@ -1,11 +1,11 @@
 "use server";
 import * as z from "zod";
 import { NewPasswordSchema } from "@/lib/schemas";
-import { getPasswordResetTokenByToken } from "@/data/password-reset-token";
+import { getPasswordResetTokenByToken } from "@/data/auth/password-reset-token";
 import { getUserByEmail } from "@/data/user";
 import bcrypt from "bcryptjs";
 import { trackPasswordChange } from "./track-system-activities";
-import { prisma } from "@/lib/db/client";
+import { db } from "@/lib/db";
 
 export const newPassword = async (
   values: z.infer<typeof NewPasswordSchema>,
@@ -38,12 +38,12 @@ export const newPassword = async (
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  await prisma.user.update({
+  await db.user.update({
     where: { id: existingUser.id },
     data: { password: hashedPassword },
   });
 
-  await prisma.passwordResetToken.delete({
+  await db.passwordResetToken.delete({
     where: { id: existingToken.id },
   });
 

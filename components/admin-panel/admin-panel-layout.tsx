@@ -1,37 +1,19 @@
-"use server";
-
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebarEnhanced } from "@/components/app-sidebar-enhanced";
-import HeaderPage from "./header";
-import { getAllVersions } from "@/actions/features/versions/get-version";
-import AddTeamPage from "./add-team";
-import { getOrganizationsByUserId } from "@/actions/features/org/organization";
-import { currentUser } from "@/lib/auth";
-import { PerformanceMonitorWrapper } from "./performance-monitor-wrapper";
+/**
+ * Simplified Admin Panel Layout for Frontend-Only System
+ * No complex organization management needed
+ */
 
 interface ProtectedLayoutProps {
   children: React.ReactNode;
 }
 
 export async function AdminPanelLayoutPage({ children }: ProtectedLayoutProps) {
-  const user = await currentUser();
-  const versions = await getAllVersions();
-  const organizations = await getOrganizationsByUserId(user?.id);
-
+  // Simple wrapper for admin panel pages
   return (
-    <SidebarProvider>
-      <AppSidebarEnhanced organizations={organizations.data} />
-      <SidebarInset>
-        <header className="flex w-full sticky top-0 opacity-95 z-10 bg-secondary mb-2 h-[53px] shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-[53px]">
-          <HeaderPage versions={versions.data} />
-        </header>
-
-        <div className="relative flex flex-1 flex-col gap-4 p-4 pt-0 w-full">
-          <AddTeamPage />
-          {children}
-        </div>
-      </SidebarInset>
-      <PerformanceMonitorWrapper />
-    </SidebarProvider>
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8">
+        {children}
+      </div>
+    </div>
   );
 }

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { newVerification } from "@/actions/auth/new-verification";
-import { prisma } from "@/lib/db/client";
+import { prisma } from "@/lib/db";
 
 // Clean up before each test for isolation
 beforeEach(async () => {

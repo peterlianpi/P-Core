@@ -3,12 +3,38 @@
 // Replaces manual orgId filtering with automated RLS-based security
 
 import { Context } from "hono";
-import { prisma } from "@/lib/db/client";
 import { auth } from "@/lib/auth/auth";
 import { ContentfulStatusCode } from "hono/utils/http-status";
+import { db as prisma } from "@/lib/db";
 
-// Types for organization context
-export interface OrganizationContext {
+// Organization data interface
+export interface Organization {
+  id: string;
+  name: string;
+  type: 'school' | 'church' | 'library' | 'general';
+  subdomain: string;
+  domain: string;
+  settings: {
+    theme: {
+      primaryColor: string;
+      logo: string;
+      favicon: string;
+    };
+    features: {
+      schoolManagement: boolean;
+      churchManagement: boolean;
+      libraryManagement: boolean;
+    };
+    branding: {
+      siteName: string;
+      tagline: string;
+      description: string;
+    };
+  };
+}
+
+// User organization context for API operations
+export interface UserOrganizationContext {
   organizationId: string;
   userId: string;
   role: string;
@@ -174,7 +200,7 @@ export async function clearOrganizationContext(): Promise<void> {
 export async function validateOrganizationAccess(
   userId: string,
   organizationId: string
-): Promise<OrganizationContext> {
+): Promise<UserOrganizationContext> {
   try {
     // First check if user is a SUPERADMIN
     const user = await prisma.user.findUnique({
@@ -227,7 +253,8 @@ export async function validateOrganizationAccess(
     }
 
     // Get permissions for the user's role
-    const permissions = ROLE_PERMISSIONS[userOrg.role] || [];
+    const roleKey = userOrg.role as keyof typeof ROLE_PERMISSIONS;
+    const permissions = ROLE_PERMISSIONS[roleKey] || [];
 
     return {
       organizationId,
@@ -239,7 +266,7 @@ export async function validateOrganizationAccess(
     if (error instanceof TenantSecurityError) {
       throw error;
     }
-    
+
     throw new TenantSecurityError(
       "Failed to validate organization access",
       "VALIDATION_FAILED",
@@ -252,10 +279,10 @@ export async function validateOrganizationAccess(
  * Check if user has specific permission
  */
 export function hasPermission(
-  context: OrganizationContext,
+  context: UserOrganizationContext,
   permission: string
 ): boolean {
-  return context.permissions.includes(permission) || 
+  return context.permissions.includes(permission) ||
          context.permissions.includes("read:all") ||
          context.permissions.includes("write:all");
 }
@@ -341,9 +368,9 @@ export async function organizationSecurityMiddleware(
 /**
  * Get organization context from Hono context
  */
-export function getOrganizationContext(c: Context): OrganizationContext {
+export function getOrganizationContext(c: Context): UserOrganizationContext {
   const context = c.get("orgContext");
-  
+
   if (!context) {
     throw new TenantSecurityError(
       "Organization context not found",
@@ -358,7 +385,7 @@ export function getOrganizationContext(c: Context): OrganizationContext {
 /**
  * Get organization context from Hono context (optional - returns null if not found)
  */
-export function getOptionalOrganizationContext(c: Context): OrganizationContext | null {
+export function getOptionalOrganizationContext(c: Context): UserOrganizationContext | null {
   const context = c.get("orgContext");
   return context || null;
 }

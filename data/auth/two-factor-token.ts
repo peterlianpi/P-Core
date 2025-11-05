@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db/client";
+import { db } from "@/lib/db";
 import crypto from "crypto";
 
 /**
@@ -10,7 +10,7 @@ export const getTwoFactorTokenByToken = async (token: string) => {
   try {
     // SECURITY: Tokens are stored hashed; hash the incoming token before lookup.
     const hashed = crypto.createHash("sha256").update(token).digest("hex");
-    const twoFactorToken = await prisma.twoFactorToken.findUnique({
+    const twoFactorToken = await db.twoFactorToken.findUnique({
       where: { token: hashed },
     });
     return twoFactorToken;
@@ -27,7 +27,7 @@ export const getTwoFactorTokenByToken = async (token: string) => {
  */
 export const getTwoFactorTokenByEmail = async (email: string) => {
   try {
-    const twoFactorToken = await prisma.twoFactorToken.findFirst({
+    const twoFactorToken = await db.twoFactorToken.findFirst({
       where: { email },
     });
     return twoFactorToken;

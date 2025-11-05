@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { mockDashboardStats } from '@/data/dashboard/mock-dashboard';
 
 export interface ActivityQueryParams {
   orgId: string;
@@ -26,7 +27,7 @@ export const dashboardActivityKeys = {
     [...dashboardActivityKeys.lists(), params] as const,
 };
 
-// API function using fetch
+// API function using mock data
 async function getDashboardActivity(params: ActivityQueryParams): Promise<{
   data: {
     activities: DashboardActivity[];
@@ -34,25 +35,41 @@ async function getDashboardActivity(params: ActivityQueryParams): Promise<{
     hasMore: boolean;
   };
 }> {
-  const queryParams = new URLSearchParams();
-  
-  if (params.limit) queryParams.set("limit", params.limit.toString());
-  if (params.offset) queryParams.set("offset", params.offset.toString());
-  if (params.types) queryParams.set("types", params.types.join(","));
-  if (params.timeRange) queryParams.set("timeRange", params.timeRange);
+  // Mock implementation - simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 400));
 
-  const response = await fetch(`/api/dashboard/activity?${queryParams.toString()}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+  // Convert mock activity data to expected format
+  const activities: DashboardActivity[] = mockDashboardStats.recentActivity.map(activity => ({
+    id: activity.id,
+    type: activity.type,
+    title: activity.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
+    description: activity.description,
+    user: { name: activity.user?.name || 'System' },
+    timestamp: activity.timestamp,
+    metadata: {}
+  }));
 
-  if (!response.ok) {
-    throw new Error("Failed to fetch dashboard activity");
+  // Apply filters
+  let filteredActivities = activities;
+
+  if (params.types && params.types.length > 0) {
+    filteredActivities = filteredActivities.filter(activity =>
+      params.types!.includes(activity.type)
+    );
   }
 
-  return response.json();
+  // Apply pagination
+  const limit = params.limit || 10;
+  const offset = params.offset || 0;
+  const paginatedActivities = filteredActivities.slice(offset, offset + limit);
+
+  return Promise.resolve({
+    data: {
+      activities: paginatedActivities,
+      total: filteredActivities.length,
+      hasMore: offset + limit < filteredActivities.length
+    }
+  });
 }
 
 // Hook

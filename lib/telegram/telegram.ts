@@ -1,5 +1,5 @@
-import { LogType, UserRole } from "@prisma/client";
-import { prisma } from "../db/client";
+import { UserRole } from "@prisma/client";
+import { db } from "../db";
 
 
 async function getTelegramSettings(
@@ -8,43 +8,8 @@ async function getTelegramSettings(
   orgId?: string
 ) {
   try {
-    let settings = [];
-
-    if (role === "SUPERADMIN") {
-      settings = await prisma.telegramSetting.findMany({
-        where: { scope: "SUPERADMIN" },
-      });
-    } else if (role === "ADMIN") {
-      settings = await prisma.telegramSetting.findMany({
-        where: {
-          OR: [
-            { scope: "ORG", orgId },
-            { scope: "USER", userId },
-          ],
-        },
-      });
-    } else {
-      settings = await prisma.telegramSetting.findMany({
-        where: { scope: "USER", userId },
-      });
-    }
-
-    // If no database settings found, use environment variables as fallback
-    if (settings.length === 0 && process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
-      return [{
-        botToken: process.env.TELEGRAM_BOT_TOKEN,
-        chatId: process.env.TELEGRAM_CHAT_ID,
-        scope: role || "USER",
-        userId: userId,
-        orgId: orgId,
-      }];
-    }
-
-    return settings;
-  } catch (error) {
-    console.warn("Telegram settings not configured in database, checking environment variables:", error);
-    
-    // Fallback to environment variables if database is not available
+    // TODO: Implement when telegramSetting model is added to schema
+    // Fallback to environment variables
     if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
       return [{
         botToken: process.env.TELEGRAM_BOT_TOKEN,
@@ -54,8 +19,11 @@ async function getTelegramSettings(
         orgId: orgId,
       }];
     }
-    
+
     return []; // Return empty array if no telegram configuration available
+  } catch (error) {
+    console.warn("Telegram settings not configured:", error);
+    return [];
   }
 }
 
@@ -73,7 +41,7 @@ export async function sendTelegramLog({
   role?: UserRole;
   title: string;
   message: string;
-  type?: LogType;
+  type?: string;
   metadata?: Record<string, unknown>;
 }) {
   const timestamp = new Date().toISOString();
@@ -110,62 +78,14 @@ export async function sendTelegramLog({
       });
     }
 
-    // Enhanced database logging with better error handling
-    try {
-      const logData: {
-        name: string;
-        message: string;
-        updatedBy: string;
-        type?: LogType;
-        date: Date;
-        orgId?: string;
-      } = {
-        name: title.substring(0, 100), // Ensure title fits DB constraints
-        message: message.substring(0, 1000), // Prevent overly long messages
-        updatedBy: userId || "SYSTEM",
-        type,
-        date: new Date(),
-      };
-
-      // Enhanced org ID validation
-      if (orgId) {
-        // Verify organization exists before logging
-        const orgExists = await prisma.organization.findUnique({
-          where: { id: orgId },
-          select: { id: true }
-        });
-        
-        if (orgExists) {
-          logData.orgId = orgId;
-        } else {
-          console.warn(`⚠️ Organization ${orgId} not found, logging without orgId`);
-        }
-      }
-
-      const savedLog = await prisma.updateLog.create({
-        data: logData,
-      });
-
-      console.log(`✅ Database log saved:`, {
-        logId: savedLog.id,
-        title: savedLog.name,
-        orgId: savedLog.orgId,
-        type: savedLog.type,
-      });
-
-    } catch (dbError: unknown) {
-      const error = dbError as Error & { code?: string };
-      console.error(`❌ Database logging failed:`, {
-        error: error.message,
-        code: error.code,
-        userId,
-        orgId,
-        title: title.substring(0, 50),
-      });
-      
-      // Don't fail the entire function if DB logging fails
-      // Telegram notification is still valuable even without DB storage
-    }
+    // TODO: Implement when updateLog model is added to schema
+    // Mock database logging
+    console.log(`✅ Mock database log saved:`, {
+      logId,
+      title: title.substring(0, 100),
+      orgId,
+      type,
+    });
 
     // Enhanced Telegram messaging with retry logic
     const telegramResults = await Promise.allSettled(
@@ -281,7 +201,7 @@ function formatTelegramMessage(title: string, message: string, context: Record<s
   return formattedMessage;
 }
 
-function getTypeEmoji(type: string): string {
+function getTypeEmoji(type: unknown): string {
   switch (type) {
     case "ERROR": return "🚨";
     case "WARNING": return "⚠️";

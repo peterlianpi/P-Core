@@ -254,7 +254,7 @@ export function NavMain({
       isActive: pathname.startsWith("/features"),
       items: [
         { title: "Dashboard", url: "/dashboard" },
-        { title: "Analytics", url: "/analytics" },
+        { title: "Analytics", url: "/admin/analytics" },
         { title: "Reports", url: "/reports" },
         { title: "API Access", url: "/api-access" },
         { title: "Quick Actions", url: "/features/quick-actions" },

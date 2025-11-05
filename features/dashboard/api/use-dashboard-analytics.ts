@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Enhanced Dashboard Analytics Hook
-// Uses centralized API client with improved error handling
-// Integrates with RLS-based security for automatic tenant isolation
+// Uses mock data for frontend-only application
 
 import { useQuery } from "@tanstack/react-query";
-import { dashboardApi } from "../lib/api-client";
+import { mockDashboardStats } from '@/data/dashboard/mock-dashboard';
 
 export interface AnalyticsQueryParams {
   orgId: string;
@@ -23,13 +22,7 @@ export const dashboardAnalyticsKeys = {
 };
 
 /**
- * Hook to fetch dashboard analytics with organization context
- * Features:
- * - Automatic tenant isolation via RLS
- * - Enhanced error handling with specific error types
- * - Flexible time range and metrics filtering
- * - Type-safe response handling
- * - Optimized caching strategy
+ * Hook to fetch dashboard analytics with mock data
  */
 export function useDashboardAnalytics({
   orgId,
@@ -50,64 +43,36 @@ export function useDashboardAnalytics({
       metrics,
     }),
 
-    // Enhanced query function with comprehensive error handling
+    // Mock query function
     queryFn: async () => {
       // Validation
       if (!orgId) {
         throw new Error("Organization ID is required");
       }
 
-      try {
-        // API request with RLS-enabled security context
-        return await dashboardApi.getAnalytics({
-          orgId,
-          timeRange,
-          organizationType,
-          metrics,
-        });
-      } catch (error) {
-        // Enhanced error handling
-        if (error instanceof Error) {
-          // Handle specific error cases
-          if (error.message.includes("access")) {
-            throw new Error(
-              "You do not have access to view dashboard analytics"
-            );
-          }
-          if (error.message.includes("organization")) {
-            throw new Error("Invalid organization context");
-          }
-          if (error.message.includes("time")) {
-            throw new Error("Invalid time range specified");
-          }
-        }
+      // Mock implementation - simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-        // Re-throw other errors
-        throw error;
-      }
+      // Return mock analytics data
+      return Promise.resolve({
+        data: {
+          metrics: {
+            userGrowth: mockDashboardStats.userGrowth,
+            organizationGrowth: mockDashboardStats.organizationGrowth,
+            totalUsers: mockDashboardStats.totalUsers,
+            activeUsers: mockDashboardStats.activeUsers,
+            totalOrganizations: mockDashboardStats.totalOrganizations,
+            systemHealth: mockDashboardStats.systemHealth
+          },
+          organizationType: organizationType || 'business',
+          timeRange
+        }
+      });
     },
 
     // Cache configuration for optimal performance
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
-
-    // Retry configuration for resilience
-    retry: (failureCount, error) => {
-      // Don't retry on client errors (access denied, etc.)
-      if (
-        error instanceof Error &&
-        (error.message.includes("access") ||
-          error.message.includes("organization"))
-      ) {
-        return false;
-      }
-
-      // Retry up to 3 times for server errors
-      return failureCount < 3;
-    },
-
-    // Retry delay with exponential backoff
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
 
     // Keep previous data when refetching (for better UX)
     placeholderData: (previousData) => previousData,
@@ -132,5 +97,21 @@ export function useDashboardAnalytics({
 
 // Export the function that the components are looking for (for backward compatibility)
 export const getDashboardAnalytics = async (params: AnalyticsQueryParams) => {
-  return await dashboardApi.getAnalytics(params);
+  // Mock implementation - simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+
+  return Promise.resolve({
+    data: {
+      metrics: {
+        userGrowth: mockDashboardStats.userGrowth,
+        organizationGrowth: mockDashboardStats.organizationGrowth,
+        totalUsers: mockDashboardStats.totalUsers,
+        activeUsers: mockDashboardStats.activeUsers,
+        totalOrganizations: mockDashboardStats.totalOrganizations,
+        systemHealth: mockDashboardStats.systemHealth
+      },
+      organizationType: params.organizationType || 'business',
+      timeRange: params.timeRange || 'month'
+    }
+  });
 };

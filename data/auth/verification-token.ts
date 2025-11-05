@@ -1,19 +1,19 @@
-import { prisma } from "@/lib/db/client";
+import { db } from "@/lib/db";
 import crypto from "crypto";
 
 /**
- * Retrieve a verification token by the user's email.
- * @param {string} email - The email address to search for in the `verificationToken` table.
+ * Retrieve a verification token by the user's identifier (email).
+ * @param {string} identifier - The identifier (email) to search for in the `verificationToken` table.
  * @returns {object | null} The verification token object if found, or null if not found or an error occurs.
  */
-export const getVerificationTokenByEmail = async (email: string) => {
+export const getVerificationTokenByEmail = async (identifier: string) => {
   try {
-    const verificationToken = await prisma.verificationToken.findFirst({
-      where: { email },
+    const verificationToken = await db.verificationToken.findFirst({
+      where: { identifier },
     });
     return verificationToken;
   } catch (error) {
-    console.error("Error fetching verification token by email:", error);
+    console.error("Error fetching verification token by identifier:", error);
     return null;
   }
 };
@@ -27,7 +27,7 @@ export const getVerificationTokenByToken = async (token: string) => {
   try {
     // SECURITY: Tokens are stored hashed; hash the incoming token before lookup.
     const hashed = crypto.createHash("sha256").update(token).digest("hex");
-    const verificationToken = await prisma.verificationToken.findUnique({
+    const verificationToken = await db.verificationToken.findUnique({
       where: { token: hashed },
     });
     return verificationToken;

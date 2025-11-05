@@ -1,315 +1,213 @@
 /**
- * Users API Route
+ * Mock Users API - Frontend Only
  *
- * REST API endpoints for user management CRUD operations using mock database
+ * Pure frontend mock data for development and demo purposes
+ * No backend dependencies - works as static data
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth/auth';
-import { prisma } from '@/lib/db/client';
-import { UserRole } from '@/features/user-management/types';
 
-// GET /api/users - Get users list with filtering and pagination
+// Mock users data - complete dataset for frontend demo
+const MOCK_USERS = [
+  {
+    id: 'user-1',
+    email: 'demo@example.com',
+    name: 'Demo User',
+    role: 'USER',
+    isActive: true,
+    createdAt: new Date('2024-01-15'),
+    updatedAt: new Date('2024-01-15')
+  },
+  {
+    id: 'user-2',
+    email: 'admin@company.com',
+    name: 'Admin User',
+    role: 'ADMIN',
+    isActive: true,
+    createdAt: new Date('2024-01-10'),
+    updatedAt: new Date('2024-01-10')
+  },
+  {
+    id: 'user-3',
+    email: 'superadmin@company.com',
+    name: 'Super Admin',
+    role: 'SUPERADMIN',
+    isActive: true,
+    createdAt: new Date('2024-01-05'),
+    updatedAt: new Date('2024-01-05')
+  },
+  {
+    id: 'user-4',
+    email: 'john.teacher@school.edu',
+    name: 'John Teacher',
+    role: 'USER',
+    isActive: true,
+    createdAt: new Date('2024-01-20'),
+    updatedAt: new Date('2024-01-20')
+  },
+  {
+    id: 'user-5',
+    email: 'jane.student@university.edu',
+    name: 'Jane Student',
+    role: 'USER',
+    isActive: true,
+    createdAt: new Date('2024-01-25'),
+    updatedAt: new Date('2024-01-25')
+  },
+  {
+    id: 'user-6',
+    email: 'inactive.user@old.com',
+    name: 'Inactive User',
+    role: 'USER',
+    isActive: false,
+    createdAt: new Date('2023-12-01'),
+    updatedAt: new Date('2023-12-01')
+  },
+  {
+    id: 'user-7',
+    email: 'manager@business.com',
+    name: 'Business Manager',
+    role: 'ADMIN',
+    isActive: true,
+    createdAt: new Date('2024-01-12'),
+    updatedAt: new Date('2024-01-12')
+  },
+  {
+    id: 'user-8',
+    email: 'support@help.com',
+    name: 'Support Staff',
+    role: 'USER',
+    isActive: true,
+    createdAt: new Date('2024-01-18'),
+    updatedAt: new Date('2024-01-18')
+  }
+];
+
+// GET /api/users - Get users with filtering and pagination
 export async function GET(request: NextRequest) {
   try {
-    // Use mock data if USE_MOCK_DB is set to true - skip database entirely
-    if (process.env.USE_MOCK_DB === 'true') {
-      const { searchParams } = new URL(request.url);
-      const page = parseInt(searchParams.get('page') || '1');
-      const limit = parseInt(searchParams.get('limit') || '20');
-      const role = searchParams.get('role');
-      const isActive = searchParams.get('isActive');
-      const search = searchParams.get('search');
-
-      // Mock users data
-      let mockUsers = [
-        {
-          id: 'mock-user-1',
-          email: 'demo@example.com',
-          name: 'Demo User',
-          role: 'USER',
-          isActive: true,
-          createdAt: new Date('2024-01-01'),
-          updatedAt: new Date('2024-01-01')
-        },
-        {
-          id: 'mock-admin-1',
-          email: 'admin@example.com',
-          name: 'Admin User',
-          role: 'ADMIN',
-          isActive: true,
-          createdAt: new Date('2024-01-01'),
-          updatedAt: new Date('2024-01-01')
-        },
-        {
-          id: 'mock-superadmin-1',
-          email: 'superadmin@example.com',
-          name: 'Super Admin',
-          role: 'SUPERADMIN',
-          isActive: true,
-          createdAt: new Date('2024-01-01'),
-          updatedAt: new Date('2024-01-01')
-        },
-        {
-          id: 'mock-teacher-1',
-          email: 'teacher@example.com',
-          name: 'Teacher User',
-          role: 'USER',
-          isActive: false,
-          createdAt: new Date('2024-01-01'),
-          updatedAt: new Date('2024-01-01')
-        },
-        {
-          id: 'mock-student-1',
-          email: 'student@example.com',
-          name: 'Student User',
-          role: 'USER',
-          isActive: true,
-          createdAt: new Date('2024-01-01'),
-          updatedAt: new Date('2024-01-01')
-        }
-      ];
-
-      // Apply filters
-      let filteredUsers = mockUsers;
-
-      if (role && role !== 'all') {
-        filteredUsers = filteredUsers.filter(u => u.role === role);
-      }
-
-      if (isActive !== null && isActive !== undefined && isActive !== 'all') {
-        filteredUsers = filteredUsers.filter(u => u.isActive === (isActive === 'true'));
-      }
-
-      if (search) {
-        const searchLower = search.toLowerCase();
-        filteredUsers = filteredUsers.filter(u =>
-          u.name?.toLowerCase().includes(searchLower) ||
-          u.email.toLowerCase().includes(searchLower)
-        );
-      }
-
-      // Sort by createdAt desc
-      filteredUsers.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-      // Apply pagination
-      const total = filteredUsers.length;
-      const skip = (page - 1) * limit;
-      const users = filteredUsers.slice(skip, skip + limit);
-
-      return NextResponse.json({
-        users,
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit)
-      });
-    }
-
-    // Development/Non-production code continues below
-    // Skip authentication in development for testing purposes
-    if (process.env.NODE_ENV !== 'development') {
-      const session = await auth();
-
-      if (!session) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-
-      // Check if user has admin privileges
-      const user = await prisma.user.findUnique({
-        where: { id: session.user.id },
-        select: { role: true }
-      });
-
-      if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPERADMIN')) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      }
-    }
-
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
+    const limit = parseInt(searchParams.get('limit') || '10');
     const role = searchParams.get('role');
     const isActive = searchParams.get('isActive');
     const search = searchParams.get('search');
 
-    console.log('🔍 API Route - Received params:', { role, isActive, search });
+    // Apply filters
+    let filteredUsers = [...MOCK_USERS];
 
-    const skip = (page - 1) * limit;
-
-    // Build where clause for database-level filtering
-    const where: any = {};
+    // Role filter
     if (role && role !== 'all') {
-      where.role = role;
-    }
-    if (isActive !== null && isActive !== undefined) {
-      where.isActive = isActive === 'true';
+      filteredUsers = filteredUsers.filter(user => user.role === role);
     }
 
-    // Get users with database-level filtering (mock database supports where filtering)
-    console.log('🔍 API Route - About to call prisma.user.findMany with where:', where);
-    const allUsers = await prisma.user.findMany({
-      where,
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-      }
-    });
-    console.log('🔍 API Route - prisma.user.findMany returned:', allUsers.length, 'users');
-    console.log('🔍 API Route - Sample user:', allUsers[0]);
+    // Active status filter
+    if (isActive !== null && isActive !== undefined && isActive !== 'all') {
+      const activeFilter = isActive === 'true';
+      filteredUsers = filteredUsers.filter(user => user.isActive === activeFilter);
+    }
 
-    console.log('🔍 API Route - All users before filtering:', allUsers.length);
-
-    // Apply filters (only search needs manual filtering)
-    let filteredUsers = allUsers;
-    console.log('🔍 API Route - Users before filtering:', allUsers.map((u: any) => ({ id: u.id, role: u.role, isActive: u.isActive })));
-
+    // Search filter
     if (search) {
-      console.log('🔍 API Route - Filtering by search:', search);
       const searchLower = search.toLowerCase();
-      filteredUsers = filteredUsers.filter((u: any) =>
-        u.name?.toLowerCase().includes(searchLower) ||
-        u.email.toLowerCase().includes(searchLower)
+      filteredUsers = filteredUsers.filter(user =>
+        user.name?.toLowerCase().includes(searchLower) ||
+        user.email.toLowerCase().includes(searchLower)
       );
-      console.log('🔍 API Route - Users after search filter:', filteredUsers.length);
     }
 
-    // Sort by createdAt desc
-    filteredUsers.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // Sort by creation date (newest first)
+    filteredUsers.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    // Apply pagination
+    // Pagination
     const total = filteredUsers.length;
-    const users = filteredUsers.slice(skip, skip + limit);
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const users = filteredUsers.slice(startIndex, endIndex);
+
+    // Simulate API delay for realistic feel
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     return NextResponse.json({
       users,
       total,
       page,
       limit,
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
+      success: true
     });
 
   } catch (error) {
-    console.error('Error fetching users:', error);
+    console.error('Mock API Error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Mock API error', success: false },
       { status: 500 }
     );
   }
 }
 
-// POST /api/users - Create a new user
+// Mock POST - Simulate user creation
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Check if user has admin privileges
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true }
-    });
-
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPERADMIN')) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
     const body = await request.json();
     const { email, name, role, isActive = true } = body;
 
-    // Validate required fields
+    // Basic validation
     if (!email || !name || !role) {
       return NextResponse.json(
-        { error: 'Email, name, and role are required' },
+        { error: 'Email, name, and role are required', success: false },
         { status: 400 }
       );
     }
 
-    // Validate role
-    if (!Object.values(UserRole).includes(role)) {
-      return NextResponse.json(
-        { error: 'Invalid role' },
-        { status: 400 }
-      );
-    }
-
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email }
-    });
-
+    // Check if user exists
+    const existingUser = MOCK_USERS.find(user => user.email === email);
     if (existingUser) {
       return NextResponse.json(
-        { error: 'User with this email already exists' },
+        { error: 'User with this email already exists', success: false },
         { status: 409 }
       );
     }
 
-    // Create user
-    const newUser = await prisma.user.create({
-      data: {
-        email,
-        name,
-        role,
-        isActive,
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-      }
-    });
+    // Create mock user
+    const newUser = {
+      id: `user-${Date.now()}`,
+      email,
+      name,
+      role,
+      isActive,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
 
-    return NextResponse.json(newUser, { status: 201 });
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    return NextResponse.json({
+      user: newUser,
+      message: 'User created successfully',
+      success: true
+    }, { status: 201 });
 
   } catch (error) {
-    console.error('Error creating user:', error);
+    console.error('Mock API Error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Mock API error', success: false },
       { status: 500 }
     );
   }
 }
 
-// PUT /api/users/[id] - Update a user
+// Mock PUT - Simulate user update
 export async function PUT(request: NextRequest) {
   try {
-    const session = await auth();
-
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Check if user has admin privileges
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true }
-    });
-
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPERADMIN')) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    // Extract user ID from URL path: /api/users/[id]
     const url = new URL(request.url);
-    const pathParts = url.pathname.split('/').filter(Boolean); // Remove empty parts
-    const id = pathParts[pathParts.length - 1]; // Get the last part of the path
+    const pathParts = url.pathname.split('/').filter(Boolean);
+    const id = pathParts[pathParts.length - 1];
 
     if (!id) {
       return NextResponse.json(
-        { error: 'User ID is required in URL path' },
+        { error: 'User ID required', success: false },
         { status: 400 }
       );
     }
@@ -317,110 +215,77 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { name, role, isActive } = body;
 
-    // Validate role if provided
-    if (role && !Object.values(UserRole).includes(role)) {
+    // Find user
+    const userIndex = MOCK_USERS.findIndex(user => user.id === id);
+    if (userIndex === -1) {
       return NextResponse.json(
-        { error: 'Invalid role' },
-        { status: 400 }
-      );
-    }
-
-    // Check if user exists
-    const existingUser = await prisma.user.findUnique({
-      where: { id }
-    });
-
-    if (!existingUser) {
-      return NextResponse.json(
-        { error: 'User not found' },
+        { error: 'User not found', success: false },
         { status: 404 }
       );
     }
 
     // Update user
-    const updatedUser = await prisma.user.update({
-      where: { id },
-      data: {
-        ...(name !== undefined && { name }),
-        ...(role !== undefined && { role }),
-        ...(isActive !== undefined && { isActive }),
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-      }
+    const updatedUser = {
+      ...MOCK_USERS[userIndex],
+      ...(name !== undefined && { name }),
+      ...(role !== undefined && { role }),
+      ...(isActive !== undefined && { isActive }),
+      updatedAt: new Date()
+    };
+
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 150));
+
+    return NextResponse.json({
+      user: updatedUser,
+      message: 'User updated successfully',
+      success: true
     });
 
-    return NextResponse.json(updatedUser);
-
   } catch (error) {
-    console.error('Error updating user:', error);
+    console.error('Mock API Error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Mock API error', success: false },
       { status: 500 }
     );
   }
 }
 
-// DELETE /api/users/[id] - Delete a user
+// Mock DELETE - Simulate user deletion
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await auth();
-
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Check if user has admin privileges
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true }
-    });
-
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPERADMIN')) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    // Extract user ID from URL path: /api/users/[id]
     const url = new URL(request.url);
-    const pathParts = url.pathname.split('/').filter(Boolean); // Remove empty parts
-    const id = pathParts[pathParts.length - 1]; // Get the last part of the path
+    const pathParts = url.pathname.split('/').filter(Boolean);
+    const id = pathParts[pathParts.length - 1];
 
     if (!id) {
       return NextResponse.json(
-        { error: 'User ID is required in URL path' },
+        { error: 'User ID required', success: false },
         { status: 400 }
       );
     }
 
-    // Check if user exists
-    const existingUser = await prisma.user.findUnique({
-      where: { id }
-    });
-
-    if (!existingUser) {
+    // Find user
+    const user = MOCK_USERS.find(user => user.id === id);
+    if (!user) {
       return NextResponse.json(
-        { error: 'User not found' },
+        { error: 'User not found', success: false },
         { status: 404 }
       );
     }
 
-    // Delete user
-    await prisma.user.delete({
-      where: { id }
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    return NextResponse.json({
+      message: 'User deleted successfully',
+      success: true
     });
 
-    return NextResponse.json({ message: 'User deleted successfully' });
-
   } catch (error) {
-    console.error('Error deleting user:', error);
+    console.error('Mock API Error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Mock API error', success: false },
       { status: 500 }
     );
   }

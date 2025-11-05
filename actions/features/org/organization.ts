@@ -1,169 +1,220 @@
-"use server";
+/**
+ * Organization Actions
+ * Mock server actions for organization management (frontend-only system)
+ */
 
-import { revalidatePath } from "next/cache";
-import { z } from "zod";
-import { prisma } from "@/lib/db/client";
-import { trackOrganizationCreatedBy } from "@/actions/auth/track-system-activities";
-import { organizationSchema } from "@/features/organization-management/schemas";
-import { ApiError, handleApiError, handleError } from "@/lib/utils/api-errors";
+'use server';
 
-// Standard API response type for all organization actions
-export type ApiResponse<T = any> = {
-  success: boolean;
-  data?: T;
-  error?: string;
-};
-import { OrganizationsAPISchema } from "@/lib/schemas";
-import { OrganizationType } from "@prisma/client";
+import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
+import { currentUser } from '@/lib/auth';
+import { teamFormSchema } from '@/lib/schemas';
 
+// Mock organization data
+let mockOrganizations = [
+  {
+    id: '1',
+    name: 'Springfield Elementary School',
+    description: 'A community-focused elementary school',
+    type: 'SCHOOL',
+    logoImage: null,
+    startedAt: new Date('2020-01-01'),
+    createdBy: 'user-1',
+    role: 'OWNER',
+  },
+  {
+    id: '2',
+    name: 'Grace Community Church',
+    description: 'A welcoming church for all',
+    type: 'CHURCH',
+    logoImage: null,
+    startedAt: new Date('2015-01-01'),
+    createdBy: 'user-1',
+    role: 'ADMIN',
+  },
+  {
+    id: '3',
+    name: 'City Public Library',
+    description: 'Knowledge center for the community',
+    type: 'LIBRARY',
+    logoImage: null,
+    startedAt: new Date('2010-01-01'),
+    createdBy: 'user-1',
+    role: 'MEMBER',
+  },
+];
 
-const context = '' as any;
+const updateOrganizationSchema = z.object({
+  organizationId: z.string(),
+  value: teamFormSchema.omit({ id: true }),
+});
 
-export async function getOrganizationsByUserId(userId: string | undefined): Promise<ApiResponse<any>> {
-  if (!userId) {
-    return { success: true, data: [] };
-  }
-  const userOrganizations = await prisma.userOrganization.findMany({
-    where: { userId },
-    select: {
-      userId: true,
-      role: true,
-      organization: {
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          startedAt: true,
-          logoImage: true,
-          type: true,
-        },
-      },
-    },
-  });
+type UpdateOrganizationInput = z.infer<typeof updateOrganizationSchema>;
 
-  console.log('🔍 getOrganizationsByUserId raw data:', userOrganizations);
-
-  const result = OrganizationsAPISchema.safeParse(userOrganizations);
-  if (!result.success) {
-    console.error("Zod validation error in getOrganizationsByUserId:", result.error);
-    console.error("Zod validation error details:", result.error.issues);
-    console.error("Data being validated:", userOrganizations);
-    return { success: false, error: "Invalid organization data" };
-  }
-
-  return { success: true, data: result.data };
-}
-
-type CreateOrganizationInput = z.infer<typeof organizationSchema>;
-
-export async function createOrganization(userId: string, values: CreateOrganizationInput): Promise<ApiResponse<any>> {
+export async function updateOrganization(input: UpdateOrganizationInput) {
   try {
-    // 1. Validate input with the dedicated Zod schema on the server.
-    const validatedData = organizationSchema.parse(values);
+    const user = await currentUser();
 
-    // 2. Check for uniqueness to provide clear error messages.
-    const existingOrg = await prisma.organization.findFirst({
-      where: { name: validatedData.name, createdById: userId },
-    });
-    if (existingOrg) {
-      throw new ApiError("An organization with this name already exists.", 409);
+    if (!user?.id) {
+      return {
+        success: false,
+        error: 'Unauthorized',
+      };
     }
 
-    // 3. Use a transaction for atomic creation of organization and user link.
-    const newOrganization = await prisma.$transaction(async (tx: any) => {
-      const organization = await tx.organization.create({
-        data: {
-          ...validatedData,
-          createdBy: { connect: { id: userId } },
-        },
-      });
+    const validatedInput = updateOrganizationSchema.parse(input);
 
-      await tx.userOrganization.create({
-        data: {
-          userId,
-          organizationId: organization.id,
-          role: "OWNER",
-        },
-      });
-      return organization;
-    });
+    // Find the organization
+    const orgIndex = mockOrganizations.findIndex(org => org.id === validatedInput.organizationId);
 
-    await trackOrganizationCreatedBy({
-      userId: newOrganization.createdById,
-      organizationId: newOrganization.id,
-    });
+    if (orgIndex === -1) {
+      return {
+        success: false,
+        error: 'Organization not found',
+      };
+    }
 
-    revalidatePath("/organization");
-    return { success: true, data: newOrganization };
+    // Check if user has permission to update this organization
+    const organization = mockOrganizations[orgIndex];
+    if (!['OWNER', 'ADMIN', 'SUPER_ADMIN'].includes(organization.role)) {
+      return {
+        success: false,
+        error: 'Insufficient permissions',
+      };
+    }
 
+    // Update the organization
+    mockOrganizations[orgIndex] = {
+      ...organization,
+      name: validatedInput.value.name,
+      description: validatedInput.value.description || '',
+      logoImage: null,
+      startedAt: validatedInput.value.startedAt || new Date(),
+      type: validatedInput.value.type || 'OTHER',
+    };
+
+    revalidatePath('/organization');
+    revalidatePath('/dashboard');
+
+    return {
+      success: true,
+      data: mockOrganizations[orgIndex],
+    };
   } catch (error) {
-    const apiError = handleApiError(context, error, "Failed to create organization");
+    console.error('Failed to update organization:', error);
     return {
       success: false,
-      data: undefined,
-      error: (apiError as any)?.error || (typeof apiError === 'string' ? apiError : 'Failed to create organization'),
+      error: 'Failed to update organization',
     };
   }
 }
 
-export async function updateOrganization({
-  organizationId,
-  value,
-}: {
-  organizationId: string;
-  value: {
-    name?: string;
-    description?: string;
-    logoImage?: string;
-    startedAt?: Date;
-    type?: string;
-  };
-}): Promise<ApiResponse<{ name: string }>> {
+export async function getOrganizationsByUserId(userId: string) {
   try {
-    // Transform the type to the correct enum if provided
-    const updateData = {
-      ...value,
-      type: value.type ? (value.type.toUpperCase() as OrganizationType) : undefined,
+    // Return mock organizations for the current user
+    return {
+      success: true,
+      data: mockOrganizations,
     };
-
-    const updated = await prisma.organization.update({
-      where: { id: organizationId },
-      data: updateData,
-    });
-    revalidatePath("/organization"); // Optional: revalidate page
-
-    return { success: true, data: { name: updated.name } };
-  } catch (error: unknown) {
-    const apiError = handleError(error, "Failed to update organization");
+  } catch (error) {
+    console.error('Failed to fetch organizations:', error);
     return {
       success: false,
-      data: undefined,
-      error: apiError?.error || (typeof apiError === 'string' ? apiError : 'Failed to update organization'),
+      error: 'Failed to fetch organizations',
     };
   }
 }
 
-export async function deleteOrganization(organizationId: string): Promise<ApiResponse<any>> {
-  if (!organizationId) return { success: false, error: "Organization ID is required" };
-
+export async function createOrganization(input: {
+  name: string;
+  description?: string;
+  type?: string;
+  logoImage?: string;
+}) {
   try {
-    // Delete related userOrganization links (optional)
-    await prisma.userOrganization.deleteMany({
-      where: { organizationId },
-    });
+    const user = await currentUser();
 
-    const deleted = await prisma.organization.delete({
-      where: { id: organizationId },
-    });
-    revalidatePath("/organization"); // Optional: revalidate page
+    if (!user?.id) {
+      return {
+        success: false,
+        error: 'Unauthorized',
+      };
+    }
 
-    return { success: true, data: deleted };
-  } catch (error: unknown) {
-    const apiError = handleError(error, "Failed to delete organization");
+    // Create a new mock organization
+    const newOrg = {
+      id: Date.now().toString(),
+      name: input.name,
+      description: input.description || '',
+      type: input.type || 'OTHER',
+      logoImage: null,
+      startedAt: new Date(),
+      createdBy: user.id,
+      role: 'OWNER' as const,
+    };
+
+    mockOrganizations.push(newOrg);
+
+    revalidatePath('/organization');
+    revalidatePath('/dashboard');
+
+    return {
+      success: true,
+      data: newOrg,
+    };
+  } catch (error) {
+    console.error('Failed to create organization:', error);
     return {
       success: false,
-      data: undefined,
-      error: apiError?.error || (typeof apiError === 'string' ? apiError : 'Failed to delete organization'),
+      error: 'Failed to create organization',
+    };
+  }
+}
+
+export async function deleteOrganization(organizationId: string) {
+  try {
+    const user = await currentUser();
+
+    if (!user?.id) {
+      return {
+        success: false,
+        error: 'Unauthorized',
+      };
+    }
+
+    // Find the organization
+    const orgIndex = mockOrganizations.findIndex(org => org.id === organizationId);
+
+    if (orgIndex === -1) {
+      return {
+        success: false,
+        error: 'Organization not found',
+      };
+    }
+
+    // Check if user is the owner
+    const organization = mockOrganizations[orgIndex];
+    if (organization.role !== 'OWNER') {
+      return {
+        success: false,
+        error: 'Only owners can delete organizations',
+      };
+    }
+
+    // Remove the organization
+    mockOrganizations.splice(orgIndex, 1);
+
+    revalidatePath('/organization');
+    revalidatePath('/dashboard');
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error('Failed to delete organization:', error);
+    return {
+      success: false,
+      error: 'Failed to delete organization',
     };
   }
 }

@@ -15,14 +15,13 @@ import type {
   UpdatePreferencesData
 } from './types';
 import {
-  getUserNotifications,
-  markNotificationAsRead,
-  markAllNotificationsAsRead,
-  getUserPreferences,
-  updateUserPreferences,
-  getUnreadCount,
-  deleteNotification
-} from './api';
+  useNotifications,
+  useMarkAsRead,
+  useMarkAllAsRead,
+  useDeleteNotification,
+  useUnreadCount
+} from './hooks';
+import type { NotificationItem } from './types';
 
 // shadcn/ui components
 import { Button } from '@/components/ui/button';
@@ -50,37 +49,19 @@ import {
 
 interface NotificationListProps {
   limit?: number;
+  offset?: number;
   onNotificationClick?: (notification: NotificationItemType) => void;
 }
 
-export function NotificationList({ limit = 20, onNotificationClick }: NotificationListProps) {
-  const [notifications, setNotifications] = useState<NotificationItemType[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadNotifications();
-  }, []);
-
-  const loadNotifications = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const data = await getUserNotifications(limit);
-      setNotifications(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load notifications');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+export function NotificationList({ limit = 20, offset = 0, onNotificationClick }: NotificationListProps) {
+  const { data: notifications = [], isLoading, error } = useNotifications(limit, offset);
+  const markAsReadMutation = useMarkAsRead();
+  const markAllAsReadMutation = useMarkAllAsRead();
+  const deleteMutation = useDeleteNotification();
 
   const handleMarkAsRead = async (notificationId: string) => {
     try {
-      await markNotificationAsRead(notificationId);
-      setNotifications(prev =>
-        prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
-      );
+      await markAsReadMutation.mutateAsync(notificationId);
     } catch (err) {
       console.error('Failed to mark notification as read:', err);
     }
@@ -88,8 +69,7 @@ export function NotificationList({ limit = 20, onNotificationClick }: Notificati
 
   const handleMarkAllAsRead = async () => {
     try {
-      await markAllNotificationsAsRead();
-      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      await markAllAsReadMutation.mutateAsync();
     } catch (err) {
       console.error('Failed to mark all notifications as read:', err);
     }
@@ -97,8 +77,7 @@ export function NotificationList({ limit = 20, onNotificationClick }: Notificati
 
   const handleDelete = async (notificationId: string) => {
     try {
-      await deleteNotification(notificationId);
-      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      await deleteMutation.mutateAsync(notificationId);
     } catch (err) {
       console.error('Failed to delete notification:', err);
     }
@@ -134,7 +113,7 @@ export function NotificationList({ limit = 20, onNotificationClick }: Notificati
         </CardHeader>
         <CardContent>
           <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>{error.message || 'Failed to load notifications'}</AlertDescription>
           </Alert>
         </CardContent>
       </Card>
@@ -262,78 +241,7 @@ interface NotificationPreferencesProps {
 }
 
 export function NotificationPreferences({ onSave }: NotificationPreferencesProps) {
-  const [preferences, setPreferences] = useState<UserNotificationPreferences | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadPreferences();
-  }, []);
-
-  const loadPreferences = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const data = await getUserPreferences();
-      setPreferences(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load preferences');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSave = async () => {
-    if (!preferences) return;
-
-    try {
-      setIsSaving(true);
-      setError(null);
-      const updated = await updateUserPreferences(preferences);
-      setPreferences(updated);
-      onSave?.(updated);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save preferences');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const updatePreference = (key: keyof UserNotificationPreferences, value: any) => {
-    if (!preferences) return;
-    setPreferences({ ...preferences, [key]: value });
-  };
-
-  const updateCategory = (category: NotificationCategory, enabled: boolean) => {
-    if (!preferences) return;
-    setPreferences({
-      ...preferences,
-      categories: { ...preferences.categories, [category]: enabled }
-    });
-  };
-
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Notification Preferences
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span className="ml-2">Loading preferences...</span>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!preferences) return null;
-
+  // Placeholder implementation - preferences not implemented yet
   return (
     <Card>
       <CardHeader>
@@ -342,84 +250,16 @@ export function NotificationPreferences({ onSave }: NotificationPreferencesProps
           Notification Preferences
         </CardTitle>
         <CardDescription>
-          Choose how you want to receive notifications
+          Notification preferences will be available soon
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Mail className="h-4 w-4" />
-              <Label htmlFor="email-notifications">Email Notifications</Label>
-            </div>
-            <Switch
-              id="email-notifications"
-              checked={preferences.emailNotifications}
-              onCheckedChange={(checked) => updatePreference('emailNotifications', checked)}
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4" />
-              <Label htmlFor="in-app-notifications">In-App Notifications</Label>
-            </div>
-            <Switch
-              id="in-app-notifications"
-              checked={preferences.inAppNotifications}
-              onCheckedChange={(checked) => updatePreference('inAppNotifications', checked)}
-            />
+      <CardContent>
+        <div className="flex items-center justify-center py-8">
+          <div className="text-center">
+            <Settings className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">Preferences coming soon...</p>
           </div>
         </div>
-
-        <Separator />
-
-        <div className="space-y-4">
-          <Label className="text-base font-medium">Categories</Label>
-          {Object.entries(preferences.categories).map(([category, enabled]) => (
-            <div key={category} className="flex items-center justify-between">
-              <Label htmlFor={`category-${category}`} className="capitalize">
-                {category} Notifications
-              </Label>
-              <Switch
-                id={`category-${category}`}
-                checked={enabled}
-                onCheckedChange={(checked) => updateCategory(category as NotificationCategory, checked)}
-              />
-            </div>
-          ))}
-        </div>
-
-        <Separator />
-
-        <div className="space-y-2">
-          <Label htmlFor="frequency">Notification Frequency</Label>
-          <Select
-            value={preferences.frequency}
-            onValueChange={(value) => updatePreference('frequency', value as NotificationFrequency)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="immediate">Immediate</SelectItem>
-              <SelectItem value="daily">Daily Digest</SelectItem>
-              <SelectItem value="weekly">Weekly Digest</SelectItem>
-              <SelectItem value="never">Never</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        <Button onClick={handleSave} disabled={isSaving} className="w-full">
-          {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isSaving ? 'Saving...' : 'Save Preferences'}
-        </Button>
       </CardContent>
     </Card>
   );
@@ -427,26 +267,12 @@ export function NotificationPreferences({ onSave }: NotificationPreferencesProps
 
 interface NotificationBadgeProps {
   children: React.ReactNode;
+  pollInterval?: number; // in milliseconds
 }
 
-export function NotificationBadge({ children }: NotificationBadgeProps) {
-  const [unreadCount, setUnreadCount] = useState(0);
-
-  useEffect(() => {
-    loadUnreadCount();
-    // Set up polling for unread count updates
-    const interval = setInterval(loadUnreadCount, 30000); // Check every 30 seconds
-    return () => clearInterval(interval);
-  }, []);
-
-  const loadUnreadCount = async () => {
-    try {
-      const { count } = await getUnreadCount();
-      setUnreadCount(count);
-    } catch (err) {
-      console.error('Failed to load unread count:', err);
-    }
-  };
+export function NotificationBadge({ children, pollInterval = 30000 }: NotificationBadgeProps) {
+  const { data: unreadCountData } = useUnreadCount(pollInterval);
+  const unreadCount = unreadCountData?.count || 0;
 
   return (
     <div className="relative">

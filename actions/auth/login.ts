@@ -1,8 +1,8 @@
 "use server";
 
 import { signIn } from "@/lib/auth/auth";
-import { getTwoFactorConfirmationByUserId } from "@/data/two-factor-confirmation";
-import { getTwoFactorTokenByEmail } from "@/data/two-factor-token";
+import { getTwoFactorConfirmationByUserId } from "@/data/auth/two-factor-confirmation";
+import { getTwoFactorTokenByEmail } from "@/data/auth/two-factor-token";
 import { getUserByEmail } from "@/data/user";
 import {
   sendTwoFactorTokenEmail,
@@ -18,7 +18,7 @@ import { LoginSchema } from "@/lib/schemas";
 import { AuthError } from "next-auth";
 import * as z from "zod";
 import { trackLogin } from "./track-system-activities";
-import { prisma } from "@/lib/db/client";
+import { db } from "@/lib/db";
 
 export const login = async (
   values: z.infer<typeof LoginSchema>,
@@ -33,7 +33,7 @@ export const login = async (
   const { email, password, code } = validatedFields.data;
 
   const existingUser = await getUserByEmail(email);
-  if (!existingUser || !existingUser.email || !existingUser.password) {
+  if (!existingUser || !existingUser.email) {
     return { error: "Email does not exist!" };
   }
 
@@ -43,12 +43,12 @@ export const login = async (
       const verificationToken = await generateVerificationToken(existingUser.email);
 
       if (typeof process !== 'undefined' && process.env.NEXT_RUNTIME === 'edge') {
-        await sendVerificationEmail(verificationToken.email, verificationToken.token);
-        console.log("[Edge] Verification email sent via Resend to", verificationToken.email);
+        await sendVerificationEmail(verificationToken.identifier, verificationToken.token);
+        console.log("[Edge] Verification email sent via Resend to", verificationToken.identifier);
       } else {
         const { sendMailSMTP } = await import("@/lib/mail/mail");
-        await sendMailSMTP("confirm", verificationToken.email, { token: verificationToken.token });
-        console.log("[Node] Verification email sent via SMTP to", verificationToken.email);
+        await sendMailSMTP("confirm", verificationToken.identifier, { token: verificationToken.token });
+        console.log("[Node] Verification email sent via SMTP to", verificationToken.identifier);
       }
       return { success: "Confirmation email sent!" };
     } catch (err) {
@@ -77,7 +77,7 @@ export const login = async (
         return { error: "Code expired!" };
       }
 
-      await prisma.twoFactorToken.delete({
+      await db.twoFactorToken.delete({
         where: { id: twoFactorToken.id },
       });
 
@@ -86,12 +86,12 @@ export const login = async (
       );
 
       if (existingConfirmation) {
-        await prisma.twoFactorConfirmation.delete({
+        await db.twoFactorConfirmation.delete({
           where: { id: existingConfirmation.id },
         });
       }
 
-      await prisma.twoFactorConfirmation.create({
+      await db.twoFactorConfirmation.create({
         data: {
           userId: existingUser.id,
         },

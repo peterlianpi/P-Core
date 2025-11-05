@@ -1,4 +1,4 @@
-import prisma from "@/lib/db/client";
+import { db } from "@/lib/db";
 
 /**
  * Retrieve the two-factor confirmation record by the provided userId.
@@ -7,7 +7,7 @@ import prisma from "@/lib/db/client";
  */
 export const getTwoFactorConfirmationByUserId = async (userId: string) => {
   try {
-    const twoFactorConfirmation = await prisma.twoFactorConfirmation.findUnique({
+    const twoFactorConfirmation = await db.twoFactorConfirmation.findUnique({
       where: { userId },
     });
     return twoFactorConfirmation;

@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { prisma, TelegramScope } from "@/lib/db/client";
+import { db } from "@/lib/db";
 import { zValidator } from "@hono/zod-validator";
 import z from "zod";
 
@@ -23,24 +23,12 @@ const app = new Hono()
       return c.json({ error: "Missing userId parameter" }, 400);
     }
 
-    // Fetch Telegram settings for the user
-    const user = await prisma.telegramSetting.findFirst({
-      where: { userId: userId, scope: scope as TelegramScope },
-      select: {
-        chatId: true,
-        botToken: true,
-        isActive: true,
-      },
-    });
-
-    if (!user) {
-      return c.json({ error: "User not found" }, 404);
-    }
-
+    // TODO: Implement when telegramSetting model is added to schema
+    // Mock data for now
     return c.json({
-      telegramChatId: user.chatId || undefined,
-      telegramBotToken: user.botToken || undefined,
-      isActive: user.isActive ?? undefined,
+      telegramChatId: undefined,
+      telegramBotToken: undefined,
+      isActive: false,
     });
   });
 

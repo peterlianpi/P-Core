@@ -1,5 +1,7 @@
 import React from "react";
-import { AlertTriangle } from "lucide-react"; // Import the error icon
+import { AlertTriangle } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Card, CardContent } from "@/components/ui/card";
 
 type ErrorBoxProps = {
   error: Error | null;
@@ -7,20 +9,18 @@ type ErrorBoxProps = {
 
 function ErrorBox({ error }: ErrorBoxProps) {
   return (
-    <div className="flex h-[85vh] items-center justify-center">
-      <div className="bg-red-100 border-l-4 border-red-500 p-6 w-full max-w-lg rounded-lg shadow-lg">
-        <div className="flex items-center space-x-4">
-          <AlertTriangle className="h-8 w-8 text-red-500" /> {/* Lucide Icon */}
-          <div>
-            <h2 className="text-2xl font-semibold text-red-700">
-              Oops, something went wrong!
-            </h2>
-            <p className="mt-2 text-lg text-red-600">
+    <div className="flex h-[85vh] items-center justify-center p-4">
+      <Card className="w-full max-w-lg">
+        <CardContent className="pt-6">
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Oops, something went wrong!</AlertTitle>
+            <AlertDescription>
               {error?.message || "An unexpected error occurred."}
-            </p>
-          </div>
-        </div>
-      </div>
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
     </div>
   );
 }

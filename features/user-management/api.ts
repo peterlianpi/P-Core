@@ -1,6 +1,6 @@
 /**
  * User Management MVP API
- * Core API functions for user operations
+ * Core API functions for user operations using mock data
  */
 
 import { UserRole } from './types';
@@ -18,179 +18,103 @@ import type {
   UserSearchParams,
   UpdateUserRoleData,
 } from './types';
-
-const API_BASE = '/api/users';
+import {
+  mockCurrentUser,
+  mockUserListItems,
+  mockUserStats,
+  getMockUserById,
+  searchMockUsers
+} from '@/data/user-management/mock-users';
 
 /**
  * Get current user profile
  */
 export async function getCurrentUser(): Promise<UserWithOrganizations> {
-  // Use mock data if USE_MOCK_DB is set to true
-  if (process.env.USE_MOCK_DB === 'true') {
-    return Promise.resolve({
-      id: 'mock-user-1',
-      name: 'Demo User',
-      email: 'demo@example.com',
-      image: null,
-      role: UserRole.USER,
-      isTwoFactorEnabled: false,
-      defaultOrgId: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      organizations: []
-    });
-  }
-
-  const response = await fetch(`${API_BASE}/me`, {
-    method: 'GET',
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to get user profile');
-  }
-
-  return response.json();
+  // Always use mock data for frontend-only application
+  return Promise.resolve(mockCurrentUser);
 }
 
 /**
  * Update current user profile
  */
 export async function updateProfile(data: UpdateProfileData): Promise<UserProfile> {
-  const response = await fetch(`${API_BASE}/me`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include',
-    body: JSON.stringify(data),
+  // Mock implementation - simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+
+  // Return updated profile (in real app, this would be saved to backend)
+  return Promise.resolve({
+    ...mockCurrentUser,
+    ...data,
+    updatedAt: new Date()
   });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to update profile');
-  }
-
-  return response.json();
 }
 
 /**
  * Change user password
  */
 export async function changePassword(data: ChangePasswordData): Promise<{ success: boolean }> {
-  const response = await fetch(`${API_BASE}/me/password`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include',
-    body: JSON.stringify(data),
-  });
+  // Mock implementation - simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 800));
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to change password');
+  // Basic validation (in real app, this would be handled by backend)
+  if (data.newPassword !== data.confirmPassword) {
+    throw new Error('Passwords do not match');
   }
 
-  return response.json();
+  return Promise.resolve({ success: true });
 }
 
 /**
  * Delete current user account
  */
 export async function deleteAccount(): Promise<{ success: boolean }> {
-  const response = await fetch(`${API_BASE}/me`, {
-    method: 'DELETE',
-    credentials: 'include',
-  });
+  // Mock implementation - simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to delete account');
-  }
-
-  return response.json();
+  return Promise.resolve({ success: true });
 }
 
 /**
  * Register new user
  */
 export async function registerUser(data: RegisterUserData): Promise<{ success: boolean; message: string }> {
-  const response = await fetch('/api/auth/register', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
+  // Mock implementation - simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1200));
+
+  return Promise.resolve({
+    success: true,
+    message: 'User registered successfully. Please check your email for verification.'
   });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to register user');
-  }
-
-  return response.json();
 }
 
 /**
  * Verify email address
  */
 export async function verifyEmail(data: VerifyEmailData): Promise<{ success: boolean }> {
-  const response = await fetch('/api/auth/verify-email', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  });
+  // Mock implementation - simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 600));
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to verify email');
-  }
-
-  return response.json();
+  return Promise.resolve({ success: true });
 }
 
 /**
  * Request password reset
  */
 export async function requestPasswordReset(data: RequestPasswordResetData): Promise<{ success: boolean }> {
-  const response = await fetch('/api/auth/reset-password', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  });
+  // Mock implementation - simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 700));
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to request password reset');
-  }
-
-  return response.json();
+  return Promise.resolve({ success: true });
 }
 
 /**
  * Reset password with token
  */
 export async function resetPassword(data: ResetPasswordData): Promise<{ success: boolean }> {
-  const response = await fetch('/api/auth/reset-password/confirm', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  });
+  // Mock implementation - simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 800));
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to reset password');
-  }
-
-  return response.json();
+  return Promise.resolve({ success: true });
 }
 
 // ============================================================================
@@ -206,99 +130,89 @@ export async function getUsers(params: UserSearchParams = {}): Promise<{
   page: number;
   limit: number;
 }> {
-  const queryParams = new URLSearchParams();
-  if (params.search) queryParams.set('search', params.search);
-  if (params.role) queryParams.set('role', params.role);
-  if (params.page) queryParams.set('page', params.page.toString());
-  if (params.limit) queryParams.set('limit', params.limit.toString());
-  if (params.sortBy) queryParams.set('sortBy', params.sortBy);
-  if (params.sortOrder) queryParams.set('sortOrder', params.sortOrder);
+  // Mock implementation - simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 300));
 
-  const response = await fetch(`/api/admin/users?${queryParams.toString()}`, {
-    method: 'GET',
-    credentials: 'include',
-  });
+  let filteredUsers = [...mockUserListItems];
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to get users');
+  // Apply search filter
+  if (params.search) {
+    filteredUsers = searchMockUsers(params.search);
   }
 
-  return response.json();
+  // Apply role filter
+  if (params.role) {
+    filteredUsers = filteredUsers.filter(user => user.role === params.role);
+  }
+
+  // Apply sorting
+  if (params.sortBy) {
+    filteredUsers.sort((a, b) => {
+      const aValue = a[params.sortBy as keyof UserListItem] || '';
+      const bValue = b[params.sortBy as keyof UserListItem] || '';
+
+      if (aValue < bValue) return params.sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return params.sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
+
+  // Apply pagination
+  const page = params.page || 1;
+  const limit = params.limit || 10;
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+  const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+
+  return Promise.resolve({
+    users: paginatedUsers,
+    total: filteredUsers.length,
+    page,
+    limit
+  });
 }
 
 /**
  * Get user by ID (admin only)
  */
 export async function getUserById(userId: string): Promise<UserWithOrganizations> {
-  const response = await fetch(`/api/admin/users/${userId}`, {
-    method: 'GET',
-    credentials: 'include',
-  });
+  // Mock implementation - simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 400));
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to get user');
+  const user = getMockUserById(userId);
+  if (!user) {
+    throw new Error('User not found');
   }
 
-  return response.json();
+  return Promise.resolve(user);
 }
 
 /**
  * Update user role (admin only)
  */
 export async function updateUserRole(data: UpdateUserRoleData): Promise<{ success: boolean }> {
-  const response = await fetch(`/api/admin/users/${data.userId}/role`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include',
-    body: JSON.stringify({ role: data.role }),
-  });
+  // Mock implementation - simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 600));
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to update user role');
-  }
-
-  return response.json();
+  return Promise.resolve({ success: true });
 }
 
 /**
  * Suspend/activate user (admin only)
  */
 export async function toggleUserStatus(userId: string, isActive: boolean): Promise<{ success: boolean }> {
-  const response = await fetch(`/api/admin/users/${userId}/status`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include',
-    body: JSON.stringify({ isActive }),
-  });
+  // Mock implementation - simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to update user status');
-  }
-
-  return response.json();
+  return Promise.resolve({ success: true });
 }
 
 /**
  * Get user statistics (admin only)
  */
 export async function getUserStats(): Promise<UserStats> {
-  const response = await fetch('/api/admin/users/stats', {
-    method: 'GET',
-    credentials: 'include',
-  });
+  // Mock implementation - simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 400));
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to get user stats');
-  }
-
-  return response.json();
+  return Promise.resolve(mockUserStats);
 }

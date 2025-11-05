@@ -1,37 +1,32 @@
 import { useQuery } from '@tanstack/react-query';
+import { mockDashboardStats } from '@/data/dashboard/mock-dashboard';
 
 // Types
 export interface DashboardStats {
   totalUsers: number;
-  totalRevenue: number;
-  activeMembers: number;
-  completionRate: number;
-  organizationType: string;
-  periodGrowth: {
+  activeUsers: number;
+  totalOrganizations: number;
+  systemHealth: 'healthy' | 'warning' | 'critical';
+  recentActivity: Array<{
+    id: string;
+    type: string;
+    description: string;
+    timestamp: Date;
+    user?: {
+      name: string;
+      email: string;
+    };
+  }>;
+  userGrowth: Array<{
+    month: string;
     users: number;
-    revenue: number;
-    members: number;
-    completion: number;
-  };
-  // Organization-specific stats
-  school?: {
-    totalStudents: number;
-    totalCourses: number;
-    totalEnrollments: number;
-    averageGrade: number;
-  };
-  church?: {
-    totalMembers: number;
-    totalFamilies: number;
-    totalChoirs: number;
-    totalEvents: number;
-  };
-  library?: {
-    totalBooks: number;
-    totalLoans: number;
-    availableBooks: number;
-    overdueLoans: number;
-  };
+    organizations: number;
+  }>;
+  organizationGrowth: Array<{
+    month: string;
+    users: number;
+    organizations: number;
+  }>;
 }
 
 export interface StatsQueryParams {
@@ -43,61 +38,15 @@ export interface StatsQueryParams {
 // API functions
 const api = {
   getDashboardStats: async (params: StatsQueryParams = {}): Promise<{ data: DashboardStats }> => {
-    const searchParams = new URLSearchParams();
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined) {
-        searchParams.append(key, value.toString());
-      }
-    });
+    // Mock implementation - simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 600));
 
-    const response = await fetch(`/api/dashboard/stats?${searchParams.toString()}`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch dashboard stats');
-    }
-    return response.json();
+    return Promise.resolve({ data: mockDashboardStats });
   },
 
   getFallbackStats: async (organizationType: string = 'business'): Promise<{ data: DashboardStats }> => {
-    // Fallback data when API fails
-    return {
-      data: {
-        totalUsers: 0,
-        totalRevenue: 0,
-        activeMembers: 0,
-        completionRate: 0,
-        organizationType,
-        periodGrowth: {
-          users: 0,
-          revenue: 0,
-          members: 0,
-          completion: 0,
-        },
-        ...(organizationType === 'school' && {
-          school: {
-            totalStudents: 0,
-            totalCourses: 0,
-            totalEnrollments: 0,
-            averageGrade: 0,
-          },
-        }),
-        ...(organizationType === 'church' && {
-          church: {
-            totalMembers: 0,
-            totalFamilies: 0,
-            totalChoirs: 0,
-            totalEvents: 0,
-          },
-        }),
-        ...(organizationType === 'library' && {
-          library: {
-            totalBooks: 0,
-            totalLoans: 0,
-            availableBooks: 0,
-            overdueLoans: 0,
-          },
-        }),
-      },
-    };
+    // Fallback data when API fails - return mock data
+    return Promise.resolve({ data: mockDashboardStats });
   },
 };
 

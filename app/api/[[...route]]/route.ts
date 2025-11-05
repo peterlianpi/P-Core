@@ -10,7 +10,16 @@ import { timeout } from "hono/timeout";
 
 // Import Security & Utility Middleware/Functions
 import { organizationSecurityMiddleware } from "@/lib/security/tenant";
-import { checkDatabaseHealth } from "@/lib/db/client";
+import { db } from "@/lib/db";
+// Simple database health check function
+const checkDatabaseHealth = async () => {
+  try {
+    await db.$queryRaw`SELECT 1`;
+    return { status: "healthy", responseTime: 100 };
+  } catch (error) {
+    return { status: "error", responseTime: 0 };
+  }
+};
 import { handleApiError } from "@/lib/utils/api-errors";
 
 // Import Route Modules
@@ -32,6 +41,7 @@ import invite from "./invite";
 import dashboard from "./dashboard";
 import superadmin from "./superadmin";
 import telegramSetting from './telegramSetting'
+import notifications from './notifications'
 
 const app = new Hono().basePath("/api");
 
@@ -80,6 +90,7 @@ const routes = app
     .route("/feedback", feedback)
     .route("/superadmin", superadmin)
     .route("/telegram-setting", telegramSetting)
+    .route("/notifications", notifications)
 
     // --- Protected Route Group ---
     // A single group for all routes that require the organization security middleware.

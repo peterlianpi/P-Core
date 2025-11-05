@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/client';
+import { db } from '@/lib/db';
 import { UserRole } from '@prisma/client';
 import { auth } from '@/lib/auth/auth';
 
@@ -91,7 +91,7 @@ async function checkDatabaseHealth() {
     const dbStartTime = Date.now();
 
     // Test basic connectivity
-    await prisma.$queryRaw`SELECT 1`;
+    await db.$queryRaw`SELECT 1`;
 
     const responseTime = Date.now() - dbStartTime;
 
@@ -171,7 +171,7 @@ async function checkApiHealth() {
 async function checkAuthenticationHealth() {
   try {
     // Count active users (sessions created in last 24 hours)
-    const activeUsers = await prisma.session.count({
+    const activeUsers = await db.session.count({
       where: {
         expires: {
           gt: new Date(),

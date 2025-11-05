@@ -5,7 +5,9 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { toast } from "sonner"
-import { UserIcon, Shield, Building2, MessageCircle, Eye, EyeOff, Loader2, Menu } from "lucide-react"
+import { UserIcon, Shield, Building2, MessageCircle, Eye, EyeOff, Loader2, Menu, LogOut, Trash2, Download, AlertTriangle, UserCog } from "lucide-react"
+import { signOut } from "next-auth/react"
+import { useRouter } from "next/navigation"
 
 import type { BadgeVariant } from "../components/DesktopProfileHeader";
 import { Button } from "@/components/ui/button"
@@ -57,6 +59,7 @@ const tabs = [
   { id: "security", label: "Security", icon: Shield },
   { id: "organization", label: "Organization", icon: Building2 },
   { id: "telegram", label: "Telegram", icon: MessageCircle },
+  { id: "account", label: "Account", icon: UserCog },
 ]
 
 export function UserProfileSettings({ user, telegram }: UserProfileSettingsProps) {
@@ -71,22 +74,35 @@ export function UserProfileSettings({ user, telegram }: UserProfileSettingsProps
     user?.image || null
   );
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
   const form = useForm<UserSettingsFormData>({
     resolver: zodResolver(userSettingsSchema),
     defaultValues: {
-      name: user.name || "",
-      email: user.email || "",
-      image: user.image || "",
-      isTwoFactorEnabled: user.isTwoFactorEnabled || false,
-      defaultOrgId: user.defaultOrgId || "",
+      name: user?.name || "",
+      email: user?.email || "",
+      image: user?.image || "",
+      isTwoFactorEnabled: user?.isTwoFactorEnabled || false,
+      defaultOrgId: user?.defaultOrgId || "",
       telegramChatId: telegram?.telegramChatId || "",
       telegramBotToken: telegram?.telegramBotToken || "",
     },
   })
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Reset form when user data changes
+  useEffect(() => {
+    form.reset({
+      name: user?.name || "",
+      email: user?.email || "",
+      image: user?.image || "",
+      isTwoFactorEnabled: user?.isTwoFactorEnabled || false,
+      defaultOrgId: user?.defaultOrgId || "",
+      telegramChatId: telegram?.telegramChatId || "",
+      telegramBotToken: telegram?.telegramBotToken || "",
+    });
+  }, [user, telegram, form]);
 
   const fileRef = form.register("image" as any);
 
@@ -181,8 +197,8 @@ export function UserProfileSettings({ user, telegram }: UserProfileSettingsProps
         currentTab={currentTab}
         getRoleBadgeVariant={getRoleBadgeVariant}
       />
-      
-      <div className="container mx-auto px-4 py-4 md:py-8 max-w-4xl">
+
+      <div className="w-full px-4 py-4 md:py-8">
         {/* Desktop Profile Header */}
         <DesktopProfileHeader
           user={user}
@@ -204,7 +220,7 @@ export function UserProfileSettings({ user, telegram }: UserProfileSettingsProps
         {/* Settings Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           {/* Desktop Tabs */}
-          <TabsList className="hidden md:grid w-full grid-cols-4">
+          <TabsList className="hidden md:grid w-full grid-cols-5">
             {tabs.map((tab) => {
               const Icon = tab.icon
               return (
@@ -248,7 +264,7 @@ export function UserProfileSettings({ user, telegram }: UserProfileSettingsProps
                       </div>
                     </div>
 
-                    <div className="grid gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                       <FormField
                         control={form.control}
                         name="name"
@@ -256,7 +272,7 @@ export function UserProfileSettings({ user, telegram }: UserProfileSettingsProps
                           <FormItem>
                             <FormLabel>Full Name</FormLabel>
                             <FormControl>
-                              <Input placeholder="Enter your full name" {...field} />
+                              <Input placeholder="Enter your full name" {...field} className="md:text-base" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -269,7 +285,33 @@ export function UserProfileSettings({ user, telegram }: UserProfileSettingsProps
                           <FormItem>
                             <FormLabel>Email Address</FormLabel>
                             <FormControl>
-                              <Input type="email" placeholder="Enter your email" {...field} />
+                              <Input type="email" placeholder="Enter your email" {...field} className="md:text-base" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Phone Number</FormLabel>
+                            <FormControl>
+                              <Input type="tel" placeholder="Enter your phone number" {...field} className="md:text-base" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="dateOfBirth"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Date of Birth</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} className="md:text-base" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -288,8 +330,8 @@ export function UserProfileSettings({ user, telegram }: UserProfileSettingsProps
                       Manage your password and security preferences.
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid gap-4">
+                  <CardContent className="space-y-4 md:space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                       <FormField
                         control={form.control}
                         name="password"
@@ -302,6 +344,7 @@ export function UserProfileSettings({ user, telegram }: UserProfileSettingsProps
                                   type={showPassword ? "text" : "password"}
                                   placeholder="Enter current password"
                                   {...field}
+                                  className="md:text-base"
                                 />
                                 <Button
                                   type="button"
@@ -314,7 +357,7 @@ export function UserProfileSettings({ user, telegram }: UserProfileSettingsProps
                                 </Button>
                               </div>
                             </FormControl>
-                            <FormDescription className="text-xs">
+                            <FormDescription className="text-xs md:text-sm">
                               Leave blank to keep your current password
                             </FormDescription>
                             <FormMessage />
@@ -333,6 +376,7 @@ export function UserProfileSettings({ user, telegram }: UserProfileSettingsProps
                                   type={showNewPassword ? "text" : "password"}
                                   placeholder="Enter new password"
                                   {...field}
+                                  className="md:text-base"
                                 />
                                 <Button
                                   type="button"
@@ -345,13 +389,56 @@ export function UserProfileSettings({ user, telegram }: UserProfileSettingsProps
                                 </Button>
                               </div>
                             </FormControl>
-                            <FormDescription className="text-xs">Must be at least 8 characters long</FormDescription>
+                            <FormDescription className="text-xs md:text-sm">Must be at least 8 characters long</FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                     </div>
                     <Separator />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                      <FormField
+                        control={form.control}
+                        name="securityQuestion"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Security Question</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select a security question" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="pet">What is your pet's name?</SelectItem>
+                                <SelectItem value="city">What city were you born in?</SelectItem>
+                                <SelectItem value="school">What was your first school?</SelectItem>
+                                <SelectItem value="color">What is your favorite color?</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormDescription className="text-xs md:text-sm">
+                              Used for account recovery
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="securityAnswer"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Security Answer</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Enter your security answer" {...field} className="md:text-base" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
                     <FormField
                       control={form.control}
                       name="isTwoFactorEnabled"
@@ -382,30 +469,78 @@ export function UserProfileSettings({ user, telegram }: UserProfileSettingsProps
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
+                    <div className={`grid gap-4 md:gap-6 ${user.role === "USER" ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2"}`}>
+                      <FormField
+                        control={form.control}
+                        name="defaultOrgId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Default Organization</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select your default organization" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {organizations.map((org) => (
+                                  <SelectItem key={org.organization.id} value={org.organization.id}>
+                                    {org.organization.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormDescription className="text-xs md:text-sm">
+                              This organization will be selected by default when you log in
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      {user.role !== "USER" && (
+                        <FormField
+                          control={form.control}
+                          name="orgRole"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Organization Role</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select your role" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="OWNER">Owner</SelectItem>
+                                  <SelectItem value="ADMIN">Administrator</SelectItem>
+                                  <SelectItem value="MEMBER">Member</SelectItem>
+                                  <SelectItem value="VIEWER">Viewer</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormDescription className="text-xs md:text-sm">
+                                Your role within the selected organization
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                    </div>
+
                     <FormField
                       control={form.control}
-                      name="defaultOrgId"
+                      name="emailNotifications"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Default Organization</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select your default organization" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {organizations.map((org) => (
-                                <SelectItem key={org.organization.id} value={org.organization.id}>
-                                  {org.organization.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormDescription className="text-xs md:text-sm">
-                            This organization will be selected by default when you log in
-                          </FormDescription>
-                          <FormMessage />
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 md:p-4">
+                          <div className="space-y-0.5 flex-1 pr-2">
+                            <FormLabel className="text-sm md:text-base">Email Notifications</FormLabel>
+                            <FormDescription className="text-xs md:text-sm">
+                              Receive email notifications for organization activities
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          </FormControl>
                         </FormItem>
                       )}
                     />
@@ -457,6 +592,81 @@ export function UserProfileSettings({ user, telegram }: UserProfileSettingsProps
                           )}
                         />
                       )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              {/* Account Tab */}
+              <TabsContent value="account" className="space-y-4 md:space-y-6 mt-0">
+                <Card>
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-lg md:text-xl">Account Management</CardTitle>
+                    <CardDescription className="text-sm">
+                      Manage your account settings and data.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Account Actions */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-blue-100 rounded-lg">
+                            <Download className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium">Export Data</h4>
+                            <p className="text-sm text-muted-foreground">Download a copy of your data</p>
+                          </div>
+                        </div>
+                        <Button variant="outline" size="sm">
+                          <Download className="h-4 w-4 mr-2" />
+                          Export
+                        </Button>
+                      </div>
+
+                      <Separator />
+
+                      <div className="flex items-center justify-between p-4 border border-red-200 rounded-lg bg-red-50">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-red-100 rounded-lg">
+                            <AlertTriangle className="h-5 w-5 text-red-600" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-red-900">Delete Account</h4>
+                            <p className="text-sm text-red-700">Permanently delete your account and all data</p>
+                          </div>
+                        </div>
+                        <Button variant="destructive" size="sm">
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Logout Section */}
+                    <div className="pt-4">
+                      <h4 className="font-medium mb-4">Session Management</h4>
+                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-gray-100 rounded-lg">
+                            <LogOut className="h-5 w-5 text-gray-600" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium">Sign Out</h4>
+                            <p className="text-sm text-muted-foreground">Sign out of your account</p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => signOut({ callbackUrl: "/" })}
+                        >
+                          <LogOut className="h-4 w-4 mr-2" />
+                          Sign Out
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

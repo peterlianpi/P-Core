@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/client';
+import { db } from '@/lib/db';
 import { UserRole } from '@prisma/client';
 import { auth } from '@/lib/auth/auth';
 
@@ -36,16 +36,16 @@ export async function GET(request: NextRequest) {
     }
 
     if (since) {
-      whereClause.createdAt = {
+      whereClause.timestamp = {
         gte: new Date(since),
       };
     }
 
-    // Get system logs from UpdateLog table and format them
-    const systemLogs = await prisma.updateLog.findMany({
+    // Get system logs from Activity table and format them
+    const systemLogs = await db.activity.findMany({
       where: whereClause,
       orderBy: {
-        createdAt: 'desc',
+        timestamp: 'desc',
       },
       take: Math.min(limit, 100), // Cap at 100 logs
       include: {
@@ -55,21 +55,28 @@ export async function GET(request: NextRequest) {
             type: true,
           },
         },
+        user: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
       },
     });
 
     // Transform logs to match the expected format
     const formattedLogs = systemLogs.map(log => ({
       id: log.id,
-      timestamp: log.createdAt.toISOString(),
+      timestamp: log.timestamp.toISOString(),
       level: log.type.toLowerCase() as 'info' | 'warning' | 'error',
-      service: determineService(log.name, log.message),
-      message: log.message,
+      service: determineService(log.description, log.description),
+      message: log.description,
       details: {
-        name: log.name,
-        updatedBy: log.updatedBy,
+        description: log.description,
+        user: log.user?.name || log.user?.email,
         organization: log.organization?.name,
         organizationType: log.organization?.type,
+        metadata: log.metadata,
       },
     }));
 

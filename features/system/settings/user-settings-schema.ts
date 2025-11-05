@@ -18,11 +18,17 @@ import { z } from "zod";
 export const userSettingsSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").optional(),
   email: z.string().email("Invalid email address").optional(),
+  phone: z.string().optional(),
+  dateOfBirth: z.string().optional(),
   image: z.string().optional(),
   password: z.string().min(8, "Password must be at least 8 characters").optional(),
   newPassword: z.string().min(8, "Password must be at least 8 characters").optional(),
+  securityQuestion: z.string().optional(),
+  securityAnswer: z.string().optional(),
   isTwoFactorEnabled: z.boolean().optional(),
   defaultOrgId: z.string().optional(),
+  orgRole: z.string().optional(),
+  emailNotifications: z.boolean().optional(),
   telegramChatId: z.string().optional(),
   telegramBotToken: z.string().optional(),
 })

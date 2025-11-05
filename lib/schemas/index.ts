@@ -69,7 +69,7 @@ export const LoginSchema = z.object({
 
 /**
  * Schema for validating user registration input.
- * Requires email, password, and name fields.
+ * Requires email, password, name, and role selection fields.
  */
 export const RegisterSchema = z.object({
   email: z.string().email({
@@ -81,6 +81,19 @@ export const RegisterSchema = z.object({
   name: z.string().min(1, {
     message: "Name is required",
   }),
+  role: z.enum(["user", "admin", "company"], {
+    message: "Please select a role",
+  }),
+  companyName: z.string().optional(),
+}).refine((data) => {
+  // If role is "company", companyName is required
+  if (data.role === "company" && !data.companyName) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Company name is required when registering as a company",
+  path: ["companyName"],
 });
 
 // Organization Schema

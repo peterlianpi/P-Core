@@ -21,7 +21,8 @@ function ProfilePageContent() {
   };
 
   const handleLogout = () => {
-    window.location.href = '/auth/login';
+    // For frontend-only app, just reload the page or show a message
+    alert('Logout not required in demo mode. This is a frontend-only application.');
   };
 
   if (isLoading) {

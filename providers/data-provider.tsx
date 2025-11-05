@@ -7,7 +7,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { useCurrentUser } from "../hooks/use-current-user";
+import { useSession } from "next-auth/react";
 
 // Define the type for the context value
 type DataContextType = {
@@ -29,7 +29,8 @@ type Props = {
 };
 
 export function DataProvider({ children }: Props) {
-  const user = useCurrentUser();
+  const { data: session } = useSession();
+  const user = session?.user;
   const [loading, setLoading] = useState(false);
   const [orgId, setOrgId] = useState<string>(() => {
     if (typeof window !== "undefined") {

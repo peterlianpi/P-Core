@@ -36,7 +36,6 @@ import {
   Palette
 } from 'lucide-react';
 
-import { LoginButton } from "@/components/auth/login-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -109,9 +108,7 @@ export default function Home() {
           
           <div className="flex items-center space-x-4">
             <ThemeSelector />
-            <LoginButton asChild>
-              <Button size="sm">Sign In</Button>
-            </LoginButton>
+            <Button size="sm" onClick={() => window.location.href = '/dashboard'}>Get Started</Button>
           </div>
         </div>
       </motion.header>
@@ -174,13 +171,15 @@ export default function Home() {
               transition={{ delay: 0.6, duration: 0.6 }}
               className="flex flex-col sm:flex-row items-center justify-center gap-4"
             >
-              <LoginButton asChild>
-                <Button size="lg" className="px-8 py-3 text-lg font-semibold group">
-                  Get Started
-                  <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-                </Button>
-              </LoginButton>
-              
+              <Button
+                size="lg"
+                className="px-8 py-3 text-lg font-semibold group"
+                onClick={() => window.location.href = '/dashboard'}
+              >
+                Get Started
+                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+              </Button>
+
               <Button variant="outline" size="lg" className="px-8 py-3 text-lg">
                 Watch Demo
               </Button>

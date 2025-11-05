@@ -1,63 +1,47 @@
-// LIGHTWEIGHT EDGE-COMPATIBLE MIDDLEWARE
-// This middleware only checks for session cookies without importing heavy dependencies
-// Authorization logic is handled in API routes to keep middleware lightweight
+import { auth } from "@/lib/auth/auth";
 import {
-  authRoutes,
   DEFAULT_LOGIN_REDIRECT,
+  apiAuthPrefix,
+  authRoutes,
   publicRoutes,
-} from "./lib/auth/routes";
-import { NextRequest, NextResponse } from "next/server";
+} from "@/lib/auth/routes";
+import { NextResponse } from "next/server";
 
-export default function middleware(req: NextRequest) {
+export default auth((req: any) => {
   const { nextUrl } = req;
-  const isLoggedIn = checkIfLoggedIn(req);
+  const isLoggedIn = !!req.auth;
 
+  const isApiAuthRoute = nextUrl.pathname.startsWith(apiAuthPrefix);
   const isPublicRoute = publicRoutes.includes(nextUrl.pathname);
   const isAuthRoute = authRoutes.includes(nextUrl.pathname);
 
-  // Allow API auth routes and health check to pass through (they handle their own auth)
-  if (nextUrl.pathname.startsWith('/api/auth') ||
-      nextUrl.pathname === '/api/health' ||
-      (process.env.NODE_ENV === 'development' && nextUrl.pathname.startsWith('/api/users'))) {
+  if (isApiAuthRoute) {
     return NextResponse.next();
   }
 
-  // Handle auth routes (login, register, etc.)
   if (isAuthRoute) {
     if (isLoggedIn) {
-      // SECURITY FIX: Prevent redirect loops
-      if (nextUrl.pathname !== DEFAULT_LOGIN_REDIRECT) {
-        return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
-      }
+      return NextResponse.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
     }
     return NextResponse.next();
   }
 
-  // Redirect to login if not logged in and not on a public route
   if (!isLoggedIn && !isPublicRoute) {
     let callbackUrl = nextUrl.pathname;
     if (nextUrl.search) {
       callbackUrl += nextUrl.search;
     }
+
     const encodedCallbackUrl = encodeURIComponent(callbackUrl);
 
-    return Response.redirect(
+    return NextResponse.redirect(
       new URL(`/auth/login?callbackUrl=${encodedCallbackUrl}`, nextUrl)
     );
   }
 
   return NextResponse.next();
-}
+});
 
-// Lightweight function to check if user is logged in by checking for session cookie
-function checkIfLoggedIn(req: NextRequest): boolean {
-  // Check for NextAuth session token cookie
-  const cookies = req.cookies;
-  return cookies.has('next-auth.session-token') ||
-         cookies.has('__Secure-next-auth.session-token');
-}
-
-// Optionally, don't invoke Middleware on some paths
 export const config = {
-  matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
+  matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api)(.*)"],
 };

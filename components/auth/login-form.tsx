@@ -8,7 +8,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -23,7 +22,6 @@ import { useState, useTransition, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { getSession, useSession } from "next-auth/react";
 import Link from "next/link";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "../ui/input-otp";
 import { InviteTokenTracker } from "@/features/organization-management/components/InviteTokenTracker";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 
@@ -34,7 +32,6 @@ export const LoginForm = () => {
       ? "Email already in use with different provider!"
       : "";
   const callbackUrl = searchParams.get("callbackUrl");
-  const [showTwoFactor, setShowTwoFactor] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | undefined>("");
   const [success, setSuccess] = useState<string | undefined>("");
@@ -46,7 +43,6 @@ export const LoginForm = () => {
     defaultValues: {
       email: "",
       password: "",
-      code: "",
     },
   });
 
@@ -66,13 +62,14 @@ export const LoginForm = () => {
             form.reset();
             setSuccess(data.success);
 
-            if (data.redirectTo) {
-              window.location.href = data.redirectTo;
-            }
-          }
-
-          if (data?.twoFactor) {
-            setShowTwoFactor(true);
+            // Add a small delay to show success message before redirect
+            setTimeout(() => {
+              if (data.redirectTo) {
+                window.location.href = data.redirectTo;
+              } else {
+                window.location.href = "/dashboard";
+              }
+            }, 1000);
           }
         })
         .catch(() =>
@@ -102,99 +99,67 @@ export const LoginForm = () => {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-4">
-              {showTwoFactor && (
-                <FormField
-                  control={form.control}
-                  name="code"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Two Factor Code</FormLabel>
-                      <FormControl>
-                        <InputOTP maxLength={6} {...field}>
-                          <InputOTPGroup>
-                            <InputOTPSlot index={0} />
-                            <InputOTPSlot index={1} />
-                            <InputOTPSlot index={2} />
-                            <InputOTPSlot index={3} />
-                            <InputOTPSlot index={4} />
-                            <InputOTPSlot index={5} />
-                          </InputOTPGroup>
-                        </InputOTP>
-                      </FormControl>
-                      <FormDescription>
-                        Please enter the one-time password sent to your phone.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-
-              {!showTwoFactor && (
-                <>
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            disabled={isPending}
-                            placeholder="john.doe@example.com"
-                            type="email"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Input
-                              {...field}
-                              disabled={isPending}
-                              placeholder="********"
-                              type={showPassword ? "text" : "password"}
-                              className="pr-10"
-                            />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                              onClick={() => setShowPassword(!showPassword)}
-                              disabled={isPending}
-                            >
-                              {showPassword ? (
-                                <EyeOff className="h-4 w-4 text-gray-400" />
-                              ) : (
-                                <Eye className="h-4 w-4 text-gray-400" />
-                              )}
-                            </Button>
-                          </div>
-                        </FormControl>
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        disabled={isPending}
+                        placeholder="john.doe@example.com"
+                        type="email"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          {...field}
+                          disabled={isPending}
+                          placeholder="********"
+                          type={showPassword ? "text" : "password"}
+                          className="pr-10"
+                        />
                         <Button
+                          type="button"
+                          variant="ghost"
                           size="sm"
-                          variant="link"
-                          className="px-0 font-normal"
-                          asChild
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                          disabled={isPending}
                         >
-                          <Link href="/auth/reset">Forgot password?</Link>
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
                         </Button>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </>
-              )}
+                      </div>
+                    </FormControl>
+                    <Button
+                      size="sm"
+                      variant="link"
+                      className="px-0 font-normal"
+                      asChild
+                    >
+                      <Link href="/auth/reset">Forgot password?</Link>
+                    </Button>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
             <FormSuccess message={success} />
             <FormError message={error || urlError} />
@@ -202,10 +167,10 @@ export const LoginForm = () => {
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {showTwoFactor ? "Confirming..." : "Logging in..."}
+                  Logging in...
                 </>
               ) : (
-                showTwoFactor ? "Confirm" : "Login"
+                "Login"
               )}
             </Button>
           </form>

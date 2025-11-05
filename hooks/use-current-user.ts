@@ -1,15 +1,21 @@
-import { useSession } from "next-auth/react";
+import { useSession } from 'next-auth/react';
 
 /**
- * Custom hook to retrieve the current user's data from the session.
+ * Custom hook to retrieve the current user's data from NextAuth session.
+ * Uses the authenticated session data instead of mock data.
  *
- * @returns {object | undefined} The user object from the session, or undefined if the session is not available.
+ * @returns {object} The current authenticated user object or null if not authenticated.
  */
 export const useCurrentUser = () => {
-  const { data: session, status } = useSession(); // Destructure `data` to get session
+  const { data: session, status } = useSession();
 
-  if (status === "authenticated") {
-    // Ensure session data is available before accessing the user object
-    return session?.user;
+  if (status === 'loading') {
+    return null; // Still loading
   }
+
+  if (status === 'unauthenticated' || !session?.user) {
+    return null; // Not authenticated
+  }
+
+  return session.user; // Return the authenticated user
 };

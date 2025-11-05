@@ -1,6 +1,8 @@
 import { currentUser } from "@/lib/auth";
 import { getTelegramSetting } from "@/actions/settings/telegram-setting";
+import { getOrganizationsByUserId } from "@/actions/features/org/organization";
 import { UserProfileSettings } from "@/features/system/settings/components/settings-profile-form";
+import { OrgDataProvider } from "@/features/organization-management/context/org-context";
 
 const SettingsPage = async () => {
   const user = await currentUser();
@@ -19,18 +21,37 @@ const SettingsPage = async () => {
     }
     : undefined;
 
-  // Fetch organizations (assuming you have a function or hook for this)
-  // If useOrgData is a hook, you can't use it in a server component. Replace with a server-side fetch if needed.
-  // For now, let's assume you have a function getOrganizations() that returns the organizations array.
-  // const organizations = await getOrganizations();
-  // For demonstration, we'll use an empty array:
-  const organizations = [];
+  // Fetch organizations for the current user
+  const orgResult = await getOrganizationsByUserId(user.id);
+  const rawOrganizations = orgResult.success ? orgResult.data : [];
+
+  // Transform organizations to match the expected Org type
+  const organizations = (rawOrganizations || []).map((org: any) => ({
+    organization: {
+      id: org.id,
+      name: org.name,
+      logoImage: org.logoImage,
+      description: org.description,
+      startedAt: org.startedAt,
+      type: org.type,
+    },
+    role: org.role,
+  }));
 
   return (
-    <UserProfileSettings
-      user={{ ...user, name: user.name ?? undefined, email:user.email??undefined, image:user.image??undefined }}
-      telegram={normalizedTelegram}
-    />
+    <OrgDataProvider organizations={organizations} users={[]}>
+      <UserProfileSettings
+        user={{
+          ...user,
+          name: user.name ?? undefined,
+          email: user.email ?? undefined,
+          image: user.image ?? undefined,
+          role: user.role as any,
+          defaultOrgId: user.defaultOrgId ?? undefined
+        }}
+        telegram={normalizedTelegram}
+      />
+    </OrgDataProvider>
   );
 };
 export default SettingsPage;

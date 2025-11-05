@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db/client";
+import { db } from "@/lib/db";
 import crypto from "crypto";
 
 /**
@@ -10,7 +10,7 @@ export const getPasswordResetTokenByToken = async (token: string) => {
   try {
     // SECURITY: Tokens are stored hashed; hash the incoming token before lookup.
     const hashed = crypto.createHash("sha256").update(token).digest("hex");
-    const passwordResetToken = await prisma.passwordResetToken.findUnique({
+    const passwordResetToken = await db.passwordResetToken.findUnique({
       where: { token: hashed },
     });
     return passwordResetToken;
@@ -27,7 +27,7 @@ export const getPasswordResetTokenByToken = async (token: string) => {
  */
 export const getPasswordResetTokenByEmail = async (email: string) => {
   try {
-    const passwordResetToken = await prisma.passwordResetToken.findFirst({
+    const passwordResetToken = await db.passwordResetToken.findFirst({
       where: { email },
     });
     return passwordResetToken;

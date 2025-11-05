@@ -16,10 +16,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation"; // Importing usePathname for App Router
-import type { UserRole } from "@/lib/types/database";
-import { trackLogout } from "@/actions/auth/track-system-activities";
+import type { UserRole } from "@/shared/types/user-role";
 
 export function NavUser({
   user,
@@ -34,12 +32,9 @@ export function NavUser({
   const { isMobile } = useSidebar();
   const pathname = usePathname(); // Using usePathname instead of useRouter for App Router
 
-  const handleLogout = async () => {
-    // Capture the current path and encode it for the callbackUrl
-    const callbackUrl = encodeURIComponent(pathname);
-    await trackLogout({ value: user.email });
-    // Log out the user and redirect to the login page with the callbackUrl
-    await signOut({ callbackUrl: `/auth/login?callbackUrl=${callbackUrl}` });
+  const handleLogout = () => {
+    // For frontend-only system, just show a message
+    alert('Logout not required in demo mode. This is a frontend-only application.');
   };
 
   return (

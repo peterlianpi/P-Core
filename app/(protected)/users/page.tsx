@@ -1,12 +1,26 @@
+import React from "react";
+import { AdminLayout } from "../../../components/admin-layout";
+import { UserManagementTable } from "../../../features/user-management/components/user-management-table";
+import { Button } from "../../../components/ui/button";
+import { Plus } from "lucide-react";
+
 /**
- * User Management Page - MVP Implementation
- *
- * Full-screen admin page for managing all users in the system using the User Management MVP
- * Uses tabbed interface instead of sidebar navigation for cleaner UX
+ * UserManagementPage
+ * Admin-facing UI for managing users and roles.
  */
-
-import { UserManagementTable } from '@/features/user-management/components/user-management-table';
-
 export default function UserManagementPage() {
-  return <UserManagementTable />;
+  return (
+    <AdminLayout>
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold tracking-tight">Users</h1>
+          <Button variant="default" size="sm">
+            <Plus className="w-4 h-4 mr-2" />
+            Add User
+          </Button>
+        </div>
+        <UserManagementTable />
+      </div>
+    </AdminLayout>
+  );
 }

@@ -3,9 +3,9 @@
 // Follows feature-based structure; see /docs/PROJECT_DEVELOPMENT_GUIDELINES.md.
 
 import React from "react";
-import { AdminLayout } from "@/components/admin-layout";
+import { AdminLayout } from "../../components/admin-layout";
 import { UserManagementTable } from "./components/user-management-table";
-import { Button } from "@/components/ui/button";
+import { Button } from "../../components/ui/button";
 import { Plus } from "lucide-react";
 
 /**
